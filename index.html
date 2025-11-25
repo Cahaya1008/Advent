@@ -421,56 +421,133 @@ function openDay6(){
 
 /* ------------------------------
    Day 7 — Simon (colorful flashes)
-   - Buttons actually change color while flashing; clearer visual
+   - Must pass 5 rounds to earn letter
+   - Rounds: 3,4,5,6,7,8, then insane bonus
    ------------------------------ */
 function openDay7(){
-  if(state.found[7]) { showModal(`<div class="card"><h3>Already found</h3><p>Letter: <strong>${lettersPerDay[7]}</strong></p><div style="margin-top:12px"><button id="close7">Close</button></div></div>`); document.getElementById('close7').addEventListener('click', hideModal); return; }
-  const html = `<div class="card"><h3>Dec 7 — Color Sequence</h3><p>Repeat sequences: lengths 3→8. Final fast bonus is optional. If you fail, you still get the letter — it's a fun challenge.</p>
+  if(state.found[7]) {
+    showModal(`<div class="card"><h3>Already found</h3>
+      <p>Letter: <strong>${lettersPerDay[7]}</strong></p>
+      <div style="margin-top:12px"><button id="close7">Close</button></div></div>`
+    );
+    document.getElementById('close7').addEventListener('click', hideModal);
+    return;
+  }
+
+  const html = `<div class="card">
+    <h3>Dec 7 — Color Sequence</h3>
+    <p>Repeat the flashing pattern. Pass <strong>5 rounds</strong> to earn the secret letter.</p>
+    <p class="muted">Bonus rounds are just for fun.</p>
+
     <div style="margin-top:12px" class="simonRow">
       <button id="s0" class="simonBtn" style="background:var(--simon0)">1</button>
       <button id="s1" class="simonBtn" style="background:var(--simon1)">2</button>
       <button id="s2" class="simonBtn" style="background:var(--simon2)">3</button>
       <button id="s3" class="simonBtn" style="background:var(--simon3)">4</button>
     </div>
-    <div style="margin-top:12px"><button id="start7">Start</button> <span id="s7msg" class="muted" style="margin-left:12px"></span></div></div>`;
+
+    <div style="margin-top:12px">
+      <button id="start7">Start</button>
+      <span id="s7msg" class="muted" style="margin-left:12px"></span>
+    </div>
+  </div>`;
+
   showModal(html);
-  const btns=[document.getElementById('s0'),document.getElementById('s1'),document.getElementById('s2'),document.getElementById('s3')];
-  const msg=document.getElementById('s7msg');
-  function flash(i,fast=false){
-    const b=btns[i];
+
+  const btns = [
+    document.getElementById('s0'),
+    document.getElementById('s1'),
+    document.getElementById('s2'),
+    document.getElementById('s3')
+  ];
+  const msg = document.getElementById('s7msg');
+
+  function flash(i, fast=false){
+    const b = btns[i];
     b.classList.add('simonFlash');
-    setTimeout(()=>b.classList.remove('simonFlash'), fast?120:360);
+    setTimeout(()=>b.classList.remove('simonFlash'), fast ? 120 : 350);
   }
-  async function playAndGetInput(len,fast=false){
-    const seq=[]; for(let i=0;i<len;i++) seq.push(Math.floor(Math.random()*4));
-    for(const s of seq){ flash(s,fast); await new Promise(r=>setTimeout(r, fast?150:500)); }
-    let idx=0;
-    return new Promise(resolve=>{
+
+  async function playRoundAndGetInput(length, fast=false){
+    const seq = [];
+    for(let i=0; i<length; i++) seq.push(Math.floor(Math.random()*4));
+
+    // play sequence
+    for(const v of seq){
+      flash(v, fast);
+      await new Promise(res => setTimeout(res, fast ? 140 : 480));
+    }
+
+    // player repeats
+    let index = 0;
+    return new Promise(resolve => {
       function handler(e){
         const i = btns.indexOf(e.target);
-        if(i<0) return;
-        flash(i,false);
-        if(i!==seq[idx]){ btns.forEach(b=>b.removeEventListener('click', handler)); resolve(false); return; }
-        idx++;
-        if(idx===seq.length){ btns.forEach(b=>b.removeEventListener('click', handler)); resolve(true); }
+        if(i === -1) return;
+
+        flash(i, false);
+
+        if(i !== seq[index]){
+          btns.forEach(b=>b.removeEventListener('click', handler));
+          resolve(false);
+          return;
+        }
+
+        index++;
+        if(index === seq.length){
+          btns.forEach(b=>b.removeEventListener('click', handler));
+          resolve(true);
+        }
       }
       btns.forEach(b=>b.addEventListener('click', handler));
     });
   }
+
   document.getElementById('start7').addEventListener('click', async ()=>{
-    msg.textContent='Good luck!';
-    for(let len=3; len<=8; len++){
-      const ok = await playAndGetInput(len,false);
-      if(!ok){ msg.textContent="Don't worry, I knew you wouldn't be able to do it."; storeLetter(7); hideModal(); return; }
-      msg.textContent=`Round ${len} complete — next.`;
-      await new Promise(r=>setTimeout(r,400));
+    msg.textContent = "Get ready...";
+
+    let roundsPassed = 0;
+    const rounds = [3,4,5,6,7,8];
+
+    for(let i=0; i<rounds.length; i++){
+      const length = rounds[i];
+      msg.textContent = `Round ${i+1}: ${length} flashes`;
+
+      const success = await playRoundAndGetInput(length, false);
+
+      if(success){
+        roundsPassed++;
+        msg.textContent = `✔ Passed round ${i+1}`;
+
+        // You earn the letter ONLY after passing round 5 (index 0–4)
+        if(roundsPassed === 5){
+          alert("You've passed 5 rounds! Secret letter unlocked.");
+          storeLetter(7);
+        }
+
+        await new Promise(res => setTimeout(res, 500));
+      } else {
+        msg.textContent = `Failed on round ${i+1}`;
+        
+        // If you hadn't passed 5 rounds yet → no letter
+        if(roundsPassed < 5){
+          alert("You didn't pass enough rounds to earn the letter. Try again!");
+        }
+
+        return; // end here
+      }
     }
-    const bonusOk = await playAndGetInput(10,true).catch(()=>false);
-    if(bonusOk) alert('Amazing — bonus cleared! You still get the letter.');
-    else alert('Bonus skipped — letter granted.');
-    storeLetter(7); hideModal();
+
+    // Bonus round (insanely fast, intentionally impossible)
+    msg.textContent = "Bonus Round: Impossible Mode...";
+    await new Promise(res => setTimeout(res, 600));
+
+    await playRoundAndGetInput(10, true);
+
+    msg.textContent = "Bonus finished.";
   });
 }
+
 
 /* ------------------------------
    Day 8 — Quote fill-in (unchanged)
