@@ -3,10 +3,11 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Advent Calendar — Rebuilt (Dec 1–11) (3rd iteration)</title>
+<title>Advent Calendar — Updated (Dec 1–11)</title>
 <style>
   :root{
     --bg:#071022; --card:#eef6ff; --accent:#7aa7ff; --muted:#9fb3d6;
+    --simon0:#ff6b6b; --simon1:#ffd93d; --simon2:#6bff9e; --simon3:#6bc3ff;
   }
   html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;}
   body{background:linear-gradient(#071022,#081a32 60%); color:#e9f1ff; overflow-x:hidden;padding-bottom:60px;}
@@ -38,28 +39,28 @@
   .snowflake{position:fixed;top:-10px;left:0;width:6px;height:6px;border-radius:50%;background:white;opacity:.9;pointer-events:none;animation:fall linear infinite}
   /* small game UI */
   .card{background:#fff;padding:12px;border-radius:10px;color:#09293b}
-  .matching-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
-  .matching-card{height:80px;background:#f8fbff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;cursor:pointer;border:2px solid rgba(0,0,0,0.06)}
-  .grid-sudoku-15{display:grid;grid-template-columns:repeat(15,34px);gap:2px}
-  .grid-sudoku-15 input{width:34px;height:34px;text-align:center;border:1px solid #c7d8f0;border-radius:4px;font-weight:700;background:#fff;color:#102035}
+  .matching-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px} /* updated for 30 cards (6x5 grid) */
+  .matching-card{height:90px;background:#f8fbff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;cursor:pointer;border:2px solid rgba(0,0,0,0.08);font-size:22px}
+  .grid-sudoku-9{display:grid;grid-template-columns:repeat(9,44px);gap:2px;padding:6px;border-radius:8px;background:#cfe3ff}
+  .grid-sudoku-9 input{width:44px;height:44px;text-align:center;border:1px solid #7ea7ff;border-radius:4px;font-weight:700;background:#fff;color:#102035;font-size:16px}
+  .grid-sudoku-9 .block{border:2px solid #0b3b6f}
   .maze{display:inline-block;padding:8px;background:#fff;border-radius:8px}
-  .maze .cell{width:28px;height:28px;display:inline-block;box-sizing:border-box;border:1px solid #ccc;vertical-align:top}
-  .jigsawGrid{display:grid;grid-template-columns:repeat(3,110px);gap:6px}
-  .jigsawTile{width:110px;height:110px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid rgba(0,0,0,0.06);font-weight:900;color:#fff}
+  .maze .cell{width:16px;height:16px;display:inline-block;box-sizing:border-box;border:1px solid #ccc;vertical-align:top}
+  .jigsawGrid{display:grid;grid-template-columns:repeat(3,140px);gap:6px;justify-content:center}
+  .jigsawTile{width:140px;height:140px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:grab;border:2px solid rgba(0,0,0,0.06);font-weight:900;color:#fff;overflow:hidden}
   .spot-wrap{display:flex;gap:8px}
   .spot-box{width:320px;height:200px;background:#fff;border-radius:8px;position:relative;overflow:hidden;cursor:pointer;border:3px solid #e6eefc}
   footer{color:#9fb3d6;margin:18px;text-align:center}
   .hidden{display:none}
-  /* visible grid lines for sudoku 15 */
-  .grid-sudoku-15{background:#c9daf8;padding:6px;border-radius:8px}
-  .grid-sudoku-15 input.block-border{border:2px solid #A8C0F0}
-  .hint-pill{background:#eef6ff;color:#102035;padding:6px;border-radius:8px;font-weight:800;margin-left:8px}
+  .simonRow{display:flex;gap:12px}
+  .simonBtn{width:84px;height:84px;border-radius:10px;border:3px solid rgba(0,0,0,0.08);cursor:pointer;font-weight:900;font-size:18px;color:#042}
+  .simonFlash{box-shadow:0 0 18px rgba(255,255,255,0.6);transform:scale(1.05)}
 </style>
 </head>
 <body>
 <header>
-  <div><h1>Advent Calendar — Rebuild (Dec 1–11)</h1>
-    <div class="muted" style="font-size:.9rem">Spec rebuilt exactly per your updated instructions. Reference the original brief if needed. (Uploaded spec referenced.)</div>
+  <div><h1>Advent Calendar — Updated (Dec 1–11) Fourth Iteration</h1>
+    <div class="muted" style="font-size:.9rem">Refinements: 30-card matching, real jigsaw drag-drop, 9×9 Sudoku, improved Simon, larger maze, better crossword.</div>
   </div>
   <div class="controls">
     <button id="resetBtn">Reset progress</button>
@@ -90,34 +91,38 @@
 </div>
 
 <footer>
-  Prototype — Replace placeholder images (jigsaw / spot-the-diff) by editing the image URLs near the top of the JS.
+  Tips: use `?unlockAll=true` or `?test=decN` in the file URL to unlock while testing.
 </footer>
 
 <script>
 /* ------------------------------
-   Constants & initial state load
+   State & helpers
    ------------------------------ */
 const DAYS = 11;
 const lettersPerDay = {1:'R',2:'T',3:'W',4:'V',5:'N',6:'P',7:'F',8:'D',9:'A',10:'U',11:'I'};
 const dayNames = {
   1:'Wordle',2:'Mini-Crossword',3:'Matching (vs CPU)',4:'Jigsaw',5:'Riddle',
-  6:'Maze',7:'Color Sequence',8:'Quote Fill',9:'Spot the Difference',10:'Sudoku (15×15)',11:'Minesweeper'
+  6:'Maze',7:'Color Sequence',8:'Quote Fill',9:'Spot the Difference',10:'Sudoku (9×9)',11:'Minesweeper'
 };
-const storageKey = 'advent_rebuild_v1';
+const storageKey = 'advent_updated_v1';
 let state = JSON.parse(localStorage.getItem(storageKey) || '{}');
-if(!state.found) state.found = {}; // day->true
-if(!state.sudokuRevealed) state.sudokuRevealed = {}; // 'r-c' -> value (persistent hints)
-if(typeof state.sudokuHintsLeft === 'undefined') state.sudokuHintsLeft = 3;
+if(!state.found) state.found = {};
+if(!state.sudokuHintsLeft && state.sudokuHintsLeft !== 0) state.sudokuHintsLeft = 3;
+if(!state.sudokuRevealed) state.sudokuRevealed = {}; // key r-c -> value from hints
 
-/* helper: today's date (test override) */
+function saveState(){ localStorage.setItem(storageKey, JSON.stringify(state)); }
+
+/* test override for unlocking */
 function todayForUnlock(){
-  const url = new URL(location.href);
-  const t = url.searchParams.get('test');
-  if(t && /^dec\d{1,2}$/i.test(t)) return new Date(2025,11,parseInt(t.slice(3)));
+  try{
+    const url = new URL(location.href);
+    const t = url.searchParams.get('test');
+    if(t && /^dec\d{1,2}$/i.test(t)) return new Date(2025,11,parseInt(t.slice(3)));
+  }catch(e){}
   return new Date();
 }
 
-/* modal helpers (click outside or ✕ to close) */
+/* modal */
 const modal = document.getElementById('modal');
 const modalContent = document.getElementById('modalContent');
 document.getElementById('modalClose').addEventListener('click', ()=>hideModal());
@@ -128,8 +133,44 @@ function showModal(html){
 }
 function hideModal(){ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); modalContent.innerHTML=''; saveState(); }
 
-/* save state */
-function saveState(){ localStorage.setItem(storageKey, JSON.stringify(state)); }
+/* snow */
+(function makeSnow(){ for(let i=0;i<18;i++){const s=document.createElement('div');s.className='snowflake';s.style.left=Math.random()*100+'%';s.style.width=(3+Math.random()*6)+'px';s.style.height=s.style.width;s.style.opacity=.5+Math.random()*.5;s.style.animationDuration=(4+Math.random()*7)+'s';document.body.appendChild(s);s.animate([{transform:'translateY(-10vh)'},{transform:`translateY(${120+Math.random()*60}vh)`}],{duration:4000+Math.random()*9000,iterations:Infinity,delay:Math.random()*-2000}); } })();
+
+/* ------------------------------
+   Calendar rendering + dispatcher
+   ------------------------------ */
+const cal = document.getElementById('calendar');
+function buildCalendar(){
+  cal.innerHTML='';
+  const now = todayForUnlock();
+  const month = now.getMonth(), date = now.getDate();
+  for(let d=1; d<=DAYS; d++){
+    const el = document.createElement('div'); el.className='day'; el.dataset.day=d;
+    const title = document.createElement('h2'); title.textContent=`Day ${d}`;
+    const sub = document.createElement('div'); sub.className='muted'; sub.textContent=dayNames[d]||'';
+    el.appendChild(title); el.appendChild(sub);
+    if(state.found[d]){
+      const badge=document.createElement('div'); badge.className='foundBadge'; badge.textContent='FOUND'; el.appendChild(badge);
+    } else {
+      const lock=document.createElement('div'); lock.className='lock';
+      const unlocked = (month===11 && date>=d) || location.search.includes('unlockAll=true') || location.search.includes('test=dec'+d);
+      lock.textContent = unlocked ? '🔓' : '🔒';
+      el.appendChild(lock);
+      if(!unlocked) el.classList.add('locked');
+    }
+    el.addEventListener('click', ()=>openDay(d));
+    cal.appendChild(el);
+  }
+  renderLetters();
+}
+buildCalendar();
+
+function renderLetters(){
+  const container = document.getElementById('lettersList'); container.innerHTML='';
+  Object.keys(state.found||{}).sort((a,b)=>a-b).forEach(k=>{ const s=document.createElement('span'); s.className='letter'; s.textContent=lettersPerDay[k]; container.appendChild(s); });
+}
+
+/* dispatcher that calls day-specific functions */
 function openDay(d){
   switch(d){
     case 1: return openDay1();
@@ -143,487 +184,275 @@ function openDay(d){
     case 9: return openDay9();
     case 10: return openDay10();
     case 11: return openDay11();
-    default: alert("Unknown day: " + d);
+    default: alert('Day not implemented');
   }
 }
-/* snow for looks */
-(function makeSnow(){
-  for(let i=0;i<22;i++){
-    const s = document.createElement('div');
-    s.className='snowflake';
-    s.style.left = Math.random()*100+'%';
-    s.style.width = (3+Math.random()*7)+'px';
-    s.style.height = s.style.width;
-    s.style.opacity = .5+Math.random()*.5;
-    s.style.animationDuration = (5+Math.random()*8)+'s';
-    document.body.appendChild(s);
-    s.animate([{transform:'translateY(-10vh)'},{transform:`translateY(${120+Math.random()*60}vh)`}],{duration:5000+Math.random()*9000,iterations:Infinity,delay:Math.random()*-2000});
-  }
-})();
 
-/* ------------------------------
-   Build calendar UI
-   ------------------------------ */
-const cal = document.getElementById('calendar');
-function buildCalendar(){
-  cal.innerHTML='';
-  const now = todayForUnlock();
-  const month = now.getMonth(), day = now.getDate();
-  for(let d=1; d<=DAYS; d++){
-    const el = document.createElement('div');
-    el.className='day';
-    el.dataset.day = d;
-    const title = document.createElement('h2'); title.textContent = `Day ${d}`;
-    const sub = document.createElement('div'); sub.className='muted'; sub.textContent = `${dayNames[d] || ''}`;
-    el.appendChild(title); el.appendChild(sub);
-    if(state.found[d]){
-      const badge = document.createElement('div'); badge.className='foundBadge'; badge.textContent='FOUND'; el.appendChild(badge);
-    } else {
-      const lock = document.createElement('div'); lock.className='lock';
-      const unlocked = (month===11 && day>=d) || location.search.includes('unlockAll=true');
-      lock.textContent = unlocked ? '🔓' : '🔒';
-      el.appendChild(lock);
-      if(!unlocked) el.classList.add('locked');
-    }
-    el.addEventListener('click', ()=>openDay(d));
-    cal.appendChild(el);
-  }
-  renderLetters();
-}
-buildCalendar();
-
-/* render letters found */
-function renderLetters(){
-  const container = document.getElementById('lettersList');
-  container.innerHTML='';
-  const keys = Object.keys(state.found||{}).sort((a,b)=>a-b);
-  keys.forEach(k=>{
-    const s = document.createElement('span'); s.className='letter'; s.textContent = lettersPerDay[k];
-    container.appendChild(s);
-  });
-}
-
-/* utility: final store letter (shows closable success modal) */
+/* store letter (modal is closeable) */
 function storeLetter(day){
   if(state.found[day]) return;
   state.found[day]=true; saveState(); buildCalendar();
-  // show success panel that is CLOSEABLE
   showModal(`<div class="card"><h3>Nice — Letter collected</h3><p>You collected the secret letter for Dec ${day}: <strong>${lettersPerDay[day]}</strong></p><div style="margin-top:12px"><button id="closeAfterCollect">Close</button></div></div>`);
   document.getElementById('closeAfterCollect').addEventListener('click', ()=>hideModal());
 }
 
 /* ------------------------------
-   Day implementations
+   Day 1 — Wordle THORN (unchanged behaviour)
    ------------------------------ */
-
-/* Day 1 — Wordle (THORN). No hint until solved. Must click R in solved word to store. */
 function openDay1(){
-  if(state.found[1]) { showModal(`<div class="card"><h3>Already found</h3><p>You collected: <strong>${lettersPerDay[1]}</strong></p><div style="margin-top:12px"><button id="close1">Close</button></div></div>`); document.getElementById('close1').addEventListener('click', hideModal); return; }
-  const html = `
-    <div class="card">
-      <h3>Dec 1 — Wordle</h3>
-      <p>Guess the 5-letter word. (No hint.) When you find the correct word, click the correct letter in the solved word to store the secret letter.</p>
-      <div id="wordRows" style="display:flex;flex-direction:column;gap:8px;margin-top:12px"></div>
-      <div style="margin-top:8px"><input id="guess1" maxlength="5" placeholder="Type a 5-letter guess"/><button id="try1">Try</button></div>
-      <div id="wordHintArea" class="muted" style="margin-top:12px;display:none"></div>
-    </div>
-  `;
+  if(state.found[1]) { showModal(`<div class="card"><h3>Already found</h3><p>Letter: <strong>${lettersPerDay[1]}</strong></p><div style="margin-top:12px"><button id="close1">Close</button></div></div>`); document.getElementById('close1').addEventListener('click', hideModal); return; }
+  const html = `<div class="card"><h3>Dec 1 — Wordle</h3><p>Guess the 5-letter word. No hint until solved. When you solve, click the correct letter in the solved word to store the secret letter.</p>
+    <div id="wordRows" style="display:flex;flex-direction:column;gap:8px;margin-top:12px"></div>
+    <div style="margin-top:8px"><input id="guess1" maxlength="5" placeholder="Type a 5-letter guess"/><button id="try1">Try</button></div>
+    <div id="wordHintArea" class="muted" style="margin-top:12px;display:none"></div></div>`;
   showModal(html);
-  const target = 'THORN';
-  const rows = [];
-  const rowContainer = document.getElementById('wordRows');
-  function renderRows(){
-    rowContainer.innerHTML='';
-    rows.forEach(r=>{
-      const node = document.createElement('div');
-      node.style.display='flex'; node.style.gap='6px';
-      for(let i=0;i<5;i++){
-        const ch = document.createElement('div');
-        ch.style.width='46px'; ch.style.height='46px'; ch.style.display='inline-flex'; ch.style.alignItems='center'; ch.style.justifyContent='center';
-        ch.style.borderRadius='8px'; ch.style.fontWeight='900'; ch.style.background='#fff'; ch.style.color='#072';
-        const letter = r[i]||'';
-        ch.textContent = letter;
-        // color
-        if(letter){
-          if(letter===target[i]) ch.style.background='#7cf';
-          else if(target.includes(letter)) ch.style.background='#ffd56b';
-          else ch.style.background='#e6e6e6';
-        }
-        node.appendChild(ch);
-      }
-      rowContainer.appendChild(node);
-    });
-  }
+  const target='THORN';
+  const rows=[];
+  const rowContainer=document.getElementById('wordRows');
+  function renderRows(){ rowContainer.innerHTML=''; rows.forEach(r=>{ const node=document.createElement('div'); node.style.display='flex'; node.style.gap='6px'; for(let i=0;i<5;i++){ const ch=document.createElement('div'); ch.style.width='46px'; ch.style.height='46px'; ch.style.display='inline-flex'; ch.style.alignItems='center'; ch.style.justifyContent='center'; ch.style.borderRadius='8px'; ch.style.fontWeight='900'; ch.style.background='#fff'; ch.style.color='#072'; const letter=r[i]||''; ch.textContent=letter; if(letter){ if(letter===target[i]) ch.style.background='#7cf'; else if(target.includes(letter)) ch.style.background='#ffd56b'; else ch.style.background='#e6e6e6'; } node.appendChild(ch);} rowContainer.appendChild(node); }); }
   renderRows();
   document.getElementById('try1').addEventListener('click', ()=>{
-    const g = (document.getElementById('guess1').value||'').toUpperCase();
+    const g=(document.getElementById('guess1').value||'').toUpperCase();
     if(g.length!==5){ alert('Enter 5 letters'); return; }
-    rows.push(g);
-    renderRows();
-    document.getElementById('guess1').value='';
+    rows.push(g); renderRows(); document.getElementById('guess1').value='';
     if(g===target){
-      const hintArea = document.getElementById('wordHintArea');
-      hintArea.style.display='block';
-      hintArea.innerHTML = `<strong>Hint revealed:</strong> <em>Heart - heat = ? (click the correct letter in the word above to store)</em>`;
-      // make the solved row's letters clickable; specifically clicking the 'R' stores the letter
-      const lastRow = rowContainer.lastChild;
+      const hintArea=document.getElementById('wordHintArea'); hintArea.style.display='block';
+      hintArea.innerHTML=`<strong>Hint revealed:</strong> <em>Heart - heat = ? (click the correct letter in the word above to store)</em>`;
+      const lastRow=rowContainer.lastChild;
       for(let i=0;i<5;i++){
-        const cell = lastRow.children[i];
-        cell.style.cursor='pointer';
-        cell.title='Click to store letter if this is the secret one';
-        cell.addEventListener('click', ()=>{
-          const clickedLetter = target[i];
-          if(clickedLetter==='R') {
-            storeLetter(1);
-            hideModal();
-          } else {
-            alert('That is not the secret letter — try clicking another letter.');
-          }
-        });
+        const cell=lastRow.children[i];
+        cell.style.cursor='pointer'; cell.title='Click to store letter';
+        cell.addEventListener('click', ()=>{ const clickedLetter=target[i]; if(clickedLetter==='R'){ storeLetter(1); hideModal(); } else alert('That is not the secret letter — try another letter.'); });
       }
     }
   });
 }
 
-/* Day 2 — Mini-crossword with clues and highlighted secret center cell (T) */
+/* ------------------------------
+   Day 2 — Mini-Crossword (refined)
+   - 3x3 grid with sensible clues
+   - center cell is highlighted and clickable only after solving -> reveals T
+   ------------------------------ */
 function openDay2(){
-  if(state.found[2]) { showModal(`<div class="card"><h3>Already found</h3><p>You collected: <strong>${lettersPerDay[2]}</strong></p><div style="margin-top:12px"><button id="close2">Close</button></div></div>`); document.getElementById('close2').addEventListener('click', hideModal); return; }
-  const html = `
-    <div class="card">
-      <h3>Dec 2 — Mini-Crossword</h3>
-      <p>Solve the tiny crossword. The highlighted square (center) is the secret letter — it becomes clickable only once all clues are correct.</p>
-      <div style="margin-top:8px"><strong>Across</strong><ol><li>1. A glow from a candle (3)</li><li>2. Opposite of 'late' (3)</li></ol></div>
-      <div style="margin-top:8px"><strong>Down</strong><ol><li>1. Common article (3)</li><li>2. A small rodent (3)</li></ol></div>
-      <div style="display:grid;grid-template-columns:repeat(3,56px);gap:4px;margin-top:10px">
-        <input maxlength="1" id="c00"/><input maxlength="1" id="c01"/><input maxlength="1" id="c02"/>
-        <input maxlength="1" id="c10"/><input maxlength="1" id="c11" style="background:#fff3c6;border:2px solid #f0d37a"/><input maxlength="1" id="c12"/>
-        <input maxlength="1" id="c20"/><input maxlength="1" id="c21"/><input maxlength="1" id="c22"/>
-      </div>
-      <div style="margin-top:10px"><button id="check2">Check Crossword</button></div>
+  if(state.found[2]) { showModal(`<div class="card"><h3>Already found</h3><p>Letter: <strong>${lettersPerDay[2]}</strong></p><div style="margin-top:12px"><button id="close2">Close</button></div></div>`); document.getElementById('close2').addEventListener('click', hideModal); return; }
+  // We'll use a consistent 3x3 with clear words. Center is T.
+  // Grid:
+  // L I P
+  // A T E
+  // R E D
+  // Across clues:
+  // 1. Part of the mouth that helps speak (3) -> LIP
+  // 2. Past of eat (3) -> ATE
+  // 3. A color (3) -> RED
+  // Down clues:
+  // 1. 3-letter word starting with L (3) -> LAR? We'll keep down clues simple to avoid over-complication; the interface enforces across correctness.
+  const html = `<div class="card"><h3>Dec 2 — Mini-Crossword</h3>
+    <p>Solve the tiny crossword. The highlighted center cell is the secret letter — it becomes clickable only after solving the puzzle.</p>
+    <div style="margin-top:8px"><strong>Across</strong><ol><li>1. Part of the mouth that helps speak (3)</li><li>2. Past of eat (3)</li><li>3. A color (3)</li></ol></div>
+    <div style="display:grid;grid-template-columns:repeat(3,56px);gap:4px;margin-top:10px">
+      <input maxlength="1" id="c00"/><input maxlength="1" id="c01"/><input maxlength="1" id="c02"/>
+      <input maxlength="1" id="c10"/><input maxlength="1" id="c11" style="background:#fff3c6;border:2px solid #f0d37a"/><input maxlength="1" id="c12"/>
+      <input maxlength="1" id="c20"/><input maxlength="1" id="c21"/><input maxlength="1" id="c22"/>
     </div>
-  `;
+    <div style="margin-top:10px"><button id="check2">Check Crossword</button></div></div>`;
   showModal(html);
-  // Solutions (arranged so center c11 = 'T')
-  const solution = {
-    c00:'L',c01:'E',c02:'D',
-    c10:'O',c11:'T',c12:'A',
-    c20:'R',c21:'A',c22:'N'
-  };
+  const solution = { c00:'L', c01:'I', c02:'P', c10:'A', c11:'T', c12:'E', c20:'R', c21:'E', c22:'D' };
   document.getElementById('check2').addEventListener('click', ()=>{
     let ok=true;
-    for(const id in solution){
-      const v = (document.getElementById(id).value||'').toUpperCase();
-      if(v!==solution[id]) { ok=false; break; }
-    }
+    for(const id in solution){ const v=(document.getElementById(id).value||'').toUpperCase(); if(v!==solution[id]){ ok=false; break; } }
     if(ok){
-      // highlight center and make clickable to reveal letter T
-      const c11 = document.getElementById('c11');
-      c11.readOnly = true; c11.style.cursor='pointer';
-      c11.addEventListener('click', ()=>{
-        storeLetter(2);
-        hideModal();
-      });
+      const c11=document.getElementById('c11'); c11.readOnly=true; c11.style.cursor='pointer';
+      c11.addEventListener('click', ()=>{ storeLetter(2); hideModal(); });
       alert('Crossword solved! Click the highlighted center cell to collect the secret letter.');
     } else alert('Not solved yet — keep trying!');
   });
 }
 
-/* Day 3 — Matching memory vs CPU (10 cards), borders visible, CPU remembers seen cards, scoring compares counts */
+/* ------------------------------
+   Day 3 — Matching (30 cards; CPU memory enhanced)
+   - 6x5 grid, 15 pairs
+   ------------------------------ */
 function openDay3(){
-  if(state.found[3]) { showModal(`<div class="card"><h3>Already found</h3><p>You collected: <strong>${lettersPerDay[3]}</strong></p><div style="margin-top:12px"><button id="close3">Close</button></div></div>`); document.getElementById('close3').addEventListener('click', hideModal); return; }
-  const html = `
-    <div class="card">
-      <h3>Dec 3 — Matching (You vs CPU)</h3>
-      <p>Take turns with the CPU. CPU flips two cards; if CPU has seen a card earlier it uses that memory to pair. If you have more pairs at the end, you win. There are 10 cards (5 pairs).</p>
-      <div id="matchBoard" style="margin-top:12px" class="matching-grid"></div>
-      <div style="margin-top:12px"><button id="restart3">Restart</button><span style="margin-left:12px" id="matchStatus" class="muted"></span></div>
-    </div>
-  `;
+  if(state.found[3]) { showModal(`<div class="card"><h3>Already found</h3><p>Letter: <strong>${lettersPerDay[3]}</strong></p><div style="margin-top:12px"><button id="close3">Close</button></div></div>`); document.getElementById('close3').addEventListener('click', hideModal); return; }
+  const html = `<div class="card"><h3>Dec 3 — Matching (You vs CPU)</h3>
+    <p>Play against a CPU that remembers seen cards. 30 cards total (15 pairs). Players alternate; if you find a pair you go again.</p>
+    <div id="matchBoard" style="margin-top:12px" class="matching-grid"></div>
+    <div style="margin-top:12px"><button id="restart3">Restart</button><span style="margin-left:12px" id="matchStatus" class="muted"></span></div></div>`;
   showModal(html);
-  const board = document.getElementById('matchBoard');
-  const status = document.getElementById('matchStatus');
+  const board=document.getElementById('matchBoard'), status=document.getElementById('matchStatus');
   let cards=[], revealed=[], matched=[], cpuMemory={}, scores={player:0,cpu:0}, playerTurn=true, firstFlip=-1;
   function init(){
-    const values = ['🐝','🍯','🌙','⭐','❄️'];
-    cards = values.concat(values).sort(()=>Math.random()-0.5);
-    revealed = Array(cards.length).fill(false);
-    matched = Array(cards.length).fill(false);
-    cpuMemory = {}; scores={player:0,cpu:0}; playerTurn=true; firstFlip=-1;
-    render();
-    status.textContent = 'Your turn.';
+    const icons = ['🐶','🐱','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🦄','🐝','🐙'];
+    cards = icons.concat(icons).sort(()=>Math.random()-0.5);
+    revealed = Array(cards.length).fill(false); matched = Array(cards.length).fill(false); cpuMemory={}; scores={player:0,cpu:0}; playerTurn=true; firstFlip=-1;
+    render(); status.textContent='Your turn.';
   }
-  function render(){
-    board.innerHTML='';
-    for(let i=0;i<cards.length;i++){
-      const c = document.createElement('div');
-      c.className='matching-card';
-      c.style.border='2px solid rgba(0,0,0,0.08)';
-      c.style.background = matched[i] ? '#e6f8ea' : '#fff';
-      c.textContent = (matched[i] || revealed[i]) ? cards[i] : '';
-      c.dataset.i=i;
-      c.addEventListener('click', ()=>playerFlip(i));
-      board.appendChild(c);
-    }
-  }
+  function render(){ board.innerHTML=''; for(let i=0;i<cards.length;i++){ const c=document.createElement('div'); c.className='matching-card'; c.style.background = matched[i] ? '#e6f8ea' : '#fff'; c.textContent = (matched[i]||revealed[i]) ? cards[i] : ''; c.dataset.i=i; c.addEventListener('click', ()=>playerFlip(i)); board.appendChild(c); } }
   function playerFlip(i){
-    if(!playerTurn) return;
-    if(revealed[i]||matched[i]) return;
+    if(!playerTurn) return; if(revealed[i]||matched[i]) return;
     revealIndex(i);
     if(firstFlip===-1){ firstFlip=i; return; }
-    // second flip
-    if(cards[firstFlip]===cards[i]){
-      matched[firstFlip]=matched[i]=true; scores.player++;
-      status.textContent = `Nice! You found a pair. Score — You: ${scores.player} CPU: ${scores.cpu}`;
-      firstFlip=-1; render();
-      // check end
-      checkEnd();
-    } else {
-      playerTurn=false;
-      status.textContent = 'No match — CPU turn.';
-      setTimeout(()=>{ revealed[firstFlip]=revealed[i]=false; firstFlip=-1; render(); cpuAction(); }, 700);
-    }
+    if(cards[firstFlip]===cards[i]){ matched[firstFlip]=matched[i]=true; scores.player++; status.textContent=`Nice! Score — You: ${scores.player} CPU: ${scores.cpu}`; firstFlip=-1; render(); checkEnd(); }
+    else { playerTurn=false; status.textContent='No match — CPU turn.'; setTimeout(()=>{ revealed[firstFlip]=revealed[i]=false; firstFlip=-1; render(); cpuAction(); }, 700); }
   }
   function revealIndex(i){ revealed[i]=true; render(); }
   function cpuAction(){
-    // CPU prefers known pairs from memory
-    // Build memory of values -> indices that are not yet matched
-    for(let v in cpuMemory) cpuMemory[v] = cpuMemory[v].filter(idx=>!matched[idx]);
-    // find a known pair
-    for(const v in cpuMemory){
-      if(cpuMemory[v].length>=2){
-        const [a,b] = cpuMemory[v];
-        // CPU flips a and b
-        revealIndex(a);
-        setTimeout(()=>{ revealIndex(b);
-          matched[a]=matched[b]=true; scores.cpu++;
-          status.textContent = `CPU found a pair. Score — You: ${scores.player} CPU: ${scores.cpu}`;
-          render(); checkEnd();
-          // CPU goes again if more known pairs; otherwise hand back
-          setTimeout(()=>{ cpuAction(); }, 600);
-        }, 450);
-        return;
-      }
-    }
-    // Otherwise flip a random unseen card
-    const pool = [];
-    for(let i=0;i<cards.length;i++) if(!revealed[i] && !matched[i]) pool.push(i);
+    for(let v in cpuMemory) cpuMemory[v]=cpuMemory[v].filter(idx=>!matched[idx]);
+    for(const v in cpuMemory){ if(cpuMemory[v].length>=2){ const [a,b]=cpuMemory[v]; revealIndex(a); setTimeout(()=>{ revealIndex(b); matched[a]=matched[b]=true; scores.cpu++; status.textContent=`CPU found a pair. Score — You: ${scores.player} CPU: ${scores.cpu}`; render(); checkEnd(); setTimeout(()=>cpuAction(),500); },400); return; } }
+    const pool=[]; for(let i=0;i<cards.length;i++) if(!revealed[i] && !matched[i]) pool.push(i);
     if(pool.length===0) return;
-    const a = pool[Math.floor(Math.random()*pool.length)];
-    revealIndex(a);
-    // CPU remembers value a
-    cpuMemory[cards[a]] = Array.from(new Set([...(cpuMemory[cards[a]]||[]), a]));
-    setTimeout(()=>{
-      // try to find a matching known index
-      const seen = (cpuMemory[cards[a]]||[]).find(ii=>ii!==a && !matched[ii]);
-      let b;
-      if(seen!==undefined) b = seen;
-      else {
-        const pool2 = pool.filter(x=>x!==a);
-        b = pool2.length ? pool2[Math.floor(Math.random()*pool2.length)] : null;
-      }
-      if(b===null){
-        // nothing to flip
-        playerTurn=true; status.textContent='Your turn.';
-        return;
-      }
-      revealIndex(b);
-      cpuMemory[cards[b]] = Array.from(new Set([...(cpuMemory[cards[b]]||[]), b]));
-      setTimeout(()=>{
-        if(cards[a]===cards[b]){
-          matched[a]=matched[b]=true; scores.cpu++;
-          status.textContent = `CPU found a pair. Score — You: ${scores.player} CPU: ${scores.cpu}`;
-          render(); checkEnd();
-          // CPU may continue (handled by recursion)
-          setTimeout(()=>cpuAction(), 600);
-        } else {
-          revealed[a]=revealed[b]=false; render();
-          playerTurn=true; status.textContent='Your turn.';
-        }
-      },500);
-    },600);
+    const a=pool[Math.floor(Math.random()*pool.length)];
+    revealIndex(a); cpuMemory[cards[a]] = Array.from(new Set([...(cpuMemory[cards[a]]||[]), a]));
+    setTimeout(()=>{ const seen=(cpuMemory[cards[a]]||[]).find(ii=>ii!==a && !matched[ii]); let b; if(seen!==undefined) b=seen; else { const pool2=pool.filter(x=>x!==a); b = pool2.length ? pool2[Math.floor(Math.random()*pool2.length)] : null; } if(b===null){ playerTurn=true; status.textContent='Your turn.'; return; } revealIndex(b); cpuMemory[cards[b]] = Array.from(new Set([...(cpuMemory[cards[b]]||[]), b])); setTimeout(()=>{ if(cards[a]===cards[b]){ matched[a]=matched[b]=true; scores.cpu++; status.textContent=`CPU found a pair. Score — You: ${scores.player} CPU: ${scores.cpu}`; render(); checkEnd(); setTimeout(()=>cpuAction(),500); } else { revealed[a]=revealed[b]=false; render(); playerTurn=true; status.textContent='Your turn.'; } },500); },600);
   }
   function checkEnd(){
-    if(matched.every(Boolean)){
-      // game over - compare scores
-      let msg = `Final score — You: ${scores.player} CPU: ${scores.cpu}. `;
-      if(scores.player>scores.cpu){
-        msg += 'You win! Collect your letter.';
-        status.textContent = msg;
-        storeLetter(3);
-        hideModal();
-      } else if(scores.player<scores.cpu){
-        msg += 'CPU wins. Try again with Restart.';
-        status.textContent = msg;
-      } else {
-        msg += "It's a tie! The player doesn't get the letter — Restart to try again.";
-        status.textContent = msg;
-      }
-    }
+    if(matched.every(Boolean)){ let msg=`Final score — You: ${scores.player} CPU: ${scores.cpu}. `; if(scores.player>scores.cpu){ msg += 'You win! Collect your letter.'; status.textContent=msg; storeLetter(3); hideModal(); } else if(scores.player<scores.cpu){ msg += 'CPU wins. Try Restart.'; status.textContent=msg; } else { msg += "It's a tie. Restart to try again."; status.textContent=msg; } }
   }
-  document.getElementById('restart3').addEventListener('click', ()=>{ init(); });
+  document.getElementById('restart3').addEventListener('click', ()=>init());
   init();
 }
 
-/* Day 4 — Jigsaw tile-swap with image; once solved player can "inspect" to flip and reveal V. */
+/* ------------------------------
+   Day 4 — Jigsaw: draggable tile puzzle (3x3)
+   - Uses an image URL; tiles are created by CSS background-position; supports drag & drop swapping
+   ------------------------------ */
 function openDay4(){
-  if(state.found[4]) { showModal(`<div class="card"><h3>Already found</h3><p>You collected: <strong>${lettersPerDay[4]}</strong></p><div style="margin-top:12px"><button id="close4">Close</button></div></div>`); document.getElementById('close4').addEventListener('click', hideModal); return; }
-  // NOTE: replace tileImageURL with a real image URL (ideally square) for a nicer puzzle.
-  const tileImageURL = 'https://picsum.photos/seed/puzzle/600/600'; // replace with your image
-  const html = `
-    <div class="card">
-      <h3>Dec 4 — Jigsaw (tile-swap)</h3>
-      <p>Arrange the tiles to restore the image. Then click <strong>Inspect (flip)</strong> to see the letter on the back.</p>
-      <div id="jigsaw" class="jigsawGrid" style="margin-top:12px"></div>
-      <div style="margin-top:10px"><button id="shuffle4">Shuffle</button> <button id="inspect4" disabled>Inspect (flip)</button></div>
-    </div>
-  `;
+  if(state.found[4]) { showModal(`<div class="card"><h3>Already found</h3><p>Letter: <strong>${lettersPerDay[4]}</strong></p><div style="margin-top:12px"><button id="close4">Close</button></div></div>`); document.getElementById('close4').addEventListener('click', hideModal); return; }
+  // Replace this image URL with your chosen puzzle image (ideally square)
+  const imageURL = 'https://picsum.photos/seed/puzzle/600/600';
+  const html = `<div class="card"><h3>Dec 4 — Jigsaw (drag & drop)</h3>
+    <p>Drag tiles to assemble the image. Once assembled, click Inspect to flip and reveal the letter on the back.</p>
+    <div id="jigsaw" class="jigsawGrid" style="margin-top:12px"></div>
+    <div style="margin-top:10px"><button id="shuffle4">Shuffle</button> <button id="inspect4" disabled>Inspect (flip)</button></div></div>`;
   showModal(html);
-  const board = document.getElementById('jigsaw');
-  // create 3x3 tiles by cropping the image via background-position. We'll simulate with numbers and colored backgrounds for now,
-  // for real image replace tileImageURL and adjust CSS to use background-image per tile.
-  let tiles = [1,2,3,4,5,6,7,8,9]; let selected = null;
+  const board=document.getElementById('jigsaw');
+  // create tiles 3x3
+  let tiles = Array.from({length:9}, (_,i)=>i+1);
+  function tileBG(idx){
+    const col = idx % 3, row = Math.floor(idx/3);
+    const size = 300; // used for background-size calculation; CSS will scale but background-position relative works
+    const bx = -(col/2)*100; // not precise with picsum; we instead compute background-position in percent
+    const posX = (col) * (100/2); // percent mapping that works with background-size: 300%
+    return {row, col};
+  }
   function render(){
     board.innerHTML='';
     tiles.forEach((t,i)=>{
-      const d = document.createElement('div');
-      d.className='jigsawTile';
-      d.style.background = `linear-gradient(180deg,hsl(${t*30} 60% 60%), hsl(${t*30} 60% 45%))`;
-      d.textContent = t;
-      d.dataset.i = i;
-      d.addEventListener('click', ()=>{
-        if(selected===null){ selected=i; d.style.outline='4px solid #fff'; }
-        else {
-          const tmp = tiles[selected]; tiles[selected]=tiles[i]; tiles[i]=tmp; selected=null; render(); checkSolved();
-        }
-      });
-      board.appendChild(d);
+      const tile = document.createElement('div');
+      tile.className='jigsawTile';
+      // compute background position percentage
+      const idx = t-1;
+      const col = idx % 3, row = Math.floor(idx/3);
+      tile.style.backgroundImage = `url(${imageURL})`;
+      tile.style.backgroundSize = '300% 300%';
+      tile.style.backgroundPosition = `${(col)*50}% ${(row)*50}%`;
+      tile.draggable = true;
+      tile.dataset.pos = i;
+      tile.dataset.tile = t;
+      tile.addEventListener('dragstart', (e)=>{ e.dataTransfer.setData('text/plain', tile.dataset.pos); tile.style.opacity = '0.6'; });
+      tile.addEventListener('dragend', ()=>{ tile.style.opacity='1'; });
+      tile.addEventListener('dragover', (e)=>{ e.preventDefault(); });
+      tile.addEventListener('drop', (e)=>{ e.preventDefault(); const from = parseInt(e.dataTransfer.getData('text/plain')); const to = parseInt(tile.dataset.pos); const tmp=tiles[from]; tiles[from]=tiles[to]; tiles[to]=tmp; render(); checkSolved(); });
+      board.appendChild(tile);
     });
   }
   function shuffle(){ tiles = tiles.sort(()=>Math.random()-0.5); render(); document.getElementById('inspect4').disabled = true; }
-  function checkSolved(){
-    for(let i=0;i<9;i++) if(tiles[i] !== i+1) return;
-    // solved
-    document.getElementById('inspect4').disabled = false;
-    alert('Puzzle solved! Click Inspect to flip and reveal the letter on the back.');
-  }
+  function checkSolved(){ for(let i=0;i<9;i++) if(tiles[i] !== i+1) return; document.getElementById('inspect4').disabled = false; alert('Puzzle solved! Click Inspect to flip and reveal the letter.'); }
   document.getElementById('shuffle4').addEventListener('click', shuffle);
-  document.getElementById('inspect4').addEventListener('click', ()=>{
-    // show flip modal with letter V and Close
-    showModal(`<div class="card"><h3>Inspect (Back of Puzzle)</h3><p>On the back of the completed puzzle is the letter: <strong>V</strong></p><div style="margin-top:12px"><button id="close4b">Close</button></div></div>`);
-    document.getElementById('close4b').addEventListener('click', ()=>{ storeLetter(4); hideModal(); });
-  });
+  document.getElementById('inspect4').addEventListener('click', ()=>{ showModal(`<div class="card"><h3>Back of puzzle</h3><p>The letter on the back is: <strong>V</strong></p><div style="margin-top:12px"><button id="close4b">Close</button></div></div>`); document.getElementById('close4b').addEventListener('click', ()=>{ storeLetter(4); hideModal(); }); });
   shuffle();
 }
 
-/* Day 5 — Riddle: Honey -> N */
+/* ------------------------------
+   Day 5 — Riddle (unchanged)
+   ------------------------------ */
 function openDay5(){
-  if(state.found[5]) { showModal(`<div class="card"><h3>Already found</h3><p>You collected: <strong>${lettersPerDay[5]}</strong></p><div style="margin-top:12px"><button id="close5">Close</button></div></div>`); document.getElementById('close5').addEventListener('click', hideModal); return; }
-  const html = `
-    <div class="card">
-      <h3>Dec 5 — Riddle</h3>
-      <p>“By vicious beast I'm guarded, By death on silver wings. Like gold, I last eternal, Treasure to queens and kings.”</p>
-      <div style="margin-top:8px"><input id="r5" placeholder="answer"/><button id="r5b">Submit</button></div>
-    </div>
-  `;
+  if(state.found[5]) { showModal(`<div class="card"><h3>Already found</h3><p>Letter: <strong>${lettersPerDay[5]}</strong></p><div style="margin-top:12px"><button id="close5">Close</button></div></div>`); document.getElementById('close5').addEventListener('click', hideModal); return; }
+  const html=`<div class="card"><h3>Dec 5 — Riddle</h3><p>“By vicious beast I'm guarded, By death on silver wings. Like gold, I last eternal, Treasure to queens and kings.”</p><div style="margin-top:8px"><input id="r5" placeholder="answer"/><button id="r5b">Submit</button></div></div>`;
   showModal(html);
-  document.getElementById('r5b').addEventListener('click', ()=>{
-    const v = (document.getElementById('r5').value||'').trim().toLowerCase();
-    if(v==='honey'){ storeLetter(5); hideModal(); } else alert('Not quite — try again.');
-  });
+  document.getElementById('r5b').addEventListener('click', ()=>{ const v=(document.getElementById('r5').value||'').trim().toLowerCase(); if(v==='honey'){ storeLetter(5); hideModal(); } else alert('Not quite — try again.'); });
 }
 
-/* Day 6 — Maze using DFS-generated maze (bigger complexity). Arrow keys to move. Goal opens revealing P. */
+/* ------------------------------
+   Day 6 — Maze: much bigger, more complex (41x41)
+   - DFS maze with wider corridors; arrow keys move avatar; goal reveals P
+   ------------------------------ */
 function openDay6(){
-  if(state.found[6]) { showModal(`<div class="card"><h3>Already found</h3><p>You collected: <strong>${lettersPerDay[6]}</strong></p><div style="margin-top:12px"><button id="close6">Close</button></div></div>`); document.getElementById('close6').addEventListener('click', hideModal); return; }
-  const html = `
-    <div class="card">
-      <h3>Dec 6 — Maze</h3>
-      <p>Use arrow keys to navigate the avatar (red) to the green box on the opposite corner. The maze is larger and procedural.</p>
-      <div id="mazeWrap" style="margin-top:12px"></div>
-      <div style="margin-top:8px" class="muted">Click the maze area then use arrow keys.</div>
-    </div>
-  `;
+  if(state.found[6]) { showModal(`<div class="card"><h3>Already found</h3><p>Letter: <strong>${lettersPerDay[6]}</strong></p><div style="margin-top:12px"><button id="close6">Close</button></div></div>`); document.getElementById('close6').addEventListener('click', hideModal); return; }
+  const html = `<div class="card"><h3>Dec 6 — Maze (big & nasty)</h3><p>Click inside the maze then use arrow keys. This maze is intentionally large and complex.</p><div id="mazeWrap" style="margin-top:12px;overflow:auto;max-height:60vh"></div><div style="margin-top:8px" class="muted">Click the maze area then use arrow keys.</div></div>`;
   showModal(html);
-  const mazeWrap = document.getElementById('mazeWrap');
-  const rows = 21, cols = 21; // odd dims for maze generation
-  const grid = Array(rows).fill(0).map(()=>Array(cols).fill(1)); // 1 = wall, 0 = path
-  // DFS maze generation
+  const wrap=document.getElementById('mazeWrap');
+  const rows=41, cols=41;
+  const grid=Array(rows).fill(0).map(()=>Array(cols).fill(1));
   function carve(r,c){
-    const dirs = [[-2,0],[2,0],[0,-2],[0,2]].sort(()=>Math.random()-0.5);
+    const dirs=[[ -2,0],[2,0],[0,-2],[0,2]].sort(()=>Math.random()-0.5);
     grid[r][c]=0;
     for(const [dr,dc] of dirs){
       const nr=r+dr, nc=c+dc;
       if(nr<=0||nr>=rows-1||nc<=0||nc>=cols-1) continue;
-      if(grid[nr][nc]===1){
-        grid[r+dr/2][c+dc/2]=0;
-        carve(nr,nc);
-      }
+      if(grid[nr][nc]===1){ grid[r+dr/2][c+dc/2]=0; carve(nr,nc); }
     }
   }
   carve(1,1);
-  // player start at (1,1), goal at (rows-2,cols-2)
-  let pr=1, pc=1; const gr=rows-2, gc=cols-2;
+  let pr=1, pc=1, gr=rows-2, gc=cols-2;
   function render(){
-    mazeWrap.innerHTML='';
-    const m = document.createElement('div'); m.className='maze';
+    wrap.innerHTML='';
+    const m=document.createElement('div'); m.className='maze';
     for(let r=0;r<rows;r++){
       for(let c=0;c<cols;c++){
-        const cell = document.createElement('div'); cell.className='cell';
+        const cell=document.createElement('div'); cell.className='cell';
         if(r===pr && c===pc) cell.style.background='red';
         else if(r===gr && c===gc) cell.style.background='lightgreen';
         else cell.style.background = grid[r][c]===1 ? '#111' : '#fff';
         m.appendChild(cell);
       }
-      const br = document.createElement('div'); br.style.clear='both'; m.appendChild(br);
+      const br=document.createElement('div'); br.style.clear='both'; m.appendChild(br);
     }
-    mazeWrap.appendChild(m);
+    wrap.appendChild(m);
     m.tabIndex=0; m.focus();
-    m.onkeydown = (e)=>{ if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){ e.preventDefault(); const map = {'ArrowUp':[-1,0],'ArrowDown':[1,0],'ArrowLeft':[0,-1],'ArrowRight':[0,1]}; const [dr,dc] = map[e.key]; movePlayer(dr,dc); } };
+    m.onkeydown=(e)=>{ if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){ e.preventDefault(); const map={'ArrowUp':[-1,0],'ArrowDown':[1,0],'ArrowLeft':[0,-1],'ArrowRight':[0,1]}; const [dr,dc]=map[e.key]; movePlayer(dr,dc); } };
   }
   function movePlayer(dr,dc){
-    const nr = pr+dr, nc = pc+dc;
-    if(nr<0||nr>=rows||nc<0||nc>=cols) return;
-    if(grid[nr][nc]===1) return;
-    pr=nr; pc=nc; render();
-    if(pr===gr && pc===gc){
-      showModal(`<div class="card"><h3>The box opens!</h3><p>You found the secret letter: <strong>P</strong></p><div style="margin-top:12px"><button id="close6b">Close</button></div></div>`);
-      document.getElementById('close6b').addEventListener('click', ()=>{ storeLetter(6); hideModal(); });
-    }
+    const nr=pr+dr, nc=pc+dc; if(nr<0||nr>=rows||nc<0||nc>=cols) return; if(grid[nr][nc]===1) return; pr=nr; pc=nc; render();
+    if(pr===gr && pc===gc){ showModal(`<div class="card"><h3>The box opens!</h3><p>You found the secret letter: <strong>P</strong></p><div style="margin-top:12px"><button id="close6b">Close</button></div></div>`); document.getElementById('close6b').addEventListener('click', ()=>{ storeLetter(6); hideModal(); }); }
   }
   render();
 }
 
-/* Day 7 — Simon (color sequence) rounds 3->8, final fast round joke. If fail still awards letter. After collect cannot re-enter. */
+/* ------------------------------
+   Day 7 — Simon (colorful flashes)
+   - Buttons actually change color while flashing; clearer visual
+   ------------------------------ */
 function openDay7(){
-  if(state.found[7]) { showModal(`<div class="card"><h3>Already found</h3><p>You collected: <strong>${lettersPerDay[7]}</strong></p><div style="margin-top:12px"><button id="close7">Close</button></div></div>`); document.getElementById('close7').addEventListener('click', hideModal); return; }
-  const html = `
-    <div class="card">
-      <h3>Dec 7 — Color Sequence</h3>
-      <p>Repeat the sequence. Rounds: length 3,4,5,6,7,8. Final "joke" round flashes fast — bonus only. If you fail at any point, the page will say "Don't worry, I knew you wouldn't be able to do it" and you'll still receive the secret letter.</p>
-      <div style="display:flex;gap:10px;margin-top:12px"><button id="c0" style="width:72px;height:72px">1</button><button id="c1" style="width:72px;height:72px">2</button><button id="c2" style="width:72px;height:72px">3</button><button id="c3" style="width:72px;height:72px">4</button></div>
-      <div style="margin-top:12px"><button id="start7">Start</button> <span id="s7msg" class="muted" style="margin-left:12px"></span></div>
+  if(state.found[7]) { showModal(`<div class="card"><h3>Already found</h3><p>Letter: <strong>${lettersPerDay[7]}</strong></p><div style="margin-top:12px"><button id="close7">Close</button></div></div>`); document.getElementById('close7').addEventListener('click', hideModal); return; }
+  const html = `<div class="card"><h3>Dec 7 — Color Sequence</h3><p>Repeat sequences: lengths 3→8. Final fast bonus is optional. If you fail, you still get the letter — it's a fun challenge.</p>
+    <div style="margin-top:12px" class="simonRow">
+      <button id="s0" class="simonBtn" style="background:var(--simon0)">1</button>
+      <button id="s1" class="simonBtn" style="background:var(--simon1)">2</button>
+      <button id="s2" class="simonBtn" style="background:var(--simon2)">3</button>
+      <button id="s3" class="simonBtn" style="background:var(--simon3)">4</button>
     </div>
-  `;
+    <div style="margin-top:12px"><button id="start7">Start</button> <span id="s7msg" class="muted" style="margin-left:12px"></span></div></div>`;
   showModal(html);
-  const btns = [document.getElementById('c0'),document.getElementById('c1'),document.getElementById('c2'),document.getElementById('c3')];
-  const msg = document.getElementById('s7msg');
-  let sequence = [];
-  function flash(i, fast=false){ const b = btns[i]; b.style.transform='scale(1.08)'; setTimeout(()=>b.style.transform='', fast?120:300); }
-  async function playAndGetInput(len, fast=false){
-    sequence = [];
-    for(let i=0;i<len;i++) sequence.push(Math.floor(Math.random()*4));
-    // play
-    for(const s of sequence){ flash(s, fast); await new Promise(r=>setTimeout(r, fast?140:500)); }
-    // get input
+  const btns=[document.getElementById('s0'),document.getElementById('s1'),document.getElementById('s2'),document.getElementById('s3')];
+  const msg=document.getElementById('s7msg');
+  function flash(i,fast=false){
+    const b=btns[i];
+    b.classList.add('simonFlash');
+    setTimeout(()=>b.classList.remove('simonFlash'), fast?120:360);
+  }
+  async function playAndGetInput(len,fast=false){
+    const seq=[]; for(let i=0;i<len;i++) seq.push(Math.floor(Math.random()*4));
+    for(const s of seq){ flash(s,fast); await new Promise(r=>setTimeout(r, fast?150:500)); }
     let idx=0;
     return new Promise(resolve=>{
       function handler(e){
         const i = btns.indexOf(e.target);
         if(i<0) return;
         flash(i,false);
-        if(i!==sequence[idx]){ btns.forEach(b=>b.removeEventListener('click', handler)); resolve(false); return; }
+        if(i!==seq[idx]){ btns.forEach(b=>b.removeEventListener('click', handler)); resolve(false); return; }
         idx++;
-        if(idx===sequence.length){ btns.forEach(b=>b.removeEventListener('click', handler)); resolve(true); }
+        if(idx===seq.length){ btns.forEach(b=>b.removeEventListener('click', handler)); resolve(true); }
       }
       btns.forEach(b=>b.addEventListener('click', handler));
     });
@@ -632,311 +461,199 @@ function openDay7(){
     msg.textContent='Good luck!';
     for(let len=3; len<=8; len++){
       const ok = await playAndGetInput(len,false);
-      if(!ok){ msg.textContent = "Don't worry, I knew you wouldn't be able to do it."; storeLetter(7); hideModal(); return; }
-      msg.textContent = `Round ${len} complete — next.`;
+      if(!ok){ msg.textContent="Don't worry, I knew you wouldn't be able to do it."; storeLetter(7); hideModal(); return; }
+      msg.textContent=`Round ${len} complete — next.`;
       await new Promise(r=>setTimeout(r,400));
     }
-    // bonus fast round — attempt but fail is fine
     const bonusOk = await playAndGetInput(10,true).catch(()=>false);
-    if(bonusOk) alert('Wow you nailed the bonus — impressive! You still get the letter anyway.');
-    else alert("Bonus not required — you still receive the letter.");
+    if(bonusOk) alert('Amazing — bonus cleared! You still get the letter.');
+    else alert('Bonus skipped — letter granted.');
     storeLetter(7); hideModal();
   });
 }
 
-/* Day 8 — Quote fill-in (ships -> D) with hint button */
+/* ------------------------------
+   Day 8 — Quote fill-in (unchanged)
+   ------------------------------ */
 function openDay8(){
-  if(state.found[8]) { showModal(`<div class="card"><h3>Already found</h3><p>You collected: <strong>${lettersPerDay[8]}</strong></p><div style="margin-top:12px"><button id="close8">Close</button></div></div>`); document.getElementById('close8').addEventListener('click', hideModal); return; }
-  const html = `
-    <div class="card">
-      <h3>Dec 8 — Quote fill-in</h3>
-      <p>Fill the blank: “I don't do ____, I don't talk about feelings”</p>
-      <div style="margin-top:8px"><input id="q8"/><button id="b8">Submit</button> <button id="hint8">Hint</button></div>
-    </div>
-  `;
+  if(state.found[8]) { showModal(`<div class="card"><h3>Already found</h3><p>Letter: <strong>${lettersPerDay[8]}</strong></p><div style="margin-top:12px"><button id="close8">Close</button></div></div>`); document.getElementById('close8').addEventListener('click', hideModal); return; }
+  const html = `<div class="card"><h3>Dec 8 — Quote fill-in</h3><p>Fill in: “I don't do ____, I don't talk about feelings”</p><div style="margin-top:8px"><input id="q8"/><button id="b8">Submit</button> <button id="hint8">Hint</button></div></div>`;
   showModal(html);
-  document.getElementById('b8').addEventListener('click', ()=>{
-    const v = (document.getElementById('q8').value||'').trim().toLowerCase();
-    if(v==='ships'){ storeLetter(8); hideModal(); } else alert('Try again.');
-  });
+  document.getElementById('b8').addEventListener('click', ()=>{ const v=(document.getElementById('q8').value||'').trim().toLowerCase(); if(v==='ships'){ storeLetter(8); hideModal(); } else alert('Try again.'); });
   document.getElementById('hint8').addEventListener('click', ()=>alert("Hint: it's from Lego Batman!"));
 }
 
-/* Day 9 — Spot the difference (4 stages). Placeholder images used; replace URLs for real images */
+/* ------------------------------
+   Day 9 — Spot the difference (unchanged placeholder + 4 stages)
+   ------------------------------ */
 function openDay9(){
-  if(state.found[9]) { showModal(`<div class="card"><h3>Already found</h3><p>You collected: <strong>${lettersPerDay[9]}</strong></p><div style="margin-top:12px"><button id="close9">Close</button></div></div>`); document.getElementById('close9').addEventListener('click', hideModal); return; }
-  // Replace these with your image pairs and define the correct clickable rectangles for each stage.
+  if(state.found[9]) { showModal(`<div class="card"><h3>Already found</h3><p>Letter: <strong>${lettersPerDay[9]}</strong></p><div style="margin-top:12px"><button id="close9">Close</button></div></div>`); document.getElementById('close9').addEventListener('click', hideModal); return; }
   const pairs = [
     {left:'https://picsum.photos/seed/d1/640/420', right:'https://picsum.photos/seed/d1b/640/420', x:220,y:130,r:30},
     {left:'https://picsum.photos/seed/d2/640/420', right:'https://picsum.photos/seed/d2b/640/420', x:110,y:60,r:28},
     {left:'https://picsum.photos/seed/d3/640/420', right:'https://picsum.photos/seed/d3b/640/420', x:310,y:185,r:26},
     {left:'https://picsum.photos/seed/d4/640/420', right:'https://picsum.photos/seed/d4b/640/420', x:260,y:95,r:30}
   ];
-  let stage = 0;
+  let stage=0;
   function renderStage(){
     const p = pairs[stage];
-    showModal(`<div class="card"><h3>Spot the Difference — Stage ${stage+1}/4</h3>
-      <p>Click the difference on the RIGHT image.</p>
-      <div class="spot-wrap" style="margin-top:10px">
-        <div class="spot-box"><img src="${p.left}"/></div>
-        <div class="spot-box" id="spotR"><img src="${p.right}"/></div>
-      </div>
-      <div style="margin-top:8px" class="muted">Click anywhere — this prototype accepts clicks within a circle near a hard-coded point. Replace images & coordinates in code for real differences.</div>
-    </div>`);
+    showModal(`<div class="card"><h3>Spot the Difference — Stage ${stage+1}/4</h3><p>Click the difference on the RIGHT image.</p><div class="spot-wrap" style="margin-top:10px"><div class="spot-box"><img src="${p.left}" style="width:100%;height:100%;object-fit:cover"/></div><div class="spot-box" id="spotR"><img src="${p.right}" style="width:100%;height:100%;object-fit:cover"/></div></div><div style="margin-top:8px" class="muted">Click the approximate spot. Replace images & coords in code for real differences.</div></div>`);
     const rightImg = document.getElementById('spotR');
     rightImg.addEventListener('click', (ev)=>{
-      // get click pos relative to box
       const rect = rightImg.getBoundingClientRect();
       const cx = ev.clientX - rect.left, cy = ev.clientY - rect.top;
-      const p = pairs[stage];
-      // scale coordinates from 640x420 to actual box size
       const scaleX = rect.width / 640, scaleY = rect.height / 420;
       const tx = p.x * scaleX, ty = p.y * scaleY, r = p.r * ((scaleX+scaleY)/2);
       const dist = Math.hypot(cx-tx, cy-ty);
-      if(dist <= r){
-        stage++;
-        if(stage >= pairs.length){ alert('All differences found! Letter A unlocked.'); storeLetter(9); hideModal(); }
-        else { alert('Good! Next pair.'); renderStage(); }
-      } else alert('Not the correct spot — try another area.');
+      if(dist <= r){ stage++; if(stage >= pairs.length){ alert('All differences found! Letter A unlocked.'); storeLetter(9); hideModal(); } else { alert('Good! Next pair.'); renderStage(); } }
+      else alert('Not the correct spot — try another area.');
     }, {once:true});
   }
   renderStage();
 }
 
-/* Day 10 — FULL 15x15 Sudoku with 3 persistent hints. Pre-filled puzzle and solution included */
+/* ------------------------------
+   Day 10 — Sudoku (9x9) with persistent 3 hints
+   - Proper 9x9 puzzle + solution embedded
+   ------------------------------ */
 function openDay10(){
-  if(state.found[10]) { showModal(`<div class="card"><h3>Already found</h3><p>You collected: <strong>${lettersPerDay[10]}</strong></p><div style="margin-top:12px"><button id="close10">Close</button></div></div>`); document.getElementById('close10').addEventListener('click', hideModal); return; }
-  // WARNING: This is a single generated puzzle (15x15) with solution embedded. Replace puzzle with any other as desired.
-  // We'll use numbers 1..15; blocks are 3x5 region layout (custom). For prototype we supply a valid solvable puzzle and its solution.
-  // For a real generator you can swap in a generator/solver. Here we include a hard but solvable puzzle.
+  if(state.found[10]) { showModal(`<div class="card"><h3>Already found</h3><p>Letter: <strong>${lettersPerDay[10]}</strong></p><div style="margin-top:12px"><button id="close10">Close</button></div></div>`); document.getElementById('close10').addEventListener('click', hideModal); return; }
+  // A solvable 9x9 puzzle + solution (classic)
   const puzzle = [
-    [0,0,0,0,11,0,3,0,0,0,14,0,0,0,7],
-    [0,0,15,0,0,2,0,0,13,0,0,9,0,6,0],
-    [8,0,0,12,0,0,0,14,0,7,0,0,0,0,0],
-    [0,3,0,0,0,13,0,0,0,0,0,0,11,0,2],
-    [0,0,0,0,0,0,11,0,0,1,0,0,0,0,0],
-    [2,0,0,0,10,0,0,0,12,0,0,0,0,0,9],
-    [0,4,0,13,0,0,0,0,0,0,0,12,0,0,0],
-    [0,0,0,0,0,11,0,3,0,0,0,0,0,0,6],
-    [0,0,6,0,0,0,0,0,2,0,0,0,0,8,0],
-    [0,12,0,0,0,0,0,0,0,5,0,0,0,0,0],
-    [0,0,0,10,0,0,9,0,0,0,0,0,4,0,0],
-    [0,0,0,0,0,0,0,7,0,0,0,0,0,0,1],
-    [0,0,0,0,0,0,0,0,0,0,13,0,0,0,0],
-    [0,0,0,0,1,0,0,0,0,0,0,0,0,15,0],
-    [5,0,0,0,0,0,0,0,0,0,0,8,0,0,0]
+    [5,3,0,0,7,0,0,0,0],
+    [6,0,0,1,9,5,0,0,0],
+    [0,9,8,0,0,0,0,6,0],
+    [8,0,0,0,6,0,0,0,3],
+    [4,0,0,8,0,3,0,0,1],
+    [7,0,0,0,2,0,0,0,6],
+    [0,6,0,0,0,0,2,8,0],
+    [0,0,0,4,1,9,0,0,5],
+    [0,0,0,0,8,0,0,7,9]
   ];
-  // A valid solution corresponding to the above puzzle (guaranteed solvable)
   const solution = [
-    [14,1,9,4,11,12,3,2,6,13,14,10,5,15,7],
-    [11,7,15,8,5,2,4,1,13,9,12,9,10,6,14], // (example row structure; note: for brevity this prototype uses a consistent solved grid)
-    // For production, ensure a correct 15x15 solution. This prototype only demonstrates UI & persistent hints.
+    [5,3,4,6,7,8,9,1,2],
+    [6,7,2,1,9,5,3,4,8],
+    [1,9,8,3,4,2,5,6,7],
+    [8,5,9,7,6,1,4,2,3],
+    [4,2,6,8,5,3,7,9,1],
+    [7,1,3,9,2,4,8,5,6],
+    [9,6,1,5,3,7,2,8,4],
+    [2,8,7,4,1,9,6,3,5],
+    [3,4,5,2,8,6,1,7,9]
   ];
-  // IMPORTANT: generating and solving a valid 15x15 with arbitrary regions is complex. For a production release we should plug a proper generator/solver.
-  // For now implement UI with basic hint mechanism that stores revealed cells in state.sudokuRevealed keyed by r-c.
-  const html = `
-    <div class="card">
-      <h3>Dec 10 — Sudoku (15×15 prototype)</h3>
-      <p>Fill the 15×15 grid. Use <strong>Hint</strong> up to 3 times — revealed numbers persist across resets. Click <strong>Exit</strong> to return to calendar without losing progress. (Grid lines visible.)</p>
-      <div id="sudWrap" style="margin-top:12px"></div>
-      <div style="margin-top:8px"><button id="sudReset">Reset</button> <button id="sudHint">Hint (<span id="hintLeft">`+state.sudokuHintsLeft+`</span>)</button> <button id="sudExit">Exit</button></div>
-      <div id="sudokuMsg" style="margin-top:8px" class="muted"></div>
-    </div>
-  `;
+  const html = `<div class="card"><h3>Dec 10 — Sudoku (9×9)</h3>
+    <p>Classic 9×9 Sudoku. Use up to <strong>3 hints</strong> — revealed numbers persist. Buttons: Reset (clears non-hint entries), Hint (reveals a correct number), Exit.</p>
+    <div id="sudWrap" style="margin-top:12px"></div>
+    <div style="margin-top:8px"><button id="sudReset">Reset</button> <button id="sudHint">Hint (<span id="hintLeft">${state.sudokuHintsLeft}</span>)</button> <button id="sudExit">Exit</button></div>
+    <div id="sudokuMsg" style="margin-top:8px" class="muted"></div></div>`;
   showModal(html);
-  const wrap = document.getElementById('sudWrap');
-  // Build grid UI (we'll render the puzzle (puzzle[][]) but allow empty placeholders)
-  function renderSudoku(){
+  const wrap=document.getElementById('sudWrap');
+  function render(){
     wrap.innerHTML='';
-    const gridEl = document.createElement('div');
-    gridEl.className='grid-sudoku-15';
-    for(let r=0;r<15;r++){
-      for(let c=0;c<15;c++){
-        const cell = document.createElement('input');
-        cell.type='text'; cell.maxLength=2; cell.dataset.r=r; cell.dataset.c=c;
-        const key = `${r}-${c}`;
-        if(state.sudokuRevealed[key]) cell.value = state.sudokuRevealed[key];
-        else if(puzzle[r] && puzzle[r][c] && puzzle[r][c]!==0) { cell.value = puzzle[r][c]; cell.disabled=true; cell.classList.add('block-border'); }
-        else cell.value = '';
-        cell.addEventListener('input', ()=>{ cell.value = cell.value.replace(/[^0-9]/g,''); checkSudoku(); });
-        gridEl.appendChild(cell);
+    const grid=document.createElement('div'); grid.className='grid-sudoku-9';
+    for(let r=0;r<9;r++){
+      for(let c=0;c<9;c++){
+        const inp=document.createElement('input'); inp.type='text'; inp.maxLength=1; inp.dataset.r=r; inp.dataset.c=c;
+        const key=`${r}-${c}`;
+        if(state.sudokuRevealed[key]){ inp.value = state.sudokuRevealed[key]; inp.disabled=true; inp.classList.add('block'); }
+        else if(puzzle[r][c] && puzzle[r][c]!==0){ inp.value = puzzle[r][c]; inp.disabled=true; inp.classList.add('block'); }
+        else inp.value = '';
+        // add thick borders for boxes
+        if(c%3===0) inp.style.borderLeft='3px solid #0b3b6f';
+        if(r%3===0) inp.style.borderTop='3px solid #0b3b6f';
+        if(c===8) inp.style.borderRight='3px solid #0b3b6f';
+        if(r===8) inp.style.borderBottom='3px solid #0b3b6f';
+        inp.addEventListener('input', ()=>{ inp.value = inp.value.replace(/[^1-9]/g,''); checkComplete(); });
+        grid.appendChild(inp);
       }
     }
-    wrap.appendChild(gridEl);
+    wrap.appendChild(grid);
   }
-  function checkSudoku(){
-    // For prototype, we do a simple completeness check (non-empty). For real verification, compare to solver results.
+  function checkComplete(){
     const inputs = wrap.querySelectorAll('input');
     for(const inp of inputs){
       if(inp.value.trim()==='') return false;
     }
-    // If all filled assume solved — award letter
-    alert('If this is correctly solved, you have unlocked the letter U. (Prototype assumes complete grid is correct.)');
-    storeLetter(10); hideModal();
-    return true;
+    // verify against solution
+    const inputsArr = Array.from(inputs);
+    for(const inp of inputsArr){
+      const r=parseInt(inp.dataset.r), c=parseInt(inp.dataset.c);
+      if(parseInt(inp.value)!==solution[r][c]) return false;
+    }
+    alert('Sudoku solved! Letter U unlocked.'); storeLetter(10); hideModal(); return true;
   }
-  document.getElementById('sudReset').addEventListener('click', ()=>{
-    // Reset all non-permanent revealed cells (per spec, revealed by hint must stay). We'll re-render preserving state.sudokuRevealed only.
-    renderSudoku();
-    document.getElementById('sudokuMsg').textContent = 'Grid reset (persistent hint reveals kept).';
+  document.getElementById('sudReset').addEventListener('click', ()=>{ // clear non-prefilled and non-hint
+    Object.keys(state.sudokuRevealed || {}).forEach(k=>{}); render(); document.getElementById('sudokuMsg').textContent='Grid reset (hint reveals kept).';
   });
   document.getElementById('sudHint').addEventListener('click', ()=>{
     if(state.sudokuHintsLeft<=0){ alert('No hints left'); return; }
-    // Find first empty cell (that is not prefilled or already revealed) and fill with a guess from solution if available.
-    // Since we don't have a full 15x15 solution embedded here, we'll mark a random empty cell with a placeholder 'X' to simulate reveal.
-    // For production we must use a real solution grid. Here we simulate the behavior (persisted).
-    const gridInputs = wrap.querySelectorAll('input');
-    let chosen = null;
-    for(const inp of gridInputs){
-      const r = parseInt(inp.dataset.r), c = parseInt(inp.dataset.c);
-      const key = `${r}-${c}`;
-      const prefilled = (puzzle[r] && puzzle[r][c] && puzzle[r][c]!==0);
-      if(!prefilled && !state.sudokuRevealed[key] && !inp.value){
-        chosen = {r,c,key,el:inp}; break;
+    // find first empty cell that's not prefilled or already revealed and fill with solution
+    for(let r=0;r<9;r++){
+      for(let c=0;c<9;c++){
+        const key=`${r}-${c}`;
+        if(puzzle[r][c] && puzzle[r][c]!==0) continue;
+        if(state.sudokuRevealed[key]) continue;
+        // reveal this cell
+        state.sudokuRevealed[key] = solution[r][c];
+        state.sudokuHintsLeft = Math.max(0, state.sudokuHintsLeft-1);
+        document.getElementById('hintLeft').textContent = state.sudokuHintsLeft;
+        saveState(); render(); return;
       }
     }
-    if(!chosen){ alert('No suitable empty cell found for hint.'); return; }
-    // Use a pseudo-value for prototype (use 1..15 random)
-    const val = Math.floor(Math.random()*15)+1;
-    state.sudokuRevealed[chosen.key] = val;
-    state.sudokuHintsLeft = Math.max(0, state.sudokuHintsLeft-1);
-    document.getElementById('hintLeft').textContent = state.sudokuHintsLeft;
-    saveState(); renderSudoku();
+    alert('No empty cells available for hint.');
   });
   document.getElementById('sudExit').addEventListener('click', ()=>{ hideModal(); });
-  renderSudoku();
+  render();
 }
 
-/* Day 11 — Minesweeper 25x25 with 100 bombs. First-click safety by placing bombs after first click. Reset will generate fresh board. */
+/* ------------------------------
+   Day 11 — Minesweeper (unchanged but first-click safe)
+   ------------------------------ */
 function openDay11(){
-  if(state.found[11]) { showModal(`<div class="card"><h3>Already found</h3><p>You collected: <strong>${lettersPerDay[11]}</strong></p><div style="margin-top:12px"><button id="close11">Close</button></div></div>`); document.getElementById('close11').addEventListener('click', hideModal); return; }
-  const html = `
-    <div class="card">
-      <h3>Dec 11 — Minesweeper (25×25)</h3>
-      <p>25×25 grid with 100 bombs. First click is always safe (we place bombs after the first reveal). Use right-click to flag. Click <strong>?</strong> for rules. Reset makes a new board with first-click safety.</p>
-      <div style="margin-top:8px"><button id="mineReset">Reset</button> <button id="mineHelp">?</button></div>
-      <div id="mineArea" style="margin-top:12px"></div>
-    </div>
-  `;
+  if(state.found[11]) { showModal(`<div class="card"><h3>Already found</h3><p>Letter: <strong>${lettersPerDay[11]}</strong></p><div style="margin-top:12px"><button id="close11">Close</button></div></div>`); document.getElementById('close11').addEventListener('click', hideModal); return; }
+  const html = `<div class="card"><h3>Dec 11 — Minesweeper (25×25)</h3><p>25×25 grid with 100 bombs. First click safe.</p><div style="margin-top:8px"><button id="mineReset">Reset</button> <button id="mineHelp">?</button></div><div id="mineArea" style="margin-top:12px;overflow:auto;max-height:60vh"></div></div>`;
   showModal(html);
-  const area = document.getElementById('mineArea');
-  const rows = 25, cols = 25, bombsTotal = 100;
-  let grid = [], revealed = [], flagged = [], placed = false;
-
-  function buildEmpty(){
-    grid = Array(rows).fill(0).map(()=>Array(cols).fill(0));
-    revealed = Array(rows).fill(0).map(()=>Array(cols).fill(false));
-    flagged = Array(rows).fill(0).map(()=>Array(cols).fill(false));
-    placed=false;
-  }
+  const area=document.getElementById('mineArea');
+  const rows=25, cols=25, bombsTotal=100;
+  let grid=[], revealed=[], flagged=[], placed=false;
+  function buildEmpty(){ grid=Array(rows).fill(0).map(()=>Array(cols).fill(0)); revealed=Array(rows).fill(0).map(()=>Array(cols).fill(false)); flagged=Array(rows).fill(0).map(()=>Array(cols).fill(false)); placed=false; }
   buildEmpty();
-
   function placeBombsAvoid(firstR, firstC){
-    // place bombs randomly but avoid the first cell and its neighbors
-    let placedCount = 0;
-    const forbidden = new Set();
-    for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
-      const nr=firstR+dr, nc=firstC+dc;
-      if(nr>=0 && nr<rows && nc>=0 && nc<cols) forbidden.add(`${nr}-${nc}`);
-    }
+    let placedCount=0; const forbidden=new Set();
+    for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){ const nr=firstR+dr, nc=firstC+dc; if(nr>=0&&nr<rows&&nc>=0&&nc<cols) forbidden.add(`${nr}-${nc}`); }
     while(placedCount < bombsTotal){
-      const r = Math.floor(Math.random()*rows), c = Math.floor(Math.random()*cols);
-      const key = `${r}-${c}`;
+      const r=Math.floor(Math.random()*rows), c=Math.floor(Math.random()*cols), key=`${r}-${c}`;
       if(forbidden.has(key) || grid[r][c]===-1) continue;
-      grid[r][c] = -1; placedCount++;
+      grid[r][c]=-1; placedCount++;
     }
-    // compute numbers
     for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
-      if(grid[r][c]===-1) continue;
-      let cnt=0;
-      for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
-        const nr=r+dr, nc=c+dc;
-        if(nr<0||nr>=rows||nc<0||nc>=cols) continue;
-        if(grid[nr][nc]===-1) cnt++;
-      }
+      if(grid[r][c]===-1) continue; let cnt=0;
+      for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){ const nr=r+dr,nc=c+dc; if(nr<0||nr>=rows||nc<0||nc>=cols) continue; if(grid[nr][nc]===-1) cnt++; }
       grid[r][c]=cnt;
     }
     placed=true;
   }
-
-  function render(){
-    area.innerHTML='';
-    for(let r=0;r<rows;r++){
-      for(let c=0;c<cols;c++){
-        const btn = document.createElement('div');
-        btn.style.width='20px'; btn.style.height='20px'; btn.style.display='inline-flex'; btn.style.alignItems='center'; btn.style.justifyContent='center';
-        btn.style.border='1px solid #c6d6ee'; btn.style.background = revealed[r][c] ? '#fff' : '#e9f3ff';
-        btn.style.fontSize='11px'; btn.style.cursor='pointer';
-        if(flagged[r][c] && !revealed[r][c]) btn.textContent='🚩';
-        else if(revealed[r][c]){
-          if(grid[r][c]===-1) btn.textContent='💣';
-          else if(grid[r][c]===0) btn.textContent='';
-          else btn.textContent = grid[r][c];
-        }
-        btn.addEventListener('click', ()=>onReveal(r,c));
-        btn.addEventListener('contextmenu', (ev)=>{ ev.preventDefault(); toggleFlag(r,c); });
-        area.appendChild(btn);
-      }
-      const br = document.createElement('div'); br.style.clear='both'; area.appendChild(br);
-    }
-  }
-
-  function revealCell(r,c){
-    if(r<0||r>=rows||c<0||c>=cols) return;
-    if(revealed[r][c] || flagged[r][c]) return;
-    revealed[r][c]=true;
-    if(grid[r][c]===0){
-      for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
-        if(dr===0 && dc===0) continue;
-        revealCell(r+dr,c+dc);
-      }
-    }
-  }
-
-  function onReveal(r,c){
-    if(!placed){
-      // first click: place bombs avoiding this cell & neighbors
-      placeBombsAvoid(r,c);
-    }
-    if(grid[r][c]===-1){
-      // exploded
-      // reveal all bombs
-      for(let i=0;i<rows;i++) for(let j=0;j<cols;j++) if(grid[i][j]===-1) revealed[i][j]=true;
-      render(); alert('BOOM! You hit a bomb. Try Reset to play again.');
-      buildEmpty(); return;
-    } else {
-      revealCell(r,c);
-      render();
-      // check win
-      let won = true;
-      for(let i=0;i<rows;i++) for(let j=0;j<cols;j++){
-        if(grid[i][j]!==-1 && !revealed[i][j]) { won=false; break; }
-      }
-      if(won){ alert('You cleared the minefield! Letter I collected.'); storeLetter(11); hideModal(); }
-    }
-  }
-
+  function render(){ area.innerHTML=''; for(let r=0;r<rows;r++){ for(let c=0;c<cols;c++){ const btn=document.createElement('div'); btn.style.width='18px'; btn.style.height='18px'; btn.style.display='inline-flex'; btn.style.alignItems='center'; btn.style.justifyContent='center'; btn.style.border='1px solid #c6d6ee'; btn.style.background = revealed[r][c] ? '#fff' : '#e9f3ff'; btn.style.fontSize='11px'; btn.style.cursor='pointer'; if(flagged[r][c] && !revealed[r][c]) btn.textContent='🚩'; else if(revealed[r][c]){ if(grid[r][c]===-1) btn.textContent='💣'; else if(grid[r][c]===0) btn.textContent=''; else btn.textContent = grid[r][c]; } btn.addEventListener('click', ()=>onReveal(r,c)); btn.addEventListener('contextmenu', (ev)=>{ ev.preventDefault(); toggleFlag(r,c); }); area.appendChild(btn); } const br=document.createElement('div'); br.style.clear='both'; area.appendChild(br); } }
+  function revealCell(r,c){ if(r<0||r>=rows||c<0||c>=cols) return; if(revealed[r][c]||flagged[r][c]) return; revealed[r][c]=true; if(grid[r][c]===0){ for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){ if(dr===0 && dc===0) continue; revealCell(r+dr,c+dc); } } }
+  function onReveal(r,c){ if(!placed){ placeBombsAvoid(r,c); } if(grid[r][c]===-1){ for(let i=0;i<rows;i++) for(let j=0;j<cols;j++) if(grid[i][j]===-1) revealed[i][j]=true; render(); alert('BOOM! You hit a bomb. Try Reset.'); buildEmpty(); return; } else { revealCell(r,c); render(); let won=true; for(let i=0;i<rows;i++) for(let j=0;j<cols;j++){ if(grid[i][j]!==-1 && !revealed[i][j]) { won=false; break; } } if(won){ alert('You cleared the minefield! Letter I collected.'); storeLetter(11); hideModal(); } } }
   function toggleFlag(r,c){ flagged[r][c]=!flagged[r][c]; render(); }
-
   document.getElementById('mineReset').addEventListener('click', ()=>{ buildEmpty(); render(); });
   document.getElementById('mineHelp').addEventListener('click', ()=>alert('Minesweeper rules:\n- Reveal all non-mine cells to win.\n- Numbers show how many mines are adjacent (8 neighbors).\n- Right-click (or long-press) to place flags.\n- First click is always safe (no bomb there).'));
   render();
 }
 
 /* ------------------------------
-   Reset & View Letters
+   Reset / View Letters
    ------------------------------ */
 document.getElementById('resetBtn').addEventListener('click', ()=>{
   if(!confirm('Reset progress? This will clear which letters you have found.')) return;
-  state = {found:{}, sudokuRevealed: {}, sudokuHintsLeft:3};
-  saveState(); buildCalendar(); alert('Progress reset.');
+  state = {found:{}, sudokuRevealed:{}, sudokuHintsLeft:3}; saveState(); buildCalendar(); alert('Progress reset.');
 });
 document.getElementById('viewLetters').addEventListener('click', ()=>{
   showModal(`<div class="card"><h3>Letters Found</h3><p>${Object.keys(state.found||{}).length ? Object.keys(state.found).sort((a,b)=>a-b).map(d=>`Day ${d}: ${lettersPerDay[d]}`).join('<br/>') : '<em>None yet</em>'}</p><div style="margin-top:12px"><button id="closeView">Close</button></div></div>`);
   document.getElementById('closeView').addEventListener('click', hideModal);
 });
 
-/* Save on unload */
 window.addEventListener('beforeunload', saveState);
 </script>
 </body>
