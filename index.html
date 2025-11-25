@@ -312,55 +312,122 @@ function openDay3(){
   init();
 }
 
-/* ------------------------------
-   Day 4 — Jigsaw: draggable tile puzzle (3x3)
-   - Uses an image URL; tiles are created by CSS background-position; supports drag & drop swapping
-   ------------------------------ */
+/* Day 4 — Jigsaw: draggable tile puzzle (NxN)
+   - Uses the uploaded file path as the image source (see imageURL)
+   - Creates an NxN tile grid (default 6x6 -> 36 pieces)
+   - Drag & drop tiles to swap. When arranged correctly, Inspect reveals letter V.
+*/
 function openDay4(){
-  if(state.found[4]) { showModal(`<div class="card"><h3>Already found</h3><p>Letter: <strong>${lettersPerDay[4]}</strong></p><div style="margin-top:12px"><button id="close4">Close</button></div></div>`); document.getElementById('close4').addEventListener('click', hideModal); return; }
-  // Replace this image URL with your chosen puzzle image (ideally square)
-  const imageURL = 'https://picsum.photos/seed/puzzle/600/600';
-  const html = `<div class="card"><h3>Dec 4 — Jigsaw (drag & drop)</h3>
-    <p>Drag tiles to assemble the image. Once assembled, click Inspect to flip and reveal the letter on the back.</p>
-    <div id="jigsaw" class="jigsawGrid" style="margin-top:12px"></div>
-    <div style="margin-top:10px"><button id="shuffle4">Shuffle</button> <button id="inspect4" disabled>Inspect (flip)</button></div></div>`;
-  showModal(html);
-  const board=document.getElementById('jigsaw');
-  // create tiles 3x3
-  let tiles = Array.from({length:9}, (_,i)=>i+1);
-  function tileBG(idx){
-    const col = idx % 3, row = Math.floor(idx/3);
-    const size = 300; // used for background-size calculation; CSS will scale but background-position relative works
-    const bx = -(col/2)*100; // not precise with picsum; we instead compute background-position in percent
-    const posX = (col) * (100/2); // percent mapping that works with background-size: 300%
-    return {row, col};
+  if(state.found[4]) {
+    showModal(`<div class="card"><h3>Already found</h3><p>Letter: <strong>${lettersPerDay[4]}</strong></p><div style="margin-top:12px"><button id="close4">Close</button></div></div>`);
+    document.getElementById('close4').addEventListener('click', hideModal);
+    return;
   }
+
+  // === EDITABLE: path to the uploaded file (the system will transform this to a URL) ===
+  const imageURL = '/mnt/data/Advent Calendar Preparation (1).pdf';
+  // ====================================================================================
+
+  const tilesPerRow = 6; // 6x6 grid (36 pieces). Change to 8 for 64, 10 for 100, etc.
+  const totalTiles = tilesPerRow * tilesPerRow;
+
+  const html = `<div class="card">
+    <h3>Dec 4 — Jigsaw (drag & drop)</h3>
+    <p>Drag tiles to assemble the image. Once assembled, click Inspect to flip and reveal the letter on the back.</p>
+    <div id="jigsaw" class="jigsawGrid" style="margin-top:12px;grid-template-columns:repeat(${tilesPerRow},140px)"></div>
+    <div style="margin-top:10px"><button id="shuffle4">Shuffle</button> <button id="inspect4" disabled>Inspect (flip)</button></div>
+    <div style="margin-top:8px" class="muted">Tip: if the puzzle image comes from a PDF, your server/transform will provide a rendered image URL for the code to use.</div>
+  </div>`;
+
+  showModal(html);
+  const board = document.getElementById('jigsaw');
+
+  // Create tiles array with correct tile indices (1..totalTiles)
+  let tiles = Array.from({length: totalTiles}, (_,i) => i+1);
+
+  // Helper: render tiles into board
   function render(){
-    board.innerHTML='';
-    tiles.forEach((t,i)=>{
+    board.innerHTML = '';
+    // set grid template dynamically for visual layout
+    board.style.gridTemplateColumns = `repeat(${tilesPerRow}, 1fr)`;
+
+    tiles.forEach((tileNumber, positionIndex) => {
       const tile = document.createElement('div');
-      tile.className='jigsawTile';
-      // compute background position percentage
-      const idx = t-1;
-      const col = idx % 3, row = Math.floor(idx/3);
-      tile.style.backgroundImage = `url(${imageURL})`;
-      tile.style.backgroundSize = '300% 300%';
-      tile.style.backgroundPosition = `${(col)*50}% ${(row)*50}%`;
+      tile.className = 'jigsawTile';
       tile.draggable = true;
-      tile.dataset.pos = i;
-      tile.dataset.tile = t;
-      tile.addEventListener('dragstart', (e)=>{ e.dataTransfer.setData('text/plain', tile.dataset.pos); tile.style.opacity = '0.6'; });
-      tile.addEventListener('dragend', ()=>{ tile.style.opacity='1'; });
-      tile.addEventListener('dragover', (e)=>{ e.preventDefault(); });
-      tile.addEventListener('drop', (e)=>{ e.preventDefault(); const from = parseInt(e.dataTransfer.getData('text/plain')); const to = parseInt(tile.dataset.pos); const tmp=tiles[from]; tiles[from]=tiles[to]; tiles[to]=tmp; render(); checkSolved(); });
+      tile.dataset.pos = positionIndex; // current position
+      tile.dataset.tile = tileNumber;    // which original tile this is
+
+      // compute background position percent so the piece shows the correct portion
+      const idx = tileNumber - 1;
+      const col = idx % tilesPerRow;
+      const row = Math.floor(idx / tilesPerRow);
+
+      // If background-size is (tilesPerRow * 100)%, then each tile's background-position should be:
+      //  col * (100/(tilesPerRow-1))% and row * (100/(tilesPerRow-1))%
+      const step = tilesPerRow === 1 ? 0 : (100 / (tilesPerRow - 1));
+      const posX = (col * step);
+      const posY = (row * step);
+
+      tile.style.backgroundImage = `url("${imageURL}")`;
+      tile.style.backgroundSize = `${tilesPerRow * 100}% ${tilesPerRow * 100}%`;
+      tile.style.backgroundPosition = `${posX}% ${posY}%`;
+
+      // basic accessibility label
+      tile.title = `Piece ${tileNumber}`;
+
+      // drag & drop handlers (swap tiles)
+      tile.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', tile.dataset.pos);
+        tile.style.opacity = '0.5';
+      });
+      tile.addEventListener('dragend', () => { tile.style.opacity = '1'; });
+      tile.addEventListener('dragover', (e) => { e.preventDefault(); });
+      tile.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const from = parseInt(e.dataTransfer.getData('text/plain'));
+        const to = parseInt(tile.dataset.pos);
+        // swap in tiles array
+        const tmp = tiles[from];
+        tiles[from] = tiles[to];
+        tiles[to] = tmp;
+        render();
+        checkSolved();
+      });
+
       board.appendChild(tile);
     });
   }
-  function shuffle(){ tiles = tiles.sort(()=>Math.random()-0.5); render(); document.getElementById('inspect4').disabled = true; }
-  function checkSolved(){ for(let i=0;i<9;i++) if(tiles[i] !== i+1) return; document.getElementById('inspect4').disabled = false; alert('Puzzle solved! Click Inspect to flip and reveal the letter.'); }
+
+  // Shuffle function ensures puzzle is solvable-ish (we just randomize)
+  function shuffle() {
+    tiles = tiles.sort(() => Math.random() - 0.5);
+    render();
+    document.getElementById('inspect4').disabled = true;
+  }
+
+  // If tiles are in natural order (1..n), puzzle is solved
+  function checkSolved(){
+    for (let i=0; i<tiles.length; i++){
+      if (tiles[i] !== i+1) return false;
+    }
+    // solved
+    document.getElementById('inspect4').disabled = false;
+    alert('Puzzle assembled! Click Inspect to flip and reveal the letter.');
+    return true;
+  }
+
+  // Inspect handler — reveals the letter and stores it
   document.getElementById('shuffle4').addEventListener('click', shuffle);
-  document.getElementById('inspect4').addEventListener('click', ()=>{ showModal(`<div class="card"><h3>Back of puzzle</h3><p>The letter on the back is: <strong>V</strong></p><div style="margin-top:12px"><button id="close4b">Close</button></div></div>`); document.getElementById('close4b').addEventListener('click', ()=>{ storeLetter(4); hideModal(); }); });
+  document.getElementById('inspect4').addEventListener('click', () => {
+    showModal(`<div class="card"><h3>Back of puzzle</h3><p>The letter on the back is: <strong>V</strong></p><div style="margin-top:12px"><button id="close4b">Close</button></div></div>`);
+    document.getElementById('close4b').addEventListener('click', () => { storeLetter(4); hideModal(); });
+  });
+
+  // initial random start
   shuffle();
+}
+
 }
 
 /* ------------------------------
