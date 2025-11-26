@@ -5,83 +5,152 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Advent Calendar — Lantern Glow (Modular)</title>
 <style>
+  /* ------------------------------
+     LANTERN GLOW THEME + FIRE/EMBERS
+     Window-style popups, cozy golds, embers rising
+  ------------------------------*/
   :root{
-    --bg:#06101f; --bg-soft:#0b1a31; --highlight:#ffd27f; --highlight-bright:#ffebc4;
-    --muted:#b7c4df; --text:#f7f8fb; --modal-bg: rgba(0,0,0,0.65);
+    --bg:#06101f; --bg-soft:#0b1a31; --card:#0f1626;
+    --gold:#ffd27f; --gold-strong:#ffebc4; --muted:#9fb3d6; --text:#f7f8fb;
+    --modal-bg: rgba(3,6,12,0.6);
   }
   *{box-sizing:border-box}
-  body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
-  header{padding:26px 12px;text-align:center;color:var(--highlight-bright);font-size:2rem;text-shadow:0 0 12px rgba(255,210,120,.35)}
-  .muted{color:var(--muted)}
+  body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,var(--bg),#071226 60%);color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  header{padding:30px 12px;text-align:center;color:var(--gold-strong);font-size:2rem;text-shadow:0 0 14px rgba(255,210,120,.28)}
   .wrap{max-width:1200px;margin:0 auto;padding:12px}
-  #lettersBar{margin:8px 0 22px;text-align:center;color:var(--highlight-bright);font-weight:700}
+  #lettersBar{margin:8px 0 18px;text-align:center;color:var(--gold-strong);font-weight:700}
+  /* calendar */
   #calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:12px}
-  .dayTile{background:var(--bg-soft);padding:18px;border-radius:12px;text-align:center;font-weight:800;cursor:pointer;border:2px solid rgba(255,255,255,0.04);transition:all .18s;min-height:84px;display:flex;flex-direction:column;align-items:center;justify-content:center}
-  .dayTile.locked{opacity:.4;cursor:default}
-  .dayTile.unlocked:hover{transform:translateY(-6px); box-shadow:0 8px 22px rgba(0,0,0,.6),0 0 12px rgba(255,200,110,.06);border-color: #ffd9a6}
-  #modalOverlay{display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:var(--modal-bg);z-index:999}
-  .modalCard{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));padding:18px;border-radius:12px;max-width:980px;width:92%;max-height:86vh;overflow:auto;border:1px solid rgba(255,255,255,.06)}
-  button{background:var(--highlight);border:none;padding:8px 12px;border-radius:8px;font-weight:800;cursor:pointer}
-  .foundBadge{position:absolute;left:10px;top:10px;background:#dff7d9;color:#052d13;padding:6px 8px;border-radius:8px;font-weight:900}
+  .dayTile{background:linear-gradient(180deg,var(--bg-soft),#071a2e);padding:18px;border-radius:12px;text-align:center;font-weight:800;cursor:pointer;border:1px solid rgba(255,255,255,0.04);transition:all .18s;min-height:88px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .dayTile.locked{opacity:.42;cursor:default}
+  .dayTile.unlocked:hover{transform:translateY(-6px); box-shadow:0 10px 30px rgba(0,0,0,.6),0 0 18px rgba(255,190,120,.06);border-color: rgba(255,200,120,.14)}
+  .foundBadge{position:absolute;left:10px;top:8px;background:#163f1f;color:#dff7d9;padding:6px 8px;border-radius:8px;font-weight:900}
   .lockIcon{position:absolute;right:10px;top:10px;font-size:20px;opacity:.9}
-  .snowflake{position:fixed;top:-10px;pointer-events:none;opacity:.9}
+  .dayTitle{font-size:1.05rem;margin-bottom:6px}
+  .daySub{font-size:0.9rem;color:var(--muted)}
   footer{color:var(--muted);text-align:center;padding:18px}
-  /* small utility */
+  /* modal overlay & cards (window-style popup) */
+  #modalOverlay{display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:var(--modal-bg);z-index:999}
+  .modalCard{background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); padding:18px;border-radius:12px; border:1px solid rgba(255,210,120,0.06); box-shadow: 0 12px 36px rgba(0,0,0,0.6); backdrop-filter: blur(4px); color:var(--text); max-height:86vh; overflow:auto}
+  .modalHeader{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .modalClose{cursor:pointer;font-size:20px;background:transparent;border:none;color:var(--gold-strong)}
+  button.primary{background:var(--gold);border:none;padding:8px 12px;border-radius:8px;font-weight:800;cursor:pointer}
+  button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:8px;color:var(--muted);cursor:pointer}
+  .muted{color:var(--muted)}
+  /* larger modals for big games */
+  .modal.size-md{width:720px}
+  .modal.size-lg{width:980px}
+  .modal.size-sm{width:520px}
+  /* snow & embers */
+  .snowflake{position:fixed;top:-10px;pointer-events:none;opacity:.85}
+  /* fire glow bottom */
+  body::after{
+    content:""; position:fixed; left:0; right:0; bottom:0; height:180px; pointer-events:none;
+    background: radial-gradient(ellipse at bottom, rgba(255,180,80,0.55) 0%, rgba(255,140,40,0.28) 25%, rgba(0,0,0,0) 70%);
+    filter: blur(28px);
+    animation: fireFlicker 3.5s ease-in-out infinite alternate;
+    z-index: 2;
+  }
+  @keyframes fireFlicker { 0%{opacity:.72} 50%{opacity:1} 100%{opacity:.6} }
+  .ember{position:fixed;bottom:8px;width:6px;height:6px;border-radius:50%;background:rgba(255,210,120,0.9);filter:blur(2px);pointer-events:none;z-index:3;opacity:0}
+  /* small utilities */
   .grid-sudoku-9{display:grid;grid-template-columns:repeat(9,44px);gap:2px;padding:6px;border-radius:8px;background:#cfe3ff}
   .grid-sudoku-9 input{width:44px;height:44px;text-align:center;border:1px solid #7ea7ff;border-radius:4px;font-weight:700;background:#fff;color:#102035;font-size:16px}
   .matching-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
   .matching-card{height:90px;background:#f8fbff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;cursor:pointer}
   .jigsawGrid{display:grid;gap:6px}
-  .jigsawTile{width:100%;height:100%;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:grab;background-size:cover;background-position:center;border:2px solid rgba(0,0,0,.06)}
-  .maze .cell{width:12px;height:12px;display:inline-block;border:1px solid #ccc;vertical-align:top}
+  .jigsawTile{border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:grab;background-size:cover;background-position:center;border:2px solid rgba(0,0,0,.06)}
+  .mazeWrap{display:flex;justify-content:center}
+  .mazeCanvas{background:#fff;border-radius:8px;padding:8px;box-shadow:0 8px 24px rgba(0,0,0,.45)}
   .simonBtn{width:84px;height:84px;border-radius:10px;border:3px solid rgba(0,0,0,.08);cursor:pointer;font-weight:900}
-  .simonFlash{box-shadow:0 0 18px rgba(255,255,255,.6);transform:scale(1.05)}
 </style>
 </head>
 <body>
 <header>Advent Calendar — Lantern Glow</header>
+
 <div class="wrap">
   <div id="lettersBar">Collected letters: <span id="lettersList">(none)</span></div>
   <div id="calendar"></div>
-  <footer class="muted">Use <code>?unlockAll=true</code> or <code>?test=decN</code> to unlock days while testing.</footer>
+  <footer class="muted">Tip: use <code>?unlockAll=true</code> or <code>?test=decN</code> while testing.</footer>
 </div>
 
 <!-- Modal -->
-<div id="modalOverlay"><div class="modalCard" id="modalContent"></div></div>
+<div id="modalOverlay"><div class="modalCard modal size-sm" id="modalContent"></div></div>
 
 <script>
 /* ------------------------------
-   Exposed state + helpers (used by day modules)
+   App state (persistent)
 ------------------------------ */
-window._AC_state = { found: JSON.parse(localStorage.getItem('ac_found')||'{}'), sudokuHintsLeft: parseInt(localStorage.getItem('ac_sudoku_hints')||'3') };
-function saveState(){ localStorage.setItem('ac_found', JSON.stringify(window._AC_state.found)); localStorage.setItem('ac_sudoku_hints', window._AC_state.sudokuHintsLeft); renderCalendar(); renderLetters(); }
-window.storeLetter = function(day){
-  if(window._AC_state.found[day]) return;
-  window._AC_state.found[day]=true; saveState();
-  showModal(`<div style="padding:12px"><h3>Letter collected</h3><p>Day ${day}: <strong>${window._AC_letters[day]}</strong></p><div style="margin-top:10px"><button onclick="hideModal()">Close</button></div></div>`);
+window._AC_state = {
+  found: JSON.parse(localStorage.getItem('ac_found') || '{}'),
+  sudokuRevealed: JSON.parse(localStorage.getItem('ac_sudoku_revealed') || '{}'),
+  sudokuHintsLeft: parseInt(localStorage.getItem('ac_sudoku_hints') || '3')
 };
-
-/* Letters mapping */
 window._AC_letters = {1:'R',2:'T',3:'W',4:'V',5:'N',6:'P',7:'F',8:'D',9:'A',10:'U',11:'I'};
 
-/* Modal helpers exposed to day modules */
-window.showModal = function(html){
-  document.getElementById('modalContent').innerHTML = html;
-  document.getElementById('modalOverlay').style.display = 'flex';
+function saveState(){
+  localStorage.setItem('ac_found', JSON.stringify(window._AC_state.found));
+  localStorage.setItem('ac_sudoku_revealed', JSON.stringify(window._AC_state.sudokuRevealed));
+  localStorage.setItem('ac_sudoku_hints', String(window._AC_state.sudokuHintsLeft));
+  renderCalendar();
+  renderLetters();
+}
+window.storeLetter = function(day){
+  if(window._AC_state.found[day]) return;
+  window._AC_state.found[day] = true;
+  saveState();
+  // inside modal, show a warm banner
+  const modal = document.getElementById('modalContent');
+  const banner = document.createElement('div');
+  banner.style.background = 'linear-gradient(90deg, rgba(255,220,160,0.14), rgba(255,240,200,0.06))';
+  banner.style.padding = '10px'; banner.style.borderRadius = '8px'; banner.style.marginTop = '10px';
+  banner.innerHTML = `<strong style="color:var(--gold-strong)">Letter found!</strong> Day ${day}: <strong>${window._AC_letters[day]}</strong><div style="margin-top:8px"><button class="primary" onclick="hideModal();">Close</button></div>`;
+  modal.appendChild(banner);
+  renderCalendar();
+  renderLetters();
+}
+
+/* modal helpers (window-style) */
+window.showModal = function(html, opts={size:'sm'}) {
+  const overlay = document.getElementById('modalOverlay');
+  const card = document.getElementById('modalContent');
+  card.className = 'modalCard modal size-' + (opts.size || 'sm');
+  card.innerHTML = html;
+  overlay.style.display = 'flex';
 };
 window.hideModal = function(){ document.getElementById('modalOverlay').style.display = 'none'; };
 
-/* Snow (decorative) */
+/* embers */
+(function spawnEmbers(){
+  const count = 8;
+  for(let i=0;i<count;i++){
+    const e = document.createElement('div'); e.className='ember';
+    const left = 8 + Math.random()*84; e.style.left = left + '%';
+    document.body.appendChild(e);
+    const dur = 3000 + Math.random()*4000;
+    const delay = Math.random()*2000;
+    const drift = (Math.random()-0.5)*120;
+    e.animate([
+      { transform: `translateX(0px) translateY(0px)`, opacity: 0 },
+      { transform: `translateX(${drift}px) translateY(-220px)`, opacity: 0.6 }
+    ],{ duration: dur, iterations: Infinity, delay: delay });
+  }
+})();
+
+/* snow for looks (light) */
 (function makeSnow(){
   for(let i=0;i<28;i++){
-    const s=document.createElement('div'); s.className='snowflake'; s.style.left=Math.random()*100+'vw'; s.style.fontSize=(6+Math.random()*12)+'px'; s.style.animationDuration=(6+Math.random()*8)+'s';
-    s.textContent='❄'; document.body.appendChild(s);
+    const s = document.createElement('div'); s.className='snowflake'; s.textContent='❆';
+    s.style.left = Math.random()*100+'vw'; s.style.fontSize=(8+Math.random()*12)+'px'; s.style.opacity=0.6+Math.random()*0.4;
+    document.body.appendChild(s);
     s.animate([{transform:'translateY(-10vh)'},{transform:`translateY(${120+Math.random()*60}vh)`}],{duration:5000+Math.random()*9000,iterations:Infinity,delay:Math.random()*-2000});
   }
 })();
 
 /* ------------------------------
-   Calendar render & click -> dynamic loader
+   Calendar render
+   Unlock rule: on Dec N days 1..N unlocked.
+   (?unlockAll=true) or (?test=decN) override supported.
 ------------------------------ */
 const DAYS = 31;
 const calendar = document.getElementById('calendar');
@@ -93,41 +162,45 @@ function renderLetters(){
 renderLetters();
 
 function renderCalendar(){
-  calendar.innerHTML='';
+  calendar.innerHTML = '';
   const now = new Date();
-  const month = now.getMonth(), date = now.getDate();
   const params = new URLSearchParams(location.search);
-  const force = params.get('unlockAll')==='true';
+  const force = params.get('unlockAll') === 'true';
+  const testParam = params.get('test'); // e.g. dec2
+  const month = now.getMonth(), day = now.getDate();
+  const unlockMax = force ? DAYS : (testParam && /^dec\d{1,2}$/i.test(testParam) ? parseInt(testParam.slice(3)) : (month===11? day : 0));
   for(let d=1; d<=DAYS; d++){
     const el = document.createElement('div'); el.className='dayTile';
-    if(window._AC_state.found[d]){ const b=document.createElement('div'); b.className='foundBadge'; b.textContent='FOUND'; el.appendChild(b); }
-    const unlocked = force || (month===11 && date>=d) || params.get('test') === ('dec'+d);
-    if(unlocked){ el.classList.add('unlocked'); el.addEventListener('click', ()=>loadDayModule(d)); }
+    const title = document.createElement('div'); title.className='dayTitle'; title.textContent=`Day ${d}`;
+    const sub = document.createElement('div'); sub.className='daySub'; sub.textContent = (d<=11 ? ['Wordle','Mini-Crossword','Matching','Jigsaw','Riddle','Maze','Color Seq','Quote Fill','Spot Diff','Sudoku','Minesweeper'][d-1] : 'Locked'); 
+    el.appendChild(title); el.appendChild(sub);
+    if(window._AC_state.found[d]){ const b = document.createElement('div'); b.className='foundBadge'; b.textContent='FOUND'; el.appendChild(b); }
+    if(d <= unlockMax){ el.classList.add('unlocked'); el.addEventListener('click', ()=> loadDayModule(d)); }
     else { el.classList.add('locked'); const lock = document.createElement('div'); lock.className='lockIcon'; lock.textContent='🔒'; el.appendChild(lock); }
-    const t = document.createElement('div'); t.textContent = `Day ${d}`; el.appendChild(t);
-    const name = document.createElement('div'); name.className='muted'; name.style.fontSize='0.9rem'; name.textContent = `Click to open`; el.appendChild(name);
     calendar.appendChild(el);
   }
 }
 renderCalendar();
 
-/* Save state before leaving */
-window.addEventListener('beforeunload', ()=>{ localStorage.setItem('ac_found', JSON.stringify(window._AC_state.found)); localStorage.setItem('ac_sudoku_hints', window._AC_state.sudokuHintsLeft); });
+/* save on unload */
+window.addEventListener('beforeunload', saveState);
 
-/* dynamic loader */
+/* ------------------------------
+   Dynamic loader (modular day files)
+------------------------------ */
 const loadedDays = {};
 function loadDayModule(n){
-  if(loadedDays[n]) { callDayOpen(n); return; }
+  if(loadedDays[n]){ callDayOpen(n); return; }
   const script = document.createElement('script');
   script.src = `days/day${n}.js`;
   script.onload = ()=>{ loadedDays[n]=true; callDayOpen(n); };
-  script.onerror = ()=>{ showModal(`<div style="padding:12px"><h3>Error</h3><p>Could not load day ${n} script. Check console & path.</p><div style="margin-top:10px"><button onclick="hideModal()">Close</button></div></div>`); };
+  script.onerror = ()=>{ showModal(`<div style="padding:12px"><h3>Error</h3><p>Could not load days/day${n}.js — check file path & console.</p><div style="margin-top:12px"><button class="ghost" onclick="hideModal()">Close</button></div></div>`); };
   document.body.appendChild(script);
 }
 function callDayOpen(n){
   const fn = window['openDay'+n];
   if(typeof fn === 'function') fn();
-  else showModal(`<div style="padding:12px"><h3>Not implemented</h3><p>Day ${n} is not implemented yet.</p><div style="margin-top:10px"><button onclick="hideModal()">Close</button></div></div>`);
+  else showModal(`<div style="padding:12px"><h3>Not implemented</h3><p>Day ${n} is not implemented in code.</p><div style="margin-top:12px"><button class="ghost" onclick="hideModal()">Close</button></div></div>`);
 }
 </script>
 </body>
