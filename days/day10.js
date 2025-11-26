@@ -1,4 +1,4 @@
-// days/day10.js
+  // days/day10.js
 window.openDay10 = function(){
   if(window._AC_state.found[10]){
     window.showModal(`<div style="padding:12px"><div style="display:flex;justify-content:space-between;align-items:center"><h3 style="color:var(--gold)">Dec 10 — Sudoku (Found)</h3><button class="ghost" onclick="hideModal()">Exit</button></div><p>Letter: <strong>U</strong></p></div>`, {size:'sm'});
@@ -42,8 +42,11 @@ window.openDay10 = function(){
       if(window._AC_state.sudokuRevealed && window._AC_state.sudokuRevealed[key]){ inp.value=window._AC_state.sudokuRevealed[key]; inp.disabled=true; inp.style.background='#eef6ff'; }
       else if(puzzle[r][c] && puzzle[r][c]!==0){ inp.value=puzzle[r][c]; inp.disabled=true; inp.style.background='#eef6ff'; }
       else inp.value='';
-      if(c%3===0) inp.style.borderLeft='3px solid rgba(255,210,140,0.12)';
-      if(r%3===0) inp.style.borderTop='3px solid rgba(255,210,140,0.12)';
+      if (c % 3 === 0) inp.style.borderLeft = '2px solid black';
+      if (r % 3 === 0) inp.style.borderTop = '2px solid black';
+
+      if (c === 8) inp.style.borderRight = '2px solid black';
+      if (r === 8) inp.style.borderBottom = '2px solid black';
       inp.addEventListener('input', ()=>{ inp.value = inp.value.replace(/[^1-9]/g,''); checkComplete(); });
       grid.appendChild(inp);
     }
