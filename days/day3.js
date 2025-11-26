@@ -1,13 +1,17 @@
-// day3.js
+// days/day3.js
 window.openDay3 = function(){
-  if(window._AC_state.found[3]){ window.showModal(`<div style="padding:12px"><h3>Dec 3 — Found</h3><p>Letter: <strong>W</strong></p><div style="margin-top:10px"><button onclick="hideModal()">Close</button></div></div>`); return; }
-  window.showModal(`<div style="padding:12px"><h3 style="color:var(--highlight)">Dec 3 — Matching (You vs CPU)</h3>
-    <p>30 cards (15 pairs). Take turns vs a CPU that remembers previously seen cards. Get more pairs than CPU to win.</p>
+  if(window._AC_state.found[3]){
+    window.showModal(`<div style="padding:12px"><div style="display:flex;justify-content:space-between;align-items:center"><h3 style="color:var(--gold)">Dec 3 — Matching (Found)</h3><button class="ghost" onclick="hideModal()">Exit</button></div><p>Letter: <strong>W</strong></p></div>`, {size:'sm'});
+    return;
+  }
+  window.showModal(`<div style="padding:12px"><div style="display:flex;justify-content:space-between;align-items:center"><h3 style="color:var(--gold)">Dec 3 — Matching (You vs CPU)</h3><button class="ghost" onclick="hideModal()">Exit</button></div>
+    <p>30 cards (15 pairs). You and CPU take turns. If you have more pairs at the end, you win and collect the letter.</p>
     <div id="matchBoard" class="matching-grid" style="margin-top:12px"></div>
-    <div style="margin-top:12px"><button id="restart3">Restart</button><span id="matchStatus" class="muted" style="margin-left:12px"></span></div>
-  </div>`);
+    <div style="margin-top:12px"><button class="primary" id="restart3">Restart</button><span id="matchStatus" class="muted" style="margin-left:12px"></span></div>
+  </div>`, {size:'md'});
+
   const board = document.getElementById('matchBoard'), status=document.getElementById('matchStatus');
-  let icons = ['🐶','🐱','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🦄','🐝','🐙'];
+  const icons = ['🐶','🐱','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🦄','🐝','🐙'];
   let cards, revealed, matched, cpuMemory, scores, playerTurn, firstFlip;
   function init(){
     cards = icons.concat(icons).sort(()=>Math.random()-0.5);
@@ -38,18 +42,8 @@ window.openDay3 = function(){
     }
   }
   function cpuAction(){
-    // clean memory
     for(let k in cpuMemory) cpuMemory[k] = cpuMemory[k].filter(idx=>!matched[idx]);
-    // look for known pair
-    for(let k in cpuMemory){
-      if(cpuMemory[k].length>=2){
-        const [a,b] = cpuMemory[k];
-        reveal(a);
-        setTimeout(()=>{ reveal(b); matched[a]=matched[b]=true; scores.cpu++; render(); checkEnd(); setTimeout(()=>cpuAction(),600); },450);
-        return;
-      }
-    }
-    // pick random unseen
+    for(let k in cpuMemory){ if(cpuMemory[k].length>=2){ const [a,b]=cpuMemory[k]; reveal(a); setTimeout(()=>{ reveal(b); matched[a]=matched[b]=true; scores.cpu++; render(); checkEnd(); setTimeout(()=>cpuAction(),600); },450); return; } }
     const pool=[]; for(let i=0;i<cards.length;i++) if(!revealed[i] && !matched[i]) pool.push(i);
     if(pool.length===0) return;
     const a = pool[Math.floor(Math.random()*pool.length)];
@@ -58,10 +52,7 @@ window.openDay3 = function(){
       const seen = (cpuMemory[cards[a]]||[]).find(ii=>ii!==a && !matched[ii]);
       let b;
       if(seen!==undefined) b = seen;
-      else {
-        const pool2 = pool.filter(x=>x!==a);
-        b = pool2.length ? pool2[Math.floor(Math.random()*pool2.length)] : null;
-      }
+      else { const pool2 = pool.filter(x=>x!==a); b = pool2.length ? pool2[Math.floor(Math.random()*pool2.length)] : null; }
       if(b===null){ playerTurn=true; status.textContent='Your turn.'; return; }
       reveal(b); cpuMemory[cards[b]] = Array.from(new Set([...(cpuMemory[cards[b]]||[]), b]));
       setTimeout(()=>{ if(cards[a]===cards[b]){ matched[a]=matched[b]=true; scores.cpu++; render(); checkEnd(); setTimeout(()=>cpuAction(),500); } else { hide(a); hide(b); render(); playerTurn=true; status.textContent='Your turn.'; } },500);
@@ -70,10 +61,10 @@ window.openDay3 = function(){
   function checkEnd(){
     if(matched.every(Boolean)){
       let msg=`Final score — You: ${scores.player} CPU: ${scores.cpu}. `;
-      if(scores.player>scores.cpu){ msg+='You win — letter unlocked.'; status.textContent=msg; window.storeLetter(3); window.hideModal(); }
+      if(scores.player>scores.cpu){ msg+='You win — letter unlocked.'; status.textContent=msg; window.storeLetter(3); }
       else if(scores.player<scores.cpu){ msg+='CPU wins — restart to try again.'; status.textContent=msg; }
       else { msg+="It's a tie — restart to try again."; status.textContent=msg; }
-    }
+    } else status.textContent = `Score — You: ${scores.player} CPU: ${scores.cpu}`;
   }
   document.getElementById('restart3').addEventListener('click', ()=>init());
   init();
