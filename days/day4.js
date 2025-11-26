@@ -1,6 +1,6 @@
 export function openDay4(showModal, addLetter, hideModal) {
   const size = 4; // 4x4 puzzle
-  const imgSrc = "img/day5.jpg";
+  const imgSrc = "img/day4.jpg";
   
   const totalPieces = size * size;
   const fixedIndex = (size - 1) * size; // bottom-left tile
