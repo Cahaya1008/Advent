@@ -1,548 +1,1182 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Advent Calendar — Cozy Lantern Edition</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;600;800&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg-1: #041022;
-    --bg-2: #08203a;
-    --card: rgba(255,255,255,0.04);
-    --accent: #ffd98a;
-    --muted: #9fb3d6;
-    --glass: rgba(255,255,255,0.03);
-    --panel: rgba(10,16,28,0.95);
-  }
+  <meta charset="UTF-8" />
+  <title>Our Advent Calendar</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    :root {
+      --bg: #2c8088;
+      --card: #f5f5f5;
+      --present-top: #b03a3a;
+      --present-box: #7b2333;
+      --gold: #f3c25b;
+      --locked: rgba(0, 0, 0, 0.45);
+      --completed: #2f9f5b;
+      --accent: #f9f0d9;
+      --text-main: #fff;
+      --text-dark: #333;
+    }
 
-  html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial; background: linear-gradient(180deg,var(--bg-1),var(--bg-2) 60%); color:#eaf3ff; -webkit-font-smoothing:antialiased;}
-  .app{max-width:1200px;margin:0 auto;padding:22px;position:relative;z-index:1;}
-  header{display:flex;align-items:center;justify-content:space-between;gap:12px}
-  h1{margin:0;font-size:1.1rem;letter-spacing:1px}
-  .subtitle{color:var(--muted);font-size:.9rem}
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-  /* calendar grid */
-  #calendarGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px;margin-top:22px}
-  .calendar-day{
-    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    border-radius:12px; padding:14px; min-height:110px; position:relative; cursor:pointer; box-shadow: 0 8px 30px rgba(0,0,0,0.6);
-    display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between; transition:transform .12s,box-shadow .12s;
-    border:1px solid rgba(255,255,255,0.03);
-  }
-  .calendar-day:hover{ transform:translateY(-6px); box-shadow:0 14px 40px rgba(0,0,0,0.7); }
-  .day-label{font-weight:800;letter-spacing:1px;color:#fff}
-  .day-sub{color:var(--muted);font-size:.85rem}
-  .lock-overlay{position:absolute;right:10px;top:10px;font-size:18px;opacity:.9}
-  .calendar-day.locked{opacity:.45;cursor:default}
-  .calendar-day.found-day{outline:2px solid rgba(255,217,150,0.12); box-shadow:0 8px 30px rgba(0,0,0,0.7) inset;}
-  .found-badge{position:absolute;left:10px;bottom:10px;background:#fff;color:#122; padding:6px 8px;border-radius:8px;font-weight:800; font-size:.85rem}
+    body {
+      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
 
-  /* bottom UI */
-  #lettersFound{margin-top:20px;background:var(--glass);padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
-  #lettersFound strong{display:block;margin-bottom:8px}
-  .letter-pill{display:inline-block;background:#fff;color:#102035;padding:8px 10px;margin:6px;border-radius:8px;font-weight:900}
+    .page {
+      position: relative;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
 
-  .controls{display:flex;gap:8px;align-items:center}
-  button{background:linear-gradient(180deg,var(--accent),#ffcd6a);border:none;padding:8px 12px;border-radius:10px;color:#082029;cursor:pointer;font-weight:800;box-shadow:0 6px 16px rgba(0,0,0,0.4)}
-  .muted{color:var(--muted)}
+    header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
 
-  /* modal window style */
-  .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(rgba(2,6,12,0.55), rgba(2,6,12,0.7));z-index:999;}
-  .window{
-    width:min(1100px,96%); max-height:86vh; background:linear-gradient(180deg,#071327,#071a2a); border-radius:14px; padding:14px; box-shadow:0 30px 80px rgba(0,0,0,0.8); border:1px solid rgba(255,255,255,0.04); overflow:hidden; position:relative;
-    display:flex;flex-direction:column;
-  }
-  .window.big{width:min(1400px,98%);height:88vh}
-  .window .titleRow{display:flex;align-items:center;justify-content:space-between}
-  .closeBtn{background:transparent;border:none;color:var(--muted);font-size:20px;cursor:pointer}
-  .iframeWrap{flex:1;margin-top:12px;border-radius:10px;overflow:hidden;background:#000}
-  iframe{width:100%;height:100%;border:0;display:block}
+    header h1 {
+      font-size: 2.4rem;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.4rem;
+    }
 
-  /* snow */
-  #snowLayer{position:fixed;left:0;right:0;top:0;height:100%;pointer-events:none;z-index:0;overflow:hidden}
-  .snow-dot{position:absolute;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.85);opacity:.9;box-shadow:0 0 6px rgba(255,255,255,0.12)}
+    header p {
+      font-size: 0.95rem;
+      opacity: 0.9;
+    }
 
-  /* stars */
-  #starLayer{position:fixed;left:0;top:0;right:0;height:45vh;pointer-events:none;z-index:0}
-  .twinkle-star{position:absolute;width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.92);box-shadow:0 0 8px rgba(255,255,255,0.25);pointer-events:auto;opacity:0.9; animation:twinkle 3s linear infinite}
-  .twinkle-star.secret-star{background:linear-gradient(90deg,#fff6d6,#ffd98a); box-shadow:0 0 12px rgba(255,220,120,0.7)}
-  @keyframes twinkle{ 0%{transform:scale(.9);opacity:.6}50%{transform:scale(1.4);opacity:1}100%{transform:scale(.9);opacity:.6} }
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr);
+      gap: 2rem;
+    }
 
-  /* embers / fire at bottom */
-  #emberCanvas{position:fixed;left:0;right:0;bottom:0;height:220px;pointer-events:none;z-index:0}
-  .lantern-glow{
-    position:fixed;left:50%;transform:translateX(-50%);bottom:8px;width:540px;height:120px;border-radius:50%;filter:blur(36px);opacity:0.6;pointer-events:none;background: radial-gradient(ellipse at center, rgba(255,200,100,0.45), rgba(255,140,40,0.12) 30%, rgba(0,0,0,0) 60%); z-index:0;
-  }
+    @media (min-width: 900px) {
+      main {
+        grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+        align-items: flex-start;
+      }
+    }
 
-  /* small helpers */
-  .hintText{position:fixed;left:12px;bottom:12px;font-size:12px;color:rgba(255,255,255,0.12)}
-  .secretCodeBox{margin-top:12px;background:rgba(255,255,255,0.02);padding:12px;border-radius:8px;border:1px dashed rgba(255,255,255,0.03)}
-  .danger{background:linear-gradient(180deg,#ff9a9a,#ff6b6b);color:white;}
+    /* Snow */
 
-  /* responsive */
-  @media (max-width:720px){ .calendar-day{min-height:90px;padding:10px} .day-label{font-size:.95rem} .lantern-glow{width:360px} }
+    #snowContainer {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      z-index: 1;
+    }
 
-</style>
+    .snowflake {
+      position: absolute;
+      top: -10px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: white;
+      opacity: 0.8;
+      filter: blur(0.5px);
+      animation-name: fall;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+    }
+
+    @keyframes fall {
+      to {
+        transform: translate3d(0, 110vh, 0);
+      }
+    }
+
+    /* Stars section */
+
+    #skySection {
+      position: relative;
+      margin-bottom: 1.5rem;
+      padding: 1rem 1.2rem 1.4rem;
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 18px;
+      overflow: hidden;
+      z-index: 2;
+    }
+
+    #skySection h2 {
+      font-size: 1.1rem;
+      margin-bottom: 0.25rem;
+    }
+
+    #skySection p {
+      font-size: 0.9rem;
+      opacity: 0.9;
+      margin-bottom: 0.75rem;
+    }
+
+    .sky {
+      position: relative;
+      height: 120px;
+      border-radius: 14px;
+      background: radial-gradient(circle at top, #fefae0 0, #2c8088 55%, #225a60 100%);
+      overflow: hidden;
+    }
+
+    .star {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 0 6px rgba(255, 255, 255, 0.9);
+      animation: twinkle 2.5s ease-in-out infinite alternate;
+      cursor: default;
+    }
+
+    .star.secret {
+      cursor: pointer;
+      transform: scale(1.1);
+    }
+
+    .star.disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    @keyframes twinkle {
+      0% {
+        opacity: 0.4;
+        transform: scale(0.8);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1.2);
+      }
+    }
+
+    /* Calendar */
+
+    #calendarSection {
+      z-index: 2;
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+
+    #calendarSection h2 {
+      font-size: 1.15rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    @media (max-width: 600px) {
+      .calendar-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+
+    .day-tile {
+      position: relative;
+      border: none;
+      background: transparent;
+      padding: 0;
+      cursor: pointer;
+      outline: none;
+      border-radius: 8px;
+      transition: transform 0.15s ease, box-shadow 0.15s ease,
+        filter 0.15s ease;
+    }
+
+    .day-tile:focus-visible {
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.85);
+    }
+
+    .day-tile-inner {
+      position: relative;
+      background: var(--card);
+      border-radius: 13px;
+      padding: 0.25rem 0.2rem 0.4rem;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
+
+    .present-top {
+      height: 32%;
+      background: var(--present-top);
+      border-radius: 10px 10px 4px 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .present-number {
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #fff;
+    }
+
+    .present-body {
+      position: relative;
+      height: 68%;
+      background: var(--present-box);
+      border-radius: 0 0 10px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ribbon-vertical,
+    .ribbon-horizontal {
+      position: absolute;
+      background: var(--gold);
+    }
+
+    .ribbon-vertical {
+      width: 18%;
+      height: 100%;
+    }
+
+    .ribbon-horizontal {
+      height: 18%;
+      width: 100%;
+    }
+
+    .bow {
+      position: relative;
+      width: 70%;
+      height: 0;
+      padding-bottom: 26%;
+      border-radius: 50%;
+      border: 4px solid var(--gold);
+      border-top-color: transparent;
+      border-right-color: transparent;
+      transform: translateY(-4px) rotate(45deg);
+    }
+
+    .day-tile.locked .day-tile-inner::after,
+    .day-tile.completed .day-tile-inner::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: var(--locked);
+      display: block;
+    }
+
+    .day-tile.locked .lock-icon,
+    .day-tile.completed .check-icon {
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 3;
+    }
+
+    .lock-icon span,
+    .check-icon span {
+      font-size: 1.1rem;
+      color: #fff;
+    }
+
+    .day-tile.completed .day-tile-inner::after {
+      background: rgba(18, 95, 54, 0.7);
+    }
+
+    .day-tile.completed .check-icon {
+      background: var(--completed);
+    }
+
+    .day-tile.available:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+      filter: brightness(1.03);
+    }
+
+    .calendar-note {
+      margin-top: 0.6rem;
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    /* Letters / secret code */
+
+    #lettersSection {
+      position: relative;
+      z-index: 2;
+      padding: 1rem 1.1rem;
+      margin-top: 0.5rem;
+      background: rgba(0, 0, 0, 0.18);
+      border-radius: 18px;
+    }
+
+    #lettersSection h2 {
+      font-size: 1.15rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .letters-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    #lettersList {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-bottom: 0.35rem;
+      min-height: 1.5rem;
+    }
+
+    .letter-badge {
+      padding: 0.25rem 0.55rem;
+      border-radius: 999px;
+      background: var(--accent);
+      color: var(--text-dark);
+      font-weight: 600;
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    #lettersProgress {
+      font-size: 0.85rem;
+      margin-bottom: 0.7rem;
+      opacity: 0.95;
+    }
+
+    .small-btn {
+      border-radius: 999px;
+      border: none;
+      padding: 0.35rem 0.9rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: var(--accent);
+      color: var(--text-dark);
+      transition: transform 0.1s ease, box-shadow 0.1s ease,
+        filter 0.1s ease;
+    }
+
+    .small-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
+      filter: brightness(1.03);
+    }
+
+    .final-wrapper {
+      margin-top: 0.5rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .final-wrapper h3 {
+      font-size: 0.95rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .final-locked-text {
+      font-size: 0.85rem;
+      opacity: 0.9;
+    }
+
+    .final-message {
+      margin-top: 0.4rem;
+      padding: 0.7rem 0.8rem;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .final-message strong {
+      display: block;
+      font-size: 0.95rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Reset */
+
+    #resetSection {
+      margin-top: 1.5rem;
+      z-index: 2;
+      position: relative;
+    }
+
+    #resetButton {
+      border-radius: 999px;
+      border: none;
+      padding: 0.6rem 1.4rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: #f8f1e1;
+      color: #6b3c3c;
+      transition: transform 0.1s ease, box-shadow 0.12s ease,
+        filter 0.1s ease;
+    }
+
+    #resetButton:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      filter: brightness(1.02);
+    }
+
+    .reset-note {
+      font-size: 0.8rem;
+      margin-top: 0.4rem;
+      opacity: 0.85;
+    }
+
+    /* Modals */
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 20;
+    }
+
+    .modal.open {
+      display: flex;
+    }
+
+    .modal-content {
+      max-width: 420px;
+      width: 100%;
+      padding: 1.2rem 1.25rem 1.1rem;
+      background: #faf5f0;
+      border-radius: 18px;
+      color: var(--text-dark);
+      position: relative;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal h2 {
+      font-size: 1.05rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .modal p {
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .modal-close {
+      position: absolute;
+      right: 0.7rem;
+      top: 0.6rem;
+      border: none;
+      background: transparent;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: #555;
+    }
+
+    .modal-footer {
+      margin-top: 0.9rem;
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+    }
+
+    .btn-secondary {
+      border-radius: 999px;
+      border: none;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      background: #e7ded3;
+      color: #333;
+    }
+
+    .btn-primary {
+      border-radius: 999px;
+      border: none;
+      padding: 0.45rem 0.95rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      background: #2f855a;
+      color: white;
+    }
+
+    /* Star lock form */
+
+    .code-form {
+      margin-top: 0.6rem;
+    }
+
+    .code-form label {
+      font-size: 0.85rem;
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    .code-input {
+      width: 100%;
+      padding: 0.45rem 0.6rem;
+      border-radius: 9px;
+      border: 1px solid #d0c5b8;
+      font-size: 0.9rem;
+    }
+
+    .code-input:focus-visible {
+      outline: 2px solid #2f855a;
+      outline-offset: 1px;
+    }
+
+    .code-message {
+      font-size: 0.8rem;
+      margin-top: 0.25rem;
+      min-height: 16px;
+    }
+  </style>
 </head>
 <body>
-  <!-- visual layers -->
-  <div id="starLayer" aria-hidden="true"></div>
-  <div id="snowLayer" aria-hidden="true"></div>
-  <canvas id="emberCanvas" aria-hidden="true"></canvas>
-  <div class="lantern-glow" aria-hidden="true"></div>
+  <div id="snowContainer"></div>
 
-  <div class="app" id="app">
+  <div class="page">
     <header>
-      <div>
-        <h1>Advent Calendar — Cozy Lantern Edition</h1>
-        <div class="subtitle">Dark winter sky • lantern glow • the stars hold secrets</div>
-      </div>
-      <div class="controls">
-        <button id="resetBtn">Reset progress</button>
-        <button id="viewLettersBtn">View letters</button>
-      </div>
+      <h1>Our Advent Calendar</h1>
+      <p>
+        One tiny puzzle each day. Collect the hidden letters and unlock the
+        final message on Christmas. 🎄
+      </p>
     </header>
 
     <main>
-      <div id="calendarGrid" aria-live="polite" style="margin-top:18px"></div>
+      <section>
+        <section id="skySection">
+          <h2>The stars hold secrets ✨</h2>
+          <p>One of these stars hides a secret lock. Once you crack it,
+            the stars will keep shining but won’t be clickable anymore.</p>
+          <div class="sky" aria-label="Night sky with twinkling stars">
+            <!-- Decorative stars (positions set inline just for variety) -->
+            <div class="star" style="top: 18%; left: 12%; animation-delay: 0.1s;"></div>
+            <div class="star" style="top: 8%; left: 40%; animation-delay: 0.5s;"></div>
+            <div class="star" style="top: 30%; left: 70%; animation-delay: 0.9s;"></div>
+            <div class="star" style="top: 62%; left: 18%; animation-delay: 1.3s;"></div>
+            <div class="star" style="top: 55%; left: 50%; animation-delay: 1.7s;"></div>
+            <!-- Secret one -->
+            <button
+              class="star secret"
+              id="secretStar"
+              aria-label="Secret star"
+              style="top: 26%; left: 84%; animation-delay: 0.2s;"
+            ></button>
+          </div>
+        </section>
 
-      <div id="lettersFound" style="margin-top:18px">
-        <strong>Letters found</strong>
-        <div id="lettersList" style="margin-top:8px"></div>
+        <section id="calendarSection">
+          <h2>December Presents</h2>
+          <div class="calendar-grid" id="calendarGrid"></div>
+          <p class="calendar-note" id="calendarNote"></p>
+        </section>
+      </section>
 
-        <div class="secretCodeBox" id="secretCodeBox">
-          <strong>Secret code</strong>
-          <div id="secretCodeText" class="muted">Locked until Dec 25 (or when all digits found).</div>
-        </div>
-      </div>
+      <section>
+        <section id="lettersSection">
+          <div class="letters-toolbar">
+            <h2>Letters Found</h2>
+            <button class="small-btn" id="openLettersModal">
+              View all letters
+            </button>
+          </div>
+          <div id="lettersList"></div>
+          <p id="lettersProgress"></p>
+
+          <div class="final-wrapper">
+            <h3>Secret final message</h3>
+            <p class="final-locked-text" id="finalLockedText">
+              Collect all the special letters and unlock the star code.
+              On Christmas Day, the hidden sentence will reveal itself.
+            </p>
+            <div id="finalMessage" class="final-message hidden">
+              <strong>Final message:</strong>
+              LOVE KNOWS NOT ITS DEPTH TILL THE HOUR OF SEPARATION
+            </div>
+          </div>
+        </section>
+
+        <section id="resetSection">
+          <button id="resetButton">Reset progress</button>
+          <p class="reset-note">
+            This resets everything on this device (calendar, stars, letters,
+            and final message). Use if you want to replay or if something breaks.
+          </p>
+        </section>
+      </section>
     </main>
-
-    <div class="hintText">the stars hold secrets</div>
   </div>
 
-  <!-- modal -->
-  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="window" id="modalWindow">
-      <div class="titleRow">
-        <div id="modalTitle" style="font-weight:800"></div>
-        <div>
-          <button class="closeBtn" id="modalClose" title="Close (Esc)">✕</button>
+  <!-- Modals -->
+
+  <!-- Letters modal -->
+  <div class="modal" id="lettersModal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="modal-close" data-close="lettersModal">&times;</button>
+      <h2>Your letter collection</h2>
+      <p style="margin-bottom: 0.6rem;">
+        These are the unique letters you’ve uncovered so far. Each day (and the
+        secret star) will add at most one new letter.
+      </p>
+      <div id="lettersModalList" style="margin-bottom:0.6rem;"></div>
+      <p id="lettersModalProgress"></p>
+      <div class="modal-footer">
+        <button class="btn-primary" data-close="lettersModal">Back to calendar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Locked day modal -->
+  <div class="modal" id="lockedDayModal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="modal-close" data-close="lockedDayModal">&times;</button>
+      <h2>Too early!</h2>
+      <p id="lockedDayText"></p>
+      <div class="modal-footer">
+        <button class="btn-primary" data-close="lockedDayModal">
+          Got it
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Already found modal -->
+  <div class="modal" id="alreadyFoundModal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="modal-close" data-close="alreadyFoundModal">&times;</button>
+      <h2>Letter already collected ✉️</h2>
+      <p>
+        You’ve already grabbed the secret from that day. Check your “Letters
+        Found” section below — it’s safely stored there.
+      </p>
+      <div class="modal-footer">
+        <button class="btn-secondary" data-close="alreadyFoundModal">
+          Close
+        </button>
+        <button class="btn-primary" data-open="lettersModal">
+          View letters
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Star / code modal -->
+  <div class="modal" id="starModal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="modal-close" data-close="starModal">&times;</button>
+      <h2>The secret star lock</h2>
+      <p>
+        Somewhere in the daily puzzles you’ll discover a 7-digit code.
+        When you think you know it, enter it here. If you’re right, you’ll
+        earn a very special letter.
+      </p>
+      <form class="code-form" id="codeForm">
+        <label for="codeInput">Enter the 7-digit code</label>
+        <input
+          id="codeInput"
+          class="code-input"
+          inputmode="numeric"
+          autocomplete="off"
+          maxlength="7"
+          minlength="7"
+          placeholder="XXXXXXX"
+        />
+        <div class="code-message" id="codeMessage"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" data-close="starModal">
+            Cancel
+          </button>
+          <button type="submit" class="btn-primary">Unlock</button>
         </div>
-      </div>
-      <div class="iframeWrap" id="iframeWrap">
-        <!-- iframe will be inserted here -->
+      </form>
+    </div>
+  </div>
+
+  <!-- Star already solved modal -->
+  <div class="modal" id="starSolvedModal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="modal-close" data-close="starSolvedModal">&times;</button>
+      <h2>The stars remember ⭐</h2>
+      <p>
+        You’ve already solved the secret star lock and claimed its letter.
+        The stars are just here to sparkle now.
+      </p>
+      <div class="modal-footer">
+        <button class="btn-primary" data-close="starSolvedModal">
+          Back to calendar
+        </button>
       </div>
     </div>
   </div>
 
-<script>
-/* ===========================
-   Persistent state & helpers
-   =========================== */
-const STORAGE_KEY = 'advent_cozy_v1';
-let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-if(!state.found) state.found = {};         // day -> collected letter or digit
-if(typeof state.comboCracked === 'undefined') state.comboCracked = false;
-if(typeof state.secretStarFound === 'undefined') state.secretStarFound = false;
+  <script>
+    // ===== CONFIG =====
+    const TOTAL_DAYS = 24;
 
-/* date / test handling */
-const params = new URLSearchParams(location.search);
-let currentDate = new Date();
-if(params.get('test') && params.get('test').startsWith('dec')){
-  const n = parseInt(params.get('test').replace('dec','')) || currentDate.getDate();
-  currentDate = new Date(currentDate.getFullYear(), 11, Math.min(31, Math.max(1,n)));
-}
-const todayDay = currentDate.getDate();
+    // Unique letters that appear in the final message
+    const UNIQUE_LETTERS = [
+      "L",
+      "O",
+      "V",
+      "E",
+      "K",
+      "N",
+      "W",
+      "S",
+      "T",
+      "I",
+      "D",
+      "P",
+      "H",
+      "U",
+      "R",
+      "F",
+      "A"
+    ];
 
-/* Config: letters/digits mapping for Days 1-24 */
-const dayLetterMap = {
-  1:'L',2:'O',3:'V',4:'E',5:'K',6:'N',7:'W',8:'S',9:'T',10:'I',
-  11:'D',12:'P',13:'H',14:'U',15:'R',16:'F',17:'A'
-};
-const dayDigitMap = {18:'5',19:'2',20:'0',21:'1',22:'3',23:'1',24:'4'};
+    // Letter you get from solving the star lock (adjust if you like)
+    const STAR_LETTER = "O";
 
-/* UI elements */
-const grid = document.getElementById('calendarGrid');
-const lettersList = document.getElementById('lettersList');
-const secretCodeText = document.getElementById('secretCodeText');
-const modal = document.getElementById('modal');
-const modalWindow = document.getElementById('modalWindow');
-const iframeWrap = document.getElementById('iframeWrap');
-const modalTitle = document.getElementById('modalTitle');
-const modalClose = document.getElementById('modalClose');
-const viewLettersBtn = document.getElementById('viewLettersBtn');
-const resetBtn = document.getElementById('resetBtn');
+    // Secret numeric code for the star lock
+    const STAR_CODE = "5201314";
 
-/* days & layout */
-const TOTAL_DAYS = 31;
+    // If true, ignore date locks (useful while testing)
+    const IGNORE_DATE_LOCKS = false;
 
-/* ========= create calendar ========= */
-function buildCalendar(){
-  grid.innerHTML = '';
-  for(let d=1; d<=TOTAL_DAYS; d++){
-    const box = document.createElement('div');
-    box.className = 'calendar-day';
-    const label = document.createElement('div');
-    label.className = 'day-label';
-    label.textContent = `Day ${d}`;
-    box.appendChild(label);
+    // ===== UTILS =====
 
-    const sub = document.createElement('div');
-    sub.className = 'day-sub';
-    // short descriptor for first 11 days
-    const desc = {
-      1:'Wordle',2:'Bracket City',3:'Matching',4:'Jigsaw',5:'Riddle',6:'Maze',7:'Simon',8:'Quote',9:'Spot the diff',10:'Sudoku',11:'Minesweeper'
-    }[d] || '';
-    sub.textContent = desc;
-    box.appendChild(sub);
-
-    // lock / unlock logic: unlocked if d <= todayDay OR ?unlockAll=true OR ?test=decN providing test day
-    const unlockAll = location.search.includes('unlockAll=true');
-    const unlocked = unlockAll || d <= todayDay;
-    const alreadyFound = !!state.found[d];
-
-    const lockDiv = document.createElement('div');
-    lockDiv.className = 'lock-overlay';
-    if(alreadyFound){
-      // show found badge inside the day
-      const f = document.createElement('div');
-      f.className = 'found-badge';
-      f.textContent = 'Found';
-      box.appendChild(f);
-      lockDiv.textContent = '✅';
-      box.classList.add('found-day');
-      box.classList.remove('locked');
-      box.removeEventListener('click', ()=>openDay(d));
-    } else if(unlocked){
-      lockDiv.textContent = '🔓';
-      box.classList.add('unlocked');
-      box.style.cursor = 'pointer';
-      box.addEventListener('click', ()=> openDay(d));
-    } else {
-      lockDiv.textContent = '🔒';
-      box.classList.add('locked');
+    function getToday() {
+      return new Date();
     }
 
-    box.appendChild(lockDiv);
-    grid.appendChild(box);
-  }
-  renderFoundLetters();
-  updateSecretCodeUI();
-}
-buildCalendar();
+    function isChristmasOrLater() {
+      const now = getToday();
+      const christmas = new Date(now.getFullYear(), 11, 25); // month 11 = Dec
+      return now >= christmas;
+    }
 
-/* ========== render found letters area ========== */
-function renderFoundLetters(){
-  lettersList.innerHTML = '';
-  const keys = Object.keys(state.found).map(k=>parseInt(k)).sort((a,b)=>a-b);
-  if(!keys.length){
-    lettersList.innerHTML = `<div class="muted">None yet</div>`;
-    return;
-  }
-  keys.forEach(k=>{
-    const v = state.found[k];
-    const pill = document.createElement('span');
-    pill.className = 'letter-pill';
-    pill.textContent = `Day ${k}: ${v}`;
-    lettersList.appendChild(pill);
-  });
-}
+    function isDayUnlocked(dayNumber) {
+      if (IGNORE_DATE_LOCKS) return true;
+      const now = getToday();
+      const decDay = new Date(now.getFullYear(), 11, dayNumber);
+      return now >= decDay;
+    }
 
-/* ========= modal controls (iframe based) ========= */
-modalClose.addEventListener('click', hideModal);
-window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') hideModal(); });
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      if (!modal) return;
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+    }
 
-function showModalForDay(day, title, path, big=false){
-  modal.style.display = 'flex';
-  modal.setAttribute('aria-hidden','false');
-  modalWindow.classList.toggle('big', !!big);
-  modalTitle.textContent = title || `Day ${day}`;
-  iframeWrap.innerHTML = '';
-  const iframe = document.createElement('iframe');
-  iframe.src = path;
-  iframe.id = 'dayIframe';
-  iframe.setAttribute('title', `Day ${day} content`);
-  iframeWrap.appendChild(iframe);
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      if (!modal) return;
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+    }
 
-  // allow messages from day iframe to call parent APIs
-  // (days should postMessage({type:'collected', day: N, value: 'A'}) when letter found)
-}
+    function getCollectedLetters() {
+      // Prefer explicit list if we ever save it
+      const stored = localStorage.getItem("advent_letters");
+      let letters = [];
 
-/* handle postMessage from day files */
-window.addEventListener('message', (ev)=>{
-  try{
-    const data = ev.data;
-    if(!data || typeof data !== 'object') return;
-    if(data.type === 'collected' && data.day && data.value){
-      // store and update UI
-      state.found[data.day] = data.value;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            letters = parsed;
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      const set = new Set(letters.map((c) => String(c).toUpperCase()));
+
+      // Derive from day letters
+      for (let day = 1; day <= TOTAL_DAYS; day++) {
+        const key = "advent_day_" + day + "_letter";
+        const letter = localStorage.getItem(key);
+        if (letter) set.add(letter.toUpperCase());
+      }
+
+      // Star letter
+      const starLetter = localStorage.getItem("advent_star_letter");
+      if (starLetter) set.add(starLetter.toUpperCase());
+
+      const finalArr = Array.from(set);
+      localStorage.setItem("advent_letters", JSON.stringify(finalArr));
+      return finalArr;
+    }
+
+    function renderLetterBadges(container, letters) {
+      container.innerHTML = "";
+      if (!letters.length) {
+        const p = document.createElement("p");
+        p.textContent = "No letters yet. Open a present to find your first one!";
+        p.style.fontSize = "0.85rem";
+        p.style.opacity = "0.9";
+        container.appendChild(p);
+        return;
+      }
+      letters
+        .sort()
+        .forEach((letter) => {
+          const span = document.createElement("span");
+          span.className = "letter-badge";
+          span.textContent = letter;
+          container.appendChild(span);
+        });
+    }
+
+    function updateLettersUI() {
+      const letters = getCollectedLetters();
+      const list = document.getElementById("lettersList");
+      const progress = document.getElementById("lettersProgress");
+      const modalList = document.getElementById("lettersModalList");
+      const modalProgress = document.getElementById("lettersModalProgress");
+
+      const haveCount = UNIQUE_LETTERS.filter((L) =>
+        letters.includes(L)
+      ).length;
+      const totalCount = UNIQUE_LETTERS.length;
+
+      renderLetterBadges(list, letters);
+      renderLetterBadges(modalList, letters);
+
+      const msgBase = `You have discovered ${haveCount} / ${totalCount} special letters.`;
+      const extra =
+        haveCount === totalCount
+          ? " All the letters for the final sentence are now in your collection!"
+          : "";
+      progress.textContent = msgBase + extra;
+      modalProgress.textContent = msgBase + extra;
+
+      checkFinalUnlockConditions();
+    }
+
+    function checkFinalUnlockConditions() {
+      const letters = getCollectedLetters();
+      const haveAll = UNIQUE_LETTERS.every((L) => letters.includes(L));
+      const starSolved = localStorage.getItem("advent_star_solved") === "true";
+      const finalUnlockedStored =
+        localStorage.getItem("advent_final_unlocked") === "true";
+
+      const finalMessage = document.getElementById("finalMessage");
+      const lockedText = document.getElementById("finalLockedText");
+
+      if (finalUnlockedStored || (haveAll && starSolved && isChristmasOrLater())) {
+        finalMessage.classList.remove("hidden");
+        lockedText.textContent =
+          "You did it! You’ve collected all the letters and solved the star lock. Here is the final message:";
+        localStorage.setItem("advent_final_unlocked", "true");
+      } else {
+        finalMessage.classList.add("hidden");
+        lockedText.textContent =
+          "Collect all the special letters and unlock the star code. On Christmas Day, the hidden sentence will reveal itself.";
+      }
+    }
+
+    // ===== Calendar =====
+
+    function buildCalendar() {
+      const grid = document.getElementById("calendarGrid");
+      grid.innerHTML = "";
+
+      for (let day = 1; day <= TOTAL_DAYS; day++) {
+        const tileBtn = document.createElement("button");
+        tileBtn.className = "day-tile";
+        tileBtn.setAttribute("type", "button");
+        tileBtn.dataset.day = String(day);
+
+        const inner = document.createElement("div");
+        inner.className = "day-tile-inner";
+
+        const top = document.createElement("div");
+        top.className = "present-top";
+
+        const number = document.createElement("div");
+        number.className = "present-number";
+        number.textContent = day;
+        top.appendChild(number);
+
+        const body = document.createElement("div");
+        body.className = "present-body";
+
+        const ribbonV = document.createElement("div");
+        ribbonV.className = "ribbon-vertical";
+
+        const ribbonH = document.createElement("div");
+        ribbonH.className = "ribbon-horizontal";
+
+        const bow = document.createElement("div");
+        bow.className = "bow";
+
+        body.appendChild(ribbonV);
+        body.appendChild(ribbonH);
+        body.appendChild(bow);
+
+        inner.appendChild(top);
+        inner.appendChild(body);
+
+        tileBtn.appendChild(inner);
+
+        // Determine state
+        const hasLetter =
+          localStorage.getItem("advent_day_" + day + "_letter") !== null;
+        const unlocked = isDayUnlocked(day);
+
+        let state = "locked";
+        if (hasLetter) state = "completed";
+        else if (unlocked) state = "available";
+
+        tileBtn.dataset.state = state;
+        tileBtn.classList.add(state);
+
+        if (state === "locked") {
+          const lock = document.createElement("div");
+          lock.className = "lock-icon";
+          lock.innerHTML = "<span>🔒</span>";
+          tileBtn.appendChild(lock);
+        } else if (state === "completed") {
+          const check = document.createElement("div");
+          check.className = "check-icon";
+          check.innerHTML = "<span>✓</span>";
+          tileBtn.appendChild(check);
+        }
+
+        tileBtn.addEventListener("click", () =>
+          onDayTileClick(day, tileBtn)
+        );
+
+        grid.appendChild(tileBtn);
+      }
+
+      const note = document.getElementById("calendarNote");
+      if (IGNORE_DATE_LOCKS) {
+        note.textContent =
+          "Date locks are currently disabled for testing. In December, each present normally unlocks on its day.";
+      } else {
+        const today = getToday();
+        note.textContent = `Today is ${
+          today.toLocaleDateString(undefined, {
+            month: "long",
+            day: "numeric",
+          })
+        }. Presents unlock on their matching December date.`;
+      }
+    }
+
+    function onDayTileClick(day, tileEl) {
+      const state = tileEl.dataset.state;
+
+      if (state === "locked") {
+        const text = document.getElementById("lockedDayText");
+        text.textContent = `That present unlocks on December ${day}. Come back then!`;
+        openModal("lockedDayModal");
+        return;
+      }
+
+      if (state === "completed") {
+        openModal("alreadyFoundModal");
+        return;
+      }
+
+      // Available: go to day page
+      // Path pattern: /days/dayX/index.html
+      window.location.href = `days/day${day}/index.html`;
+    }
+
+    // ===== Stars / code =====
+
+    function initStars() {
+      const starButton = document.getElementById("secretStar");
+      if (!starButton) return;
+
+      const starSolved =
+        localStorage.getItem("advent_star_solved") === "true";
+
+      if (starSolved) {
+        starButton.classList.add("disabled");
+        starButton.addEventListener("click", () => openModal("starSolvedModal"));
+      } else {
+        starButton.addEventListener("click", () => openModal("starModal"));
+      }
+
+      const codeForm = document.getElementById("codeForm");
+      const codeInput = document.getElementById("codeInput");
+      const codeMsg = document.getElementById("codeMessage");
+
+      codeForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const raw = (codeInput.value || "").trim();
+        if (raw.length !== 7) {
+          codeMsg.textContent = "The code should be exactly 7 digits.";
+          return;
+        }
+        if (raw === STAR_CODE) {
+          localStorage.setItem("advent_star_solved", "true");
+          localStorage.setItem("advent_star_letter", STAR_LETTER);
+          codeMsg.textContent =
+            "Unlocked! A secret letter has been added to your collection.";
+          codeMsg.style.color = "#2f855a";
+          starButton.classList.add("disabled");
+          starButton.onclick = () => openModal("starSolvedModal");
+          updateLettersUI();
+          setTimeout(() => {
+            closeModal("starModal");
+            openModal("lettersModal");
+          }, 900);
+        } else {
+          codeMsg.textContent = "Not quite. Keep collecting clues from the days!";
+          codeMsg.style.color = "#b83232";
+        }
+      });
+    }
+
+    // ===== Snow =====
+
+    function initSnow() {
+      const container = document.getElementById("snowContainer");
+      const flakeCount = 70;
+      for (let i = 0; i < flakeCount; i++) {
+        const flake = document.createElement("div");
+        flake.className = "snowflake";
+        const size = 2 + Math.random() * 4;
+        flake.style.width = size + "px";
+        flake.style.height = size + "px";
+        flake.style.left = Math.random() * 100 + "vw";
+        flake.style.animationDuration = 8 + Math.random() * 8 + "s";
+        flake.style.animationDelay = Math.random() * 8 + "s";
+        container.appendChild(flake);
+      }
+    }
+
+    // ===== Reset =====
+
+    function initReset() {
+      const btn = document.getElementById("resetButton");
+      btn.addEventListener("click", () => {
+        const ok = confirm(
+          "Reset all progress? (Days, letters, stars, and final message will all be cleared.)"
+        );
+        if (!ok) return;
+
+        // Clear day letters
+        for (let day = 1; day <= TOTAL_DAYS; day++) {
+          localStorage.removeItem("advent_day_" + day + "_letter");
+        }
+
+        // Clear other keys
+        localStorage.removeItem("advent_letters");
+        localStorage.removeItem("advent_star_letter");
+        localStorage.removeItem("advent_star_solved");
+        localStorage.removeItem("advent_final_unlocked");
+
+        // If you ever add more keys, wipe them here too.
+        location.reload();
+      });
+    }
+
+    // ===== Modals generic close handlers =====
+
+    function initModals() {
+      document.querySelectorAll("[data-close]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-close");
+          if (id) closeModal(id);
+        });
+      });
+
+      document.querySelectorAll("[data-open]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-open");
+          if (id) openModal(id);
+        });
+      });
+
+      document.querySelectorAll(".modal").forEach((modal) => {
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal) {
+            modal.classList.remove("open");
+            modal.setAttribute("aria-hidden", "true");
+          }
+        });
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          document
+            .querySelectorAll(".modal.open")
+            .forEach((m) => m.classList.remove("open"));
+        }
+      });
+
+      const openLettersButton = document.getElementById("openLettersModal");
+      openLettersButton.addEventListener("click", () =>
+        openModal("lettersModal")
+      );
+    }
+
+    // ===== Boot =====
+
+    document.addEventListener("DOMContentLoaded", () => {
+      initSnow();
       buildCalendar();
-      // show small success modal (closable)
-      showSimpleModal(`Letter found! Day ${data.day}: ${data.value}`);
-    }
-    if(data.type === 'comboCracked'){
-      state.comboCracked = true;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      showSimpleModal('You cracked the star combination!');
-    }
-  }catch(e){ console.warn('message handler error', e); }
-});
+      initStars();
+      initModals();
+      initReset();
+      updateLettersUI();
+    });
 
-
-/* generic small modal content for simple messages */
-function showSimpleModal(html){
-  modal.style.display = 'flex';
-  modal.setAttribute('aria-hidden','false');
-  modalWindow.classList.remove('big');
-  modalTitle.textContent = '';
-  iframeWrap.innerHTML = `<div style="padding:18px;color:#fff;font-weight:700">${html}<div style="margin-top:12px"><button onclick="hideModal()">Close</button></div></div>`;
-}
-
-/* hide modal */
-function hideModal(){
-  modal.style.display = 'none';
-  modal.setAttribute('aria-hidden','true');
-  iframeWrap.innerHTML = '';
-}
-
-/* ========== public API for day files (if loaded as same-origin iframe they can also access parent.collectLetter) ========== */
-function collectLetterFromDay(day, value){
-  state.found[day] = value;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  buildCalendar();
-  showSimpleModal(`Letter found! Day ${day}: ${value}`);
-}
-
-/* make it globally available for same-origin iframe usage */
-window.collectLetterFromDay = collectLetterFromDay;
-
-/* ========= openDay dispatcher (path assumes Option C folder names) ========= */
-function openDay(day){
-  // don't open found days
-  if(state.found[day]){ showSimpleModal(`You've already found Day ${day}'s letter.`); return; }
-
-  // if day > today and not unlocked, block
-  const unlockAll = location.search.includes('unlockAll=true');
-  if(!unlockAll && day > todayDay){
-    showSimpleModal(`Day ${day} is locked until its date.`);
-    return;
-  }
-
-  // map day -> path to /days/dayX/index.html
-  const path = `./days/day${day}/index.html`;
-  // For larger games (4,6,7,10,11) open bigger window
-  const big = [1,2,3,4,5,6,7,8,9,10,11].includes(day);
-  let title = `Day ${day}`;
-  switch(day){
-    case 1: title = 'Wordle — Day 1'; break;
-    case 2: title = 'Bracket City — Day 2'; break;
-    case 3: title = 'Matching — Day 3'; break;
-    case 4: title = 'Jigsaw — Day 4'; break;
-    case 5: title = 'Riddle — Day 5'; break;
-    case 6: title = 'Maze — Day 6'; break;
-    case 7: title = 'Simon — Day 7'; break;
-    case 8: title = 'Quote — Day 8'; break;
-    case 9: title = 'Spot the Diff — Day 9'; break;
-    case 10: title = 'Sudoku — Day 10'; break;
-    case 11: title = 'Minesweeper — Day 11'; break;
-  }
-  showModalForDay(day, title, path, big);
-}
-
-/* ========= secret star system ========= */
-const starLayer = document.getElementById('starLayer');
-let secretStarIndex = Math.floor(Math.random()*24)+1;
-function spawnStars(){
-  for(let i=0;i<24;i++){
-    const s = document.createElement('div');
-    s.className = 'twinkle-star';
-    s.style.left = (5 + Math.random()*90) + '%';
-    s.style.top = (5 + Math.random()*33) + '%';
-    s.style.width = (6 + Math.random()*8) + 'px';
-    s.style.height = s.style.width;
-
-    // one secret star only
-    if(i+1 === secretStarIndex && !state.secretStarFound){
-      s.classList.add('secret-star');
-      s.title = 'Secret star (click me)';
-      s.style.cursor = 'pointer';
-      s.addEventListener('click', openStarCombo);
-    } else {
-      // non-secret stars are not clickable
-      s.style.pointerEvents = 'none';
-    }
-    starLayer.appendChild(s);
-  }
-}
-spawnStars();
-
-function openStarCombo(){
-  // if already found, ignore
-  if(state.secretStarFound){
-    showSimpleModal('You already discovered the star secret.');
-    return;
-  }
-  // a small modal with input
-  modal.style.display = 'flex';
-  modal.setAttribute('aria-hidden','false');
-  modalWindow.classList.remove('big');
-  modalTitle.textContent = 'Stars — Combination Lock';
-  iframeWrap.innerHTML = `
-    <div style="padding:18px;color:#fff">
-      <p>Enter the 7-digit code you discover across Days 18–24.</p>
-      <input id="comboInput" maxlength="7" style="font-size:20px;padding:8px;width:220px;text-align:center" />
-      <div style="margin-top:12px"><button onclick="submitCombo()">Enter</button> <button onclick="hideModal()">Cancel</button></div>
-      <div style="margin-top:10px;color:var(--muted);font-size:13px">Hint: code = digits found on Days 18–24</div>
-    </div>
-  `;
-}
-function submitCombo(){
-  const v = document.getElementById('comboInput').value.trim();
-  if(v === '5201314'){
-    state.secretStarFound = true;
-    state.comboCracked = true;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    hideModal();
-    // notify and show special message (parent)
-    showSimpleModal('✨ You cracked the star combination! ✨');
-    // broadcast to iframes (if needed)
-    window.postMessage({type:'comboCracked'}, '*');
-  } else {
-    showSimpleModal('Incorrect code — keep collecting the digits from Days 18–24.');
-  }
-}
-
-/* ========= secret code UI (locked until Dec 25 or when all collected) ========= */
-function updateSecretCodeUI(){
-  // build code string from found days 18-24
-  let digits = [];
-  for(let d=18; d<=24; d++){
-    if(state.found[d]) digits.push(state.found[d]); else digits.push('_');
-  }
-  const allFound = digits.every(ch => ch !== '_');
-  secretCodeText.textContent = `Digits (Days 18–24): ${digits.join(' ')} — ${allFound ? 'All digits collected' : 'Collect all digits.'}`;
-  // final decode only available Dec 25+
-  const canDecode = currentDate >= new Date(currentDate.getFullYear(),11,25) && allFound;
-  if(canDecode){
-    // decode via provided mapping: we won't implement calculus mapping here; just show final message if all letters present
-    secretCodeText.innerHTML = `<strong>Final message unlocked:</strong><div style="margin-top:8px;background:rgba(255,255,255,0.03);padding:8px;border-radius:8px;color:#fff">LOVE KNOWS NOT ITS DEPTH TILL THE HOUR OF SEPARATION</div>`;
-  }
-}
-
-/* ========= reset / view letters ========= */
-viewLettersBtn.addEventListener('click', ()=> {
-  // show a modal listing letters and a close button
-  const keys = Object.keys(state.found).map(n=>parseInt(n)).sort((a,b)=>a-b);
-  const lines = keys.length ? keys.map(k=>`Day ${k}: ${state.found[k]}`).join('<br>') : '<em>None yet</em>';
-  modal.style.display = 'flex'; modal.setAttribute('aria-hidden','false'); modalWindow.classList.remove('big'); modalTitle.textContent = 'Letters found';
-  iframeWrap.innerHTML = `<div style="padding:18px;color:#fff">${lines}<div style="margin-top:12px"><button onclick="hideModal()">Close</button></div></div>`;
-});
-
-resetBtn.addEventListener('click', ()=> {
-  modal.style.display = 'flex'; modal.setAttribute('aria-hidden','false'); modalWindow.classList.remove('big'); modalTitle.textContent = 'Reset Progress';
-  iframeWrap.innerHTML = `<div style="padding:18px;color:#fff">
-    <p>Reset will clear all collected letters. If current date is Dec 25+ and the code was cracked, resetting could optionally reshuffle the calendar (not implemented).</p>
-    <div style="margin-top:12px"><button onclick="confirmReset()" class="danger">Confirm Reset</button> <button onclick="hideModal()">Cancel</button></div>
-  </div>`;
-});
-function confirmReset(){
-  state = {found:{}, comboCracked:false, secretStarFound:false};
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  hideModal();
-  buildCalendar();
-  showSimpleModal('Progress cleared.');
-}
-
-/* ========== Snow system (small efficient particle system) ========== */
-const snowLayer = document.getElementById('snowLayer');
-function makeSnow(count=80){
-  for(let i=0;i<count;i++){
-    const d = document.createElement('div');
-    d.className = 'snow-dot';
-    resetDot(d,true);
-    snowLayer.appendChild(d);
-    animateDot(d);
-  }
-}
-function resetDot(d, initial=false){
-  const w = Math.max(window.innerWidth,600);
-  d.style.left = (Math.random()*100) + '%';
-  d.style.top = (initial ? (-Math.random()*50) : -10) + '%';
-  d.style.opacity = (0.3 + Math.random()*0.8);
-  const s = 4 + Math.random()*8;
-  d.style.width = s+'px';
-  d.style.height = s+'px';
-}
-function animateDot(d){
-  const dur = 8000 + Math.random()*12000;
-  const end = window.innerHeight + 40;
-  const startX = parseFloat(d.style.left);
-  const dx = (Math.random()*20 - 10);
-  const startTop = parseFloat(d.style.top);
-  const start = Date.now();
-  function frame(){
-    const t = (Date.now() - start)/dur;
-    if(t >= 1){ resetDot(d); setTimeout(()=>animateDot(d), Math.random()*2000); return; }
-    d.style.top = (t*120) + '%';
-    d.style.left = (startX + dx * t) + '%';
-    requestAnimationFrame(frame);
-  }
-  requestAnimationFrame(frame);
-}
-makeSnow(90);
-
-/* ========== Embers (canvas) ========= */
-const emberC = document.getElementById('emberCanvas');
-const ectx = emberC.getContext?.('2d');
-function resizeCanvas(){ emberC.width = window.innerWidth; emberC.height = 220; }
-resizeCanvas(); window.addEventListener('resize', resizeCanvas);
-
-let embers = [];
-function spawnEmber(){
-  const w = emberC.width;
-  embers.push({
-    x: w/2 + (Math.random()*380 - 190),
-    y: emberC.height - 20,
-    vx: (Math.random()*2 - 1),
-    vy: - (4 + Math.random()*5),
-    life: 60 + Math.random()*80,
-    r: 2 + Math.random()*3,
-    alpha: 1
-  });
-}
-function updateEmbers(){
-  if(!ectx) return;
-  ectx.clearRect(0,0,emberC.width, emberC.height);
-  if(Math.random() < 0.25) spawnEmber();
-  embers.forEach((em,idx)=>{
-    em.x += em.vx;
-    em.y += em.vy;
-    em.vy += 0.08; // gravity
-    em.life -= 1;
-    em.alpha = Math.max(0, em.life / 120);
-    // glow
-    ectx.beginPath();
-    ectx.fillStyle = `rgba(255,180,60,${em.alpha})`;
-    ectx.shadowColor = `rgba(255,160,30,${em.alpha})`;
-    ectx.shadowBlur = 18;
-    ectx.arc(em.x, em.y, em.r, 0, Math.PI*2);
-    ectx.fill();
-    if(em.life <= 0 || em.y > emberC.height + 20) embers.splice(idx,1);
-  });
-  requestAnimationFrame(updateEmbers);
-}
-updateEmbers();
-
-/* ========== utilities ========== */
-function formatDate(d){
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
-
-/* ensure calendar is rebuilt on load (in case state changed elsewhere) */
-window.addEventListener('focus', ()=> buildCalendar());
-</script>
+    // ===== IMPORTANT FOR DAY PAGES =====
+    // On each /days/dayX/index.html puzzle page, when she finishes the puzzle
+    // and you know the letter for that day, call:
+    //
+    //   localStorage.setItem("advent_day_X_letter", "L"); // replace X and "L"
+    //
+    // (Use a single uppercase letter.)
+    // When she returns to this main page, the letter will automatically appear
+    // in the collection and that day will be marked as completed + unclickable,
+    // showing the "already found this secret letter" modal instead.
+  </script>
 </body>
 </html>
