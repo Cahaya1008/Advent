@@ -1,152 +1,641 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Day 1 — Wordle</title>
-<style>
-  :root{ --bg:#071427; --card:#fff; --accent:#ffd98a; }
-  body{margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,#041226,#072238);color:#fff;padding:14px;}
-  .wrap{max-width:760px;margin:0 auto;background:rgba(255,255,255,0.02);padding:16px;border-radius:10px}
-  h2{margin:0 0 8px 0}
-  #rows{display:flex;flex-direction:column;gap:8px;margin:12px 0}
-  .row{display:flex;gap:8px}
-  .cell{width:56px;height:56px;border-radius:8px;background:#fff;color:#072;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px}
-  .cell.gray{background:#e6e6e6}
-  .cell.yellow{background:#ffd56b}
-  .cell.green{background:#7cf}
-  input[type="text"]{padding:10px;border-radius:8px;border:0;width:260px}
-  button{padding:8px 12px;border-radius:8px;border:0;background:var(--accent);color:#072;font-weight:800;cursor:pointer}
-  .muted{color:#b8cee4}
-  .hint{margin-top:12px;background:rgba(255,255,255,0.02);padding:10px;border-radius:8px}
-  .foundBox{margin-top:12px;background:#fff;padding:10px;border-radius:8px;color:#072;font-weight:900;display:flex;align-items:center;justify-content:space-between}
-</style>
+  <meta charset="UTF-8" />
+  <title>Day 1 – Wordle</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    :root {
+      --bg: #2c8088;
+      --panel: #fdf6ed;
+      --tile-border: #d3c4b2;
+      --text-main: #222;
+      --accent: #b03a3a;
+      --correct: #2f9f5b;
+      --present: #f3c25b;
+      --absent: #737373;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #fefae0 0, #2c8088 55%, #225a60 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: var(--text-main);
+      padding: 1.5rem 0.75rem;
+    }
+
+    .page {
+      max-width: 540px;
+      width: 100%;
+      background: var(--panel);
+      border-radius: 22px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+      padding: 1.6rem 1.4rem 1.3rem;
+      position: relative;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 1.1rem;
+    }
+
+    header h1 {
+      font-size: 1.7rem;
+      margin-bottom: 0.1rem;
+      color: var(--accent);
+    }
+
+    header p {
+      font-size: 0.9rem;
+      opacity: 0.85;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      background: #f4e4d0;
+      padding: 0.22rem 0.6rem;
+      border-radius: 999px;
+      margin-bottom: 0.3rem;
+    }
+
+    main {
+      margin-top: 0.3rem;
+    }
+
+    .board {
+      display: grid;
+      grid-template-rows: repeat(6, 1fr);
+      gap: 0.4rem;
+      margin-bottom: 1rem;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.35rem;
+    }
+
+    .tile {
+      border-radius: 8px;
+      border: 2px solid var(--tile-border);
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      background: #fff;
+      transition: transform 0.1s ease, background 0.15s ease,
+        border-color 0.15s ease, color 0.15s ease;
+      cursor: default;
+      user-select: none;
+    }
+
+    .tile.revealed {
+      color: #fff;
+      border-color: transparent;
+    }
+
+    .tile.correct {
+      background: var(--correct);
+    }
+
+    .tile.present {
+      background: var(--present);
+      color: #422000;
+    }
+
+    .tile.absent {
+      background: var(--absent);
+    }
+
+    .tile.clickable-letter {
+      cursor: pointer;
+      box-shadow: 0 0 0 2px rgba(176, 58, 58, 0.65);
+    }
+
+    .tile.clickable-letter:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .controls label {
+      font-size: 0.85rem;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    #guessInput {
+      flex: 1;
+      padding: 0.5rem 0.7rem;
+      border-radius: 999px;
+      border: 1px solid #cbb7a3;
+      font-size: 1rem;
+      text-transform: uppercase;
+    }
+
+    #guessInput:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+
+    .btn {
+      border-radius: 999px;
+      border: none;
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+      transition: transform 0.1s ease, box-shadow 0.12s ease;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+    }
+
+    .btn-secondary {
+      background: #f1e4d4;
+      color: #5a4032;
+      border: 1px solid #d5c4b0;
+    }
+
+    .btn-secondary:hover {
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    #status {
+      font-size: 0.85rem;
+      min-height: 1.1rem;
+    }
+
+    #status.error {
+      color: #b83232;
+    }
+
+    #status.success {
+      color: #2f855a;
+    }
+
+    #guessesLeft {
+      font-size: 0.8rem;
+      opacity: 0.75;
+    }
+
+    #hintContainer {
+      margin-top: 0.6rem;
+      padding: 0.65rem 0.75rem;
+      background: #f8ecdc;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      border: 1px dashed #d1b491;
+      display: none;
+    }
+
+    #hintLabel {
+      font-weight: 600;
+      margin-bottom: 0.15rem;
+    }
+
+    footer {
+      margin-top: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      font-size: 0.8rem;
+    }
+
+    footer a {
+      text-decoration: none;
+      color: #5a4032;
+    }
+
+    .already-banner {
+      position: absolute;
+      top: 0.75rem;
+      right: 1rem;
+      font-size: 0.75rem;
+      background: #ecf8f0;
+      border-radius: 999px;
+      padding: 0.2rem 0.6rem;
+      border: 1px solid #c3e6d4;
+      color: #285943;
+    }
+
+    /* Modal */
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 20;
+    }
+
+    .modal.open {
+      display: flex;
+    }
+
+    .modal-content {
+      max-width: 420px;
+      width: 100%;
+      padding: 1.2rem 1.3rem 1.05rem;
+      background: #faf5f0;
+      border-radius: 18px;
+      color: #333;
+      position: relative;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal h2 {
+      font-size: 1.1rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .modal p {
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .modal-close {
+      position: absolute;
+      right: 0.7rem;
+      top: 0.6rem;
+      border: none;
+      background: transparent;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: #555;
+    }
+
+    .modal-footer {
+      margin-top: 0.9rem;
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+  </style>
 </head>
 <body>
-  <div class="wrap">
-    <h2>Day 1 — Wordle (5 letters)</h2>
-    <p class="muted">Guess the 5-letter English word. When you guess correctly, the hint appears and you must click the secret letter in the solved word to store it.</p>
-
-    <div id="rows"></div>
-
-    <div>
-      <input id="guess" maxlength="5" placeholder="Type a 5-letter word" />
-      <button id="try">Try</button>
-      <button id="closeBtn" style="margin-left:8px">Close</button>
+  <div class="page">
+    <div class="already-banner" id="alreadyBanner" style="display:none;">
+      Letter already collected ✅
     </div>
+    <header>
+      <div class="badge">
+        <span>Day 1</span> <span>Wordle warm-up</span>
+      </div>
+      <h1>December 1</h1>
+      <p>Guess the 5-letter word. When you crack it, a special letter is hiding in plain sight.</p>
+    </header>
 
-    <div id="hintArea" class="hint muted" style="display:none"></div>
+    <main>
+      <section class="board" id="board" aria-label="Wordle board"></section>
 
-    <div id="foundPanel" style="display:none" class="foundBox">
-      <div>Letter found: <span id="foundLetter" style="font-size:18px"></span></div>
-      <div><button id="foundClose">Close</button></div>
+      <section class="controls">
+        <label for="guessInput">Enter a 5-letter English word</label>
+        <div class="input-row">
+          <input
+            id="guessInput"
+            maxlength="5"
+            autocomplete="off"
+            autofocus
+          />
+          <button class="btn" id="submitGuess">Submit</button>
+        </div>
+        <p id="status"></p>
+        <p id="guessesLeft"></p>
+      </section>
+
+      <section id="hintContainer">
+        <div id="hintLabel">Hint unlocked 💡</div>
+        <p>
+          The letter that is to be clicked on is a heart after it loses its warmth.
+          (heart − heat = ?)
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      <button class="btn btn-secondary" id="backButton">
+        ← Back to calendar
+      </button>
+      <span>Each day hides at most one letter.</span>
+    </footer>
+  </div>
+
+  <!-- Letter collected modal -->
+  <div class="modal" id="letterModal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="modal-close" data-close="letterModal">&times;</button>
+      <h2>Letter collected ✉️</h2>
+      <p>
+        You chose wisely. This letter has been stored in your collection
+        on the main calendar page.
+      </p>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close="letterModal">
+          Stay on this page
+        </button>
+        <button class="btn" id="goHomeFromModal">
+          Back to calendar
+        </button>
+      </div>
     </div>
   </div>
 
-<script>
-/* Day 1 Wordle */
-const DAY = 1;
-const COLLECT_LETTER = 'R';
-const TARGET = 'THORN';
+  <script>
+    // ===== CONFIG =====
+    const ANSWER = "THORN";
+    const MAX_GUESSES = 6;
+    const DAY_LETTER_KEY = "advent_day_1_letter"; // will store "R"
+    const HIDDEN_LETTER = "R";
 
-/* tiny dictionary — extend this array with a larger one or fetch an external wordlist */
-const DICT = ['THORN','THOSE','THEIR','SPARE','CRANE','BROOM','APPLE','GLASS','HEART','LIGHT','BRAVE','BRING','PLACE','STONE','BLADE','PRIDE','QUICK','SPOON','HOUSE'];
+    // ===== STATE =====
+    let currentRow = 0;
+    let gameOver = false;
+    let dictionary = new Set([ANSWER]); // fallback
 
-const rowsEl = document.getElementById('rows');
-const guessEl = document.getElementById('guess');
-document.getElementById('try').addEventListener('click', tryGuess);
-document.getElementById('closeBtn').addEventListener('click', tryClose);
-document.getElementById('foundClose').addEventListener('click', closeAfterCollect);
+    const boardEl = document.getElementById("board");
+    const guessInput = document.getElementById("guessInput");
+    const submitGuessBtn = document.getElementById("submitGuess");
+    const statusEl = document.getElementById("status");
+    const guessesLeftEl = document.getElementById("guessesLeft");
+    const hintContainer = document.getElementById("hintContainer");
+    const alreadyBanner = document.getElementById("alreadyBanner");
 
-let rows = [];
-
-function render(){
-  rowsEl.innerHTML = '';
-  rows.forEach(r=>{
-    const node = document.createElement('div'); node.className='row';
-    for(let i=0;i<5;i++){
-      const ch = document.createElement('div'); ch.className='cell';
-      const letter = r[i]||'';
-      ch.textContent = letter;
-      if(letter){
-        // colorize later by state property included in r._colors
-        const colors = r._colors || [];
-        if(colors[i] === 'green') ch.classList.add('green');
-        else if(colors[i] === 'yellow') ch.classList.add('yellow');
-        else ch.classList.add('gray');
+    // ===== INIT BOARD =====
+    function createBoard() {
+      boardEl.innerHTML = "";
+      for (let r = 0; r < MAX_GUESSES; r++) {
+        const row = document.createElement("div");
+        row.className = "row";
+        row.dataset.row = String(r);
+        for (let c = 0; c < ANSWER.length; c++) {
+          const tile = document.createElement("div");
+          tile.className = "tile";
+          tile.dataset.row = String(r);
+          tile.dataset.col = String(c);
+          row.appendChild(tile);
+        }
+        boardEl.appendChild(row);
       }
-      node.appendChild(ch);
     }
-    rowsEl.appendChild(node);
-  });
-}
 
-function tryGuess(){
-  const g = (guessEl.value||'').trim().toUpperCase();
-  if(g.length !== 5){ alert('Please enter 5 letters'); return; }
-  if(!DICT.includes(g)){ alert('Word not found in dictionary (replace DICT array with larger list if necessary)'); return; }
+    // ===== DICTIONARY LOAD =====
+    // Optional: create a text file `wordlist-5-letter.txt` in this folder,
+    // one word per line, to use a bigger dictionary.
+    fetch("wordlist-5-letter.txt")
+      .then((resp) => resp.text())
+      .then((text) => {
+        text
+          .split(/\r?\n/)
+          .map((w) => w.trim().toUpperCase())
+          .filter((w) => w.length === 5)
+          .forEach((w) => dictionary.add(w));
+      })
+      .catch(() => {
+        // If it fails, fallback to just ANSWER + a few extras for testing
+        ["APPLE", "BRAIN", "SMILE", "WORDS"].forEach((w) =>
+          dictionary.add(w)
+        );
+      });
 
-  // produce coloring with correct-letter priority: first mark greens, then count remaining target letters for yellows
-  const colors = Array(5).fill('gray');
-  const targetArr = TARGET.split('');
-  // mark greens
-  for(let i=0;i<5;i++){
-    if(g[i] === TARGET[i]) { colors[i] = 'green'; targetArr[i] = null; }
-  }
-  // mark yellows
-  for(let i=0;i<5;i++){
-    if(colors[i] === 'gray'){
-      const pos = targetArr.indexOf(g[i]);
-      if(pos !== -1){ colors[i] = 'yellow'; targetArr[pos] = null; }
+    // ===== UTIL =====
+    function setStatus(message, type = "") {
+      statusEl.textContent = message;
+      statusEl.className = "";
+      if (type) statusEl.classList.add(type);
     }
-  }
-  // push row object
-  const row = g.split(''); row._colors = colors;
-  rows.push(row);
-  render();
-  guessEl.value='';
 
-  if(g === TARGET){
-    // reveal hint
-    document.getElementById('hintArea').style.display = 'block';
-    document.getElementById('hintArea').innerHTML = '<strong>Hint revealed:</strong> Heart - heat = ? (click the correct letter in the solved word above to store)';
-    // make last row clickable
-    const lastRow = rowsEl.lastChild;
-    for(let i=0;i<5;i++){
-      const cell = lastRow.children[i];
-      cell.style.cursor='pointer';
-      cell.addEventListener('click', ()=> {
-        const clicked = TARGET[i];
-        if(clicked === COLLECT_LETTER) collectLetter();
-        else alert('That is not the secret letter — try another letter.');
+    function updateGuessesLeft() {
+      const remaining = MAX_GUESSES - currentRow;
+      guessesLeftEl.textContent = `Guesses remaining: ${remaining}`;
+    }
+
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      if (!modal) return;
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      if (!modal) return;
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    // ===== WORDLE LOGIC =====
+    function evaluateGuess(guess, answer) {
+      const result = Array(5).fill("absent");
+      const answerChars = answer.split("");
+      const used = Array(5).fill(false);
+
+      // First pass: correct positions
+      for (let i = 0; i < 5; i++) {
+        if (guess[i] === answerChars[i]) {
+          result[i] = "correct";
+          used[i] = true;
+        }
+      }
+
+      // Second pass: present in wrong position
+      for (let i = 0; i < 5; i++) {
+        if (result[i] !== "absent") continue;
+        for (let j = 0; j < 5; j++) {
+          if (!used[j] && guess[i] === answerChars[j]) {
+            result[i] = "present";
+            used[j] = true;
+            break;
+          }
+        }
+      }
+
+      return result;
+    }
+
+    function revealGuess(guess, evaluation) {
+      const rowEl = boardEl.querySelector(`.row[data-row="${currentRow}"]`);
+      const tiles = rowEl.querySelectorAll(".tile");
+      for (let i = 0; i < 5; i++) {
+        tiles[i].textContent = guess[i];
+        tiles[i].classList.add("revealed");
+        tiles[i].classList.add(evaluation[i]); // correct / present / absent
+      }
+    }
+
+    function handleWin(guess) {
+      gameOver = true;
+      setStatus("Nice! You found the word.", "success");
+      hintContainer.style.display = "block";
+      enableLetterSelectionForRow(currentRow);
+    }
+
+    function handleLoss(answer) {
+      gameOver = true;
+      setStatus(`Out of guesses. The word was ${answer}.`, "error");
+      hintContainer.style.display = "block";
+      // Still allow letter selection from the (non-existent) correct row? No.
+      // The letter is only collectible if she actually solves it.
+    }
+
+    function onSubmitGuess() {
+      if (gameOver) return;
+
+      let guess = guessInput.value.trim().toUpperCase();
+      guessInput.value = "";
+
+      if (guess.length !== 5) {
+        setStatus("Please enter exactly 5 letters.", "error");
+        return;
+      }
+
+      if (!/^[A-Z]+$/.test(guess)) {
+        setStatus("Letters only, please.", "error");
+        return;
+      }
+
+      if (!dictionary.has(guess)) {
+        setStatus("Word not found in dictionary.", "error");
+        return;
+      }
+
+      const evaluation = evaluateGuess(guess, ANSWER);
+      revealGuess(guess, evaluation);
+
+      if (guess === ANSWER) {
+        handleWin(guess);
+      } else {
+        currentRow++;
+        if (currentRow >= MAX_GUESSES) {
+          handleLoss(ANSWER);
+        } else {
+          setStatus("", "");
+        }
+      }
+
+      updateGuessesLeft();
+    }
+
+    // ===== LETTER SELECTION AFTER WIN =====
+    function enableLetterSelectionForRow(rowIndex) {
+      const rowEl = boardEl.querySelector(`.row[data-row="${rowIndex}"]`);
+      if (!rowEl) return;
+
+      const tiles = rowEl.querySelectorAll(".tile");
+      tiles.forEach((tile) => {
+        tile.classList.add("clickable-letter");
+        tile.addEventListener("click", () =>
+          handleLetterClick(tile.textContent || "")
+        );
       });
     }
-  }
-}
 
-function collectLetter(){
-  // fallback strategies to notify parent
-  try{
-    if(window.parent && window.parent.collectLetterFromDay) {
-      window.parent.collectLetterFromDay(DAY, COLLECT_LETTER);
-    } else {
-      window.parent.postMessage({type:'collected', day: DAY, value: COLLECT_LETTER}, '*');
+    function handleLetterClick(letter) {
+      // If letter already stored, just show modal again.
+      if (localStorage.getItem(DAY_LETTER_KEY)) {
+        openModal("letterModal");
+        return;
+      }
+
+      // She has to pick the right letter based on the hint.
+      if (letter === HIDDEN_LETTER) {
+        localStorage.setItem(DAY_LETTER_KEY, HIDDEN_LETTER);
+        alreadyBanner.style.display = "block";
+        openModal("letterModal");
+      } else {
+        setStatus("Not that one. Think about the hint again. ❤️➖🔥", "error");
+      }
     }
-  }catch(e){
-    window.parent.postMessage({type:'collected', day: DAY, value: COLLECT_LETTER}, '*');
-  }
-  // show found panel (closeable)
-  document.getElementById('foundLetter').textContent = COLLECT_LETTER;
-  document.getElementById('foundPanel').style.display = 'flex';
-}
 
-function closeAfterCollect(){
-  try{ window.parent.hideModal(); }catch(e){ window.parent.postMessage({type:'requestClose'}, '*'); }
-}
+    // ===== PAGE + MODAL BEHAVIOUR =====
+    document.getElementById("backButton").addEventListener("click", () => {
+      window.location.href = "../../index.html";
+    });
 
-function tryClose(){ try{ window.parent.hideModal(); }catch(e){ window.parent.postMessage({type:'requestClose'}, '*'); } }
+    document.getElementById("goHomeFromModal").addEventListener("click", () => {
+      window.location.href = "../../index.html";
+    });
 
-render();
-</script>
+    document
+      .querySelectorAll("[data-close]")
+      .forEach((btn) =>
+        btn.addEventListener("click", () =>
+          closeModal(btn.getAttribute("data-close"))
+        )
+      );
+
+    document.querySelectorAll(".modal").forEach((modal) => {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) {
+          modal.classList.remove("open");
+          modal.setAttribute("aria-hidden", "true");
+        }
+      });
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        // If any modal is open, ignore Enter
+        if (document.querySelector(".modal.open")) return;
+        onSubmitGuess();
+      } else if (e.key === "Escape") {
+        document
+          .querySelectorAll(".modal.open")
+          .forEach((m) => m.classList.remove("open"));
+      }
+    });
+
+    submitGuessBtn.addEventListener("click", onSubmitGuess);
+
+    // ===== INITIALISE =====
+    createBoard();
+    updateGuessesLeft();
+    setStatus("", "");
+
+    // If the letter was already collected earlier, show a tiny banner.
+    if (localStorage.getItem(DAY_LETTER_KEY)) {
+      alreadyBanner.style.display = "block";
+    }
+  </script>
 </body>
 </html>
