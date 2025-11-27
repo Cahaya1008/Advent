@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Day 11 — Minesweeper</title>
+<style>
+  body{margin:0;font-family:Inter,Arial;background:linear-gradient(180deg,#041226,#072238);color:#fff;padding:12px}
+  .wrap{max-width:1100px;margin:0 auto}
+  h2{margin:0}
+  #field{margin-top:12px}
+  .cell{width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;border:1px solid #c6d6ee;background:#e9f3ff;color:#072;font-size:12px;cursor:pointer}
+  .controls{margin-top:12px}
+  button{background:#ffd98a;border:0;padding:8px 12px;border-radius:8px;color:#072;font-weight:800}
+  .muted{color:#7f9fc2}
+  .found{margin-top:12px;background:#fff;color:#072;padding:10px;border-radius:8px;display:flex;justify-content:space-between;align-items:center}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h2>Day 11 — Minesweeper (25×25)</h2>
+    <p class="muted">25×25 grid, 100 bombs. First click is always safe. Right-click to place flags.</p>
+
+    <div class="controls">
+      <button id="reset">Reset</button>
+      <button id="help">?</button>
+      <button id="close">Close</button>
+    </div>
+
+    <div id="field"></div>
+
+    <div id="foundPanel" style="display:none" class="found"><div>Letter found: <strong id="foundLetter">I</strong></div><div><button id="closeFound">Close</button></div></div>
+  </div>
+
+<script>
+/* Day 11 Minesweeper */
+const DAY = 11;
+const COLLECT_LETTER = 'I';
+const rows = 25, cols = 25, bombsTotal = 100;
+let grid = [], revealed = [], flagged = [], placed = false;
+
+const field = document.getElementById('field');
+document.getElementById('reset').addEventListener('click', init);
+document.getElementById('help').addEventListener('click', ()=>alert('Minesweeper rules:\n- Reveal all non-mine cells to win.\n- Numbers show how many mines adjacent.\n- Right-click to flag.\n- First click safe (mines placed after first click).'));
+document.getElementById('close').addEventListener('click', ()=>{ try{ window.parent.hideModal(); }catch(e){ window.parent.postMessage({type:'requestClose'}, '*'); } });
+document.getElementById('closeFound').addEventListener('click', ()=>{ try{ window.parent.hideModal(); }catch(e){ window.parent.postMessage({type:'requestClose'}, '*'); } });
+
+function buildEmpty(){
+  grid = Array.from({length:rows}, ()=>Array(cols).fill(0));
+  revealed = Array.from({length:rows}, ()=>Array(cols).fill(false));
+  flagged = Array.from({length:rows}, ()=>Array(cols).fill(false));
+  placed = false;
+  render();
+}
+
+function placeBombsAvoid(fr,fc){
+  let placedCount = 0;
+  const forbidden = new Set();
+  for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
+    const nr=fr+dr, nc=fc+dc;
+    if(nr>=0&&nr<rows&&nc>=0&&nc<cols) forbidden.add(`${nr}-${nc}`);
+  }
+  while(placedCount < bombsTotal){
+    const r = Math.floor(Math.random()*rows), c = Math.floor(Math.random()*cols), key=`${r}-${c}`;
+    if(forbidden.has(key) || grid[r][c] === -1) continue;
+    grid[r][c] = -1; placedCount++;
+  }
+  // numbers
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+    if(grid[r][c] === -1) continue;
+    let cnt = 0;
+    for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
+      const nr=r+dr, nc=c+dc;
+      if(nr<0||nr>=rows||nc<0||nc>=cols) continue;
+      if(grid[nr][nc] === -1) cnt++;
+    }
+    grid[r][c] = cnt;
+  }
+  placed = true;
+}
+
+function render(){
+  field.innerHTML = '';
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const btn = document.createElement('div');
+      btn.className = 'cell';
+      btn.style.width = btn.style.height = '18px';
+      btn.dataset.r = r; btn.dataset.c = c;
+      if(flagged[r][c] && !revealed[r][c]) btn.textContent = '🚩';
+      else if(revealed[r][c]){
+        if(grid[r][c] === -1) btn.textContent = '💣';
+        else if(grid[r][c] === 0) btn.textContent = '';
+        else btn.textContent = grid[r][c];
+        btn.style.background = '#fff';
+      } else btn.textContent = '';
+      btn.addEventListener('click', ()=>onReveal(r,c));
+      btn.addEventListener('contextmenu', (ev)=>{ ev.preventDefault(); toggleFlag(r,c); });
+      field.appendChild(btn);
+    }
+    const br = document.createElement('div'); br.style.clear='both'; field.appendChild(br);
+  }
+}
+
+function revealCell(r,c){
+  if(r<0||r>=rows||c<0||c>=cols) return;
+  if(revealed[r][c] || flagged[r][c]) return;
+  revealed[r][c] = true;
+  if(grid[r][c] === 0){
+    for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
+      if(dr===0 && dc===0) continue;
+      revealCell(r+dr,c+dc);
+    }
+  }
+}
+
+function onReveal(r,c){
+  if(!placed) placeBombsAvoid(r,c);
+  if(grid[r][c] === -1){
+    // reveal all bombs
+    for(let i=0;i<rows;i++) for(let j=0;j<cols;j++) if(grid[i][j] === -1) revealed[i][j] = true;
+    render();
+    alert('BOOM! You hit a bomb. Try Reset.');
+    buildEmpty(); return;
+  } else {
+    revealCell(r,c);
+    render();
+    // check win
+    let won = true;
+    for(let i=0;i<rows;i++) for(let j=0;j<cols;j++){
+      if(grid[i][j] !== -1 && !revealed[i][j]) { won=false; break; }
+    }
+    if(won){
+      try{ if(window.parent && window.parent.collectLetterFromDay) window.parent.collectLetterFromDay(DAY, COLLECT_LETTER); else window.parent.postMessage({type:'collected', day:DAY, value:COLLECT_LETTER}, '*'); }catch(e){ window.parent.postMessage({type:'collected', day:DAY, value:COLLECT_LETTER}, '*'); }
+      document.getElementById('foundLetter').textContent = COLLECT_LETTER;
+      document.getElementById('foundPanel').style.display = 'flex';
+    }
+  }
+}
+
+function toggleFlag(r,c){ flagged[r][c] = !flagged[r][c]; render(); }
+
+buildEmpty();
+</script>
+</body>
+</html>
