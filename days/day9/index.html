@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Day 9 — Spot the Difference</title>
+<style>
+  body{margin:0;font-family:Inter,Arial;background:linear-gradient(180deg,#041226,#072238);color:#fff;padding:12px}
+  .wrap{max-width:980px;margin:0 auto}
+  h2{margin:0}
+  .spotWrap{display:flex;gap:12px;margin-top:12px}
+  .imgBox{width:48%;border-radius:8px;overflow:hidden;border:3px solid rgba(255,255,255,0.04);cursor:pointer}
+  .controls{margin-top:12px}
+  button{background:#ffd98a;border:0;padding:8px 12px;border-radius:8px;color:#072;font-weight:800}
+  .muted{color:#b9cfe6}
+  .found{margin-top:12px;background:#fff;color:#072;padding:10px;border-radius:8px;display:flex;justify-content:space-between;align-items:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2>Day 9 — Spot the Difference</h2>
+  <p class="muted">Click the difference on the RIGHT image. There are 5 stages (images). Upload images to /img/ naming them Dec8_puzzle1_left.jpg, Dec8_puzzle1_right.jpg ... up to 5.</p>
+  <div class="spotWrap">
+    <div class="imgBox" id="leftBox"><img id="leftImg" style="width:100%;height:100%;object-fit:cover"/></div>
+    <div class="imgBox" id="rightBox"><img id="rightImg" style="width:100%;height:100%;object-fit:cover"/></div>
+  </div>
+  <div class="controls"><button id="close">Close</button></div>
+  <div id="foundPanel" style="display:none" class="found"><div>Letter found: <strong id="foundLetter">T</strong></div><div><button id="closeFound">Close</button></div></div>
+</div>
+
+<script>
+/* Day 9 Spot the diff */
+const DAY = 9;
+const COLLECT_LETTER = 'T';
+let stage = 1;
+const maxStage = 5;
+const coords = {
+  // placeholder coords in the original 640x420 image. Replace these with real positions for your images.
+  1:{x:220,y:130,r:30},
+  2:{x:110,y:60,r:28},
+  3:{x:310,y:185,r:26},
+  4:{x:260,y:95,r:30},
+  5:{x:180,y:210,r:28}
+};
+
+const leftImg = document.getElementById('leftImg');
+const rightImg = document.getElementById('rightImg');
+const leftBox = document.getElementById('leftBox');
+const rightBox = document.getElementById('rightBox');
+
+function loadStage(){
+  // try ../../img first then /img fallback
+  const leftPath = `../../img/Dec8_puzzle${stage}_left.jpg`;
+  const leftPath2 = `/img/Dec8_puzzle${stage}_left.jpg`;
+  leftImg.src = leftPath; rightImg.src = leftPath.replace('_left','_right');
+  // no reliable cross-check here — user will supply images
+  document.getElementById('foundPanel').style.display = 'none';
+}
+rightBox.addEventListener('click', (ev)=>{
+  // compute click relative to element
+  const rect = rightImg.getBoundingClientRect();
+  const cx = ev.clientX - rect.left;
+  const cy = ev.clientY - rect.top;
+  const naturalW = rightImg.naturalWidth || 640;
+  const naturalH = rightImg.naturalHeight || 420;
+  const scaleX = rect.width / naturalW;
+  const scaleY = rect.height / naturalH;
+  const p = coords[stage] || {x:rect.width/2,y:rect.height/2,r:30};
+  const tx = p.x * scaleX, ty = p.y * scaleY, r = p.r * ((scaleX+scaleY)/2);
+  const dist = Math.hypot(cx-tx, cy-ty);
+  if(dist <= r){
+    stage++;
+    if(stage > maxStage){
+      // success
+      try{ if(window.parent && window.parent.collectLetterFromDay) window.parent.collectLetterFromDay(DAY, COLLECT_LETTER); else window.parent.postMessage({type:'collected', day:DAY, value:COLLECT_LETTER}, '*'); }catch(e){ window.parent.postMessage({type:'collected', day:DAY, value:COLLECT_LETTER}, '*'); }
+      document.getElementById('foundLetter').textContent = COLLECT_LETTER;
+      document.getElementById('foundPanel').style.display = 'flex';
+    } else {
+      alert('Good — next pair!');
+      loadStage();
+    }
+  } else alert('Not the right spot — try again.');
+});
+
+document.getElementById('close').addEventListener('click', ()=>{ try{ window.parent.hideModal(); }catch(e){ window.parent.postMessage({type:'requestClose'}, '*'); } });
+document.getElementById('closeFound').addEventListener('click', ()=>{ try{ window.parent.hideModal(); }catch(e){ window.parent.postMessage({type:'requestClose'}, '*'); } });
+
+loadStage();
+</script>
+</body>
+</html>
