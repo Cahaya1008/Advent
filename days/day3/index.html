@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Day 3 — Matching</title>
+<style>
+  body{margin:0;font-family:Inter,Arial;background:linear-gradient(180deg,#041226,#072238);color:#fff;padding:12px}
+  .wrap{max-width:980px;margin:0 auto}
+  h2{margin:0}
+  .board{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:12px}
+  .card{height:90px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:28px;color:#072;cursor:pointer;border:3px solid rgba(0,0,0,0.06)}
+  .card.revealed{background:#e6f8ea}
+  .controls{margin-top:12px;display:flex;gap:8px}
+  button{background:#ffd98a;border:0;padding:8px 12px;border-radius:8px;color:#072;font-weight:800}
+  .muted{color:#b9cfe6}
+  #status{margin-top:10px}
+  .found{margin-top:12px;background:#fff;color:#072;padding:10px;border-radius:8px;display:flex;justify-content:space-between;align-items:center}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h2>Day 3 — Matching (You vs CPU)</h2>
+    <p class="muted">30 cards (15 pairs). Take turns with the CPU. If you get more pairs than CPU, you win.</p>
+    <div class="board" id="board"></div>
+
+    <div id="status" class="muted"></div>
+    <div class="controls">
+      <button id="restart">Restart</button>
+      <button id="closeBtn">Close</button>
+    </div>
+
+    <div id="foundPanel" style="display:none" class="found"><div>Letter found: <strong id="foundLetter">V</strong></div><div><button id="closeFound">Close</button></div></div>
+  </div>
+
+<script>
+/* Day 3 Matching */
+const DAY = 3;
+const COLLECT_LETTER = 'V';
+const icons = ['🐶','🐱','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🦄','🐝','🐙']; // 15 unique icons
+let cards=[], revealed=[], matched=[], cpuMemory={}, scores={player:0,cpu:0}, playerTurn=true, firstFlip=-1;
+const board = document.getElementById('board');
+const status = document.getElementById('status');
+
+document.getElementById('restart').addEventListener('click', init);
+document.getElementById('closeBtn').addEventListener('click', closeSelf);
+document.getElementById('closeFound').addEventListener('click', closeSelf);
+
+function init(){
+  const pairs = icons.concat(icons);
+  cards = pairs.sort(()=>Math.random()-0.5);
+  revealed = Array(cards.length).fill(false);
+  matched = Array(cards.length).fill(false);
+  cpuMemory = {};
+  scores = {player:0,cpu:0};
+  playerTurn = true; firstFlip=-1;
+  render(); status.textContent = 'Your turn.';
+}
+
+function render(){
+  board.innerHTML = '';
+  for(let i=0;i<cards.length;i++){
+    const c = document.createElement('div');
+    c.className = 'card';
+    if(matched[i]) c.classList.add('revealed');
+    c.textContent = (matched[i] || revealed[i]) ? cards[i] : '';
+    c.dataset.i = i;
+    c.addEventListener('click', ()=>playerFlip(i));
+    board.appendChild(c);
+  }
+}
+
+function revealIndex(i){
+  revealed[i] = true;
+  render();
+}
+
+function playerFlip(i){
+  if(!playerTurn) return;
+  if(revealed[i] || matched[i]) return;
+  revealIndex(i);
+  if(firstFlip === -1){ firstFlip = i; return; }
+  // second flip
+  if(cards[firstFlip] === cards[i]){
+    matched[firstFlip] = matched[i] = true;
+    scores.player++;
+    status.textContent = `Nice! Score — You: ${scores.player} CPU: ${scores.cpu}`;
+    firstFlip = -1; render();
+    checkEnd();
+  } else {
+    playerTurn = false;
+    status.textContent = 'No match — CPU turn.';
+    setTimeout(()=>{ revealed[firstFlip] = revealed[i] = false; firstFlip = -1; render(); cpuAction(); }, 700);
+  }
+}
+
+function cpuAction(){
+  // clean memory of matched
+  for(let k in cpuMemory) cpuMemory[k] = cpuMemory[k].filter(ii=>!matched[ii]);
+  // find known pair
+  for(const v in cpuMemory){
+    if(cpuMemory[v].length >= 2){
+      const [a,b] = cpuMemory[v];
+      revealIndex(a);
+      setTimeout(()=>{ revealIndex(b); matched[a]=matched[b]=true; scores.cpu++; status.textContent = `CPU found a pair. Score — You: ${scores.player} CPU: ${scores.cpu}`; render(); checkEnd(); setTimeout(()=>cpuAction(), 500); }, 450);
+      return;
+    }
+  }
+  // random pick from unrevealed/unmatched
+  const pool = [];
+  for(let i=0;i<cards.length;i++) if(!revealed[i] && !matched[i]) pool.push(i);
+  if(pool.length === 0) return;
+  const a = pool[Math.floor(Math.random()*pool.length)];
+  revealIndex(a);
+  // remember value
+  cpuMemory[cards[a]] = Array.from(new Set([...(cpuMemory[cards[a]]||[]), a]));
+  setTimeout(()=>{
+    // try to find a match known
+    const seen = (cpuMemory[cards[a]]||[]).find(ii=>ii!==a && !matched[ii]);
+    let b;
+    if(seen !== undefined) b = seen;
+    else {
+      const pool2 = pool.filter(x=>x!==a);
+      b = pool2.length ? pool2[Math.floor(Math.random()*pool2.length)] : null;
+    }
+    if(b === null){ playerTurn = true; status.textContent = 'Your turn.'; return; }
+    revealIndex(b);
+    cpuMemory[cards[b]] = Array.from(new Set([...(cpuMemory[cards[b]]||[]), b]));
+    setTimeout(()=>{
+      if(cards[a] === cards[b]){
+        matched[a]=matched[b]=true; scores.cpu++; status.textContent = `CPU found a pair. Score — You: ${scores.player} CPU: ${scores.cpu}`; render(); checkEnd(); setTimeout(()=>cpuAction(),500);
+      } else {
+        revealed[a]=revealed[b]=false; render(); playerTurn = true; status.textContent = 'Your turn.';
+      }
+    }, 500);
+  }, 600);
+}
+
+function checkEnd(){
+  if(matched.every(Boolean)){
+    let msg = `Final score — You: ${scores.player} CPU: ${scores.cpu}. `;
+    if(scores.player > scores.cpu){
+      msg += 'You win! Collect your letter.';
+      status.textContent = msg;
+      collect();
+    } else if(scores.player < scores.cpu){
+      msg += 'CPU wins. Restart to try again.';
+      status.textContent = msg;
+    } else {
+      msg += "It's a tie. Restart to try again.";
+      status.textContent = msg;
+    }
+  }
+}
+
+function collect(){
+  try{
+    if(window.parent && window.parent.collectLetterFromDay) window.parent.collectLetterFromDay(DAY, COLLECT_LETTER);
+    else window.parent.postMessage({type:'collected', day:DAY, value:COLLECT_LETTER}, '*');
+  }catch(e){ window.parent.postMessage({type:'collected', day:DAY, value:COLLECT_LETTER}, '*'); }
+  document.getElementById('foundPanel').style.display = 'flex';
+}
+
+function closeSelf(){ try{ window.parent.hideModal(); }catch(e){ window.parent.postMessage({type:'requestClose'}, '*'); } }
+
+init();
+</script>
+</body>
+</html>
