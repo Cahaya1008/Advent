@@ -334,7 +334,7 @@ function openDay(day){
   // map day -> path to /days/dayX/index.html
   const path = `./days/day${day}/index.html`;
   // For larger games (4,6,7,10,11) open bigger window
-  const big = [3,4,6,7,10,11].includes(day);
+  const big = [1,2,3,4,5,6,7,8,9,10,11].includes(day);
   let title = `Day ${day}`;
   switch(day){
     case 1: title = 'Wordle — Day 1'; break;
