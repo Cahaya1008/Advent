@@ -42,7 +42,7 @@
       max-width: 1200px;
       margin: 0 auto;
       padding: 2rem 1.5rem 4rem;
-      z-index: 3;
+      z-index: 4;
     }
 
     header {
@@ -74,15 +74,34 @@
       }
     }
 
-    /* Snow */
+    /* Background layers */
 
-    #snowContainer {
+    #starContainer {
       pointer-events: none;
       position: fixed;
       inset: 0;
       overflow: hidden;
       z-index: 1;
     }
+
+    #snowContainer {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      z-index: 2;
+    }
+
+    #fireContainer {
+      pointer-events: none;
+      position: fixed;
+      inset: auto 0 0 0;
+      height: 40vh; /* a bit taller so glow isn't cut off */
+      overflow: visible;
+      z-index: 3;
+    }
+
+    /* Snow */
 
     .snowflake {
       position: absolute;
@@ -106,29 +125,20 @@
 
     /* Fire glow and embers */
 
-    #fireContainer {
-      pointer-events: none;
-      position: fixed;
-      inset: auto 0 0 0;
-      height: 30vh;
-      overflow: visible;
-      z-index: 2;
-    }
-
     .fire-glow {
       position: absolute;
-      bottom: -20%;
+      bottom: -45%; /* push down so top edge is softer */
       left: 50%;
       transform: translateX(-50%);
-      width: 70vw;
-      max-width: 900px;
-      height: 80%;
+      width: 80vw;
+      max-width: 1100px;
+      height: 130%;
       background:
         radial-gradient(circle at 50% 100%, rgba(252, 211, 77, 0.6), transparent 55%),
         radial-gradient(circle at 40% 100%, rgba(248, 113, 113, 0.55), transparent 60%),
         radial-gradient(circle at 60% 100%, rgba(251, 146, 60, 0.7), transparent 60%);
-      opacity: 0.65;
-      filter: blur(12px);
+      opacity: 0.7;
+      filter: blur(14px);
       animation: firePulse 3.2s ease-in-out infinite;
     }
 
@@ -138,7 +148,7 @@
         transform: translateX(-50%) scale(0.95);
       }
       50% {
-        opacity: 0.9;
+        opacity: 0.95;
         transform: translateX(-50%) scale(1.06);
       }
       100% {
@@ -174,65 +184,31 @@
       }
     }
 
-    /* Stars section */
-
-    #skySection {
-      position: relative;
-      margin-bottom: 1.5rem;
-      padding: 1rem 1.2rem 1.4rem;
-      background: rgba(0, 0, 0, 0.25);
-      border-radius: 18px;
-      overflow: hidden;
-      z-index: 2;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      backdrop-filter: blur(4px);
-    }
-
-    #skySection h2 {
-      font-size: 1.1rem;
-      margin-bottom: 0.25rem;
-    }
-
-    #skySection p {
-      font-size: 0.9rem;
-      opacity: 0.9;
-      margin-bottom: 0.75rem;
-    }
-
-    .sky {
-      position: relative;
-      height: 120px;
-      border-radius: 14px;
-      background: radial-gradient(circle at top, #fefae0 0, #2c8088 55%, #225a60 100%);
-      overflow: hidden;
-    }
+    /* Stars */
 
     .star {
       position: absolute;
-      width: 10px;
-      height: 10px;
       border-radius: 50%;
-      border: 2px solid rgba(255, 255, 255, 0.8);
       background: rgba(255, 255, 255, 0.95);
       box-shadow: 0 0 6px rgba(255, 255, 255, 0.9);
       animation: twinkle 2.5s ease-in-out infinite alternate;
-      cursor: default;
     }
 
-    .star.secret {
+    .star.secret-star {
+      width: 12px;
+      height: 12px;
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      background: rgba(252, 211, 77, 0.95);
+      box-shadow: 0 0 10px rgba(252, 211, 77, 0.9);
+      border-radius: 999px;
       cursor: pointer;
-      transform: scale(1.1);
-    }
-
-    .star.disabled {
-      opacity: 0.4;
-      cursor: default;
+      pointer-events: auto; /* clickable even though container is none */
     }
 
     @keyframes twinkle {
       0% {
-        opacity: 0.4;
-        transform: scale(0.8);
+        opacity: 0.3;
+        transform: scale(0.7);
       }
       100% {
         opacity: 1;
@@ -643,6 +619,7 @@
   </style>
 </head>
 <body>
+  <div id="starContainer"></div>
   <div id="snowContainer"></div>
   <div id="fireContainer"></div>
 
@@ -657,27 +634,6 @@
 
     <main>
       <section>
-        <section id="skySection">
-          <h2>The stars hold secrets ✨</h2>
-          <p>One of these stars hides a secret lock. Once you crack it,
-            the stars will keep shining but won’t be clickable anymore.</p>
-          <div class="sky" aria-label="Night sky with twinkling stars">
-            <!-- Decorative stars -->
-            <div class="star" style="top: 18%; left: 12%; animation-delay: 0.1s;"></div>
-            <div class="star" style="top: 8%; left: 40%; animation-delay: 0.5s;"></div>
-            <div class="star" style="top: 30%; left: 70%; animation-delay: 0.9s;"></div>
-            <div class="star" style="top: 62%; left: 18%; animation-delay: 1.3s;"></div>
-            <div class="star" style="top: 55%; left: 50%; animation-delay: 1.7s;"></div>
-            <!-- Secret one -->
-            <button
-              class="star secret"
-              id="secretStar"
-              aria-label="Secret star"
-              style="top: 26%; left: 84%; animation-delay: 0.2s;"
-            ></button>
-          </div>
-        </section>
-
         <section id="calendarSection">
           <h2>December Presents</h2>
           <div class="calendar-grid" id="calendarGrid"></div>
@@ -826,7 +782,6 @@
     // ===== CONFIG =====
     const TOTAL_DAYS = 24;
 
-    // Unique letters that appear in the final message
     const UNIQUE_LETTERS = [
       "L",
       "O",
@@ -847,24 +802,38 @@
       "A"
     ];
 
-    // Letter you get from solving the star lock (adjust if you like)
     const STAR_LETTER = "O";
-
-    // Secret numeric code for the star lock
     const STAR_CODE = "5201314";
 
-    // If true, ignore date locks (useful while testing)
+    // If true, all days are available regardless of date (overrides test param)
     const IGNORE_DATE_LOCKS = false;
+
+    // Simulated date from ?test=decNN query
+    let SIMULATED_DATE = null;
+    (function initSimulatedDateFromQuery() {
+      const params = new URLSearchParams(window.location.search);
+      const test = params.get("test");
+      if (!test) return;
+      const match = /^dec(\d{1,2})$/i.exec(test.trim());
+      if (!match) return;
+      const dayNum = parseInt(match[1], 10);
+      if (Number.isNaN(dayNum) || dayNum < 1 || dayNum > 31) return;
+      const realNow = new Date();
+      SIMULATED_DATE = new Date(realNow.getFullYear(), 11, dayNum); // December = 11
+    })();
 
     // ===== UTILS =====
 
     function getToday() {
+      if (SIMULATED_DATE && !IGNORE_DATE_LOCKS) {
+        return new Date(SIMULATED_DATE.getTime());
+      }
       return new Date();
     }
 
     function isChristmasOrLater() {
       const now = getToday();
-      const christmas = new Date(now.getFullYear(), 11, 25); // month 11 = Dec
+      const christmas = new Date(now.getFullYear(), 11, 25);
       return now >= christmas;
     }
 
@@ -906,14 +875,12 @@
 
       const set = new Set(letters.map((c) => String(c).toUpperCase()));
 
-      // Derive from day letters
       for (let day = 1; day <= TOTAL_DAYS; day++) {
         const key = "advent_day_" + day + "_letter";
         const letter = localStorage.getItem(key);
         if (letter) set.add(letter.toUpperCase());
       }
 
-      // Star letter
       const starLetter = localStorage.getItem("advent_star_letter");
       if (starLetter) set.add(starLetter.toUpperCase());
 
@@ -1018,10 +985,8 @@
 
         const ribbonV = document.createElement("div");
         ribbonV.className = "ribbon-vertical";
-
         const ribbonH = document.createElement("div");
         ribbonH.className = "ribbon-horizontal";
-
         const bow = document.createElement("div");
         bow.className = "bow";
 
@@ -1034,7 +999,6 @@
 
         tileBtn.appendChild(inner);
 
-        // Determine state
         const hasLetter =
           localStorage.getItem("advent_day_" + day + "_letter") !== null;
         const unlocked = isDayUnlocked(day);
@@ -1068,15 +1032,21 @@
       const note = document.getElementById("calendarNote");
       if (IGNORE_DATE_LOCKS) {
         note.textContent =
-          "Date locks are currently disabled for testing. In December, each present normally unlocks on its day.";
+          "Test mode: date locks are disabled. All presents are available.";
       } else {
         const today = getToday();
-        note.textContent = `Today is ${
-          today.toLocaleDateString(undefined, {
-            month: "long",
-            day: "numeric",
-          })
-        }. Presents unlock on their matching December date.`;
+        const baseText = today.toLocaleDateString(undefined, {
+          month: "long",
+          day: "numeric",
+        });
+
+        if (SIMULATED_DATE) {
+          note.textContent =
+            `Test mode: pretending today is ${baseText}. Presents unlock on their matching December date.`;
+        } else {
+          note.textContent =
+            `Today is ${baseText}. Presents unlock on their matching December date.`;
+        }
       }
     }
 
@@ -1095,24 +1065,49 @@
         return;
       }
 
-      // Available: go to day page
       window.location.href = `days/day${day}/index.html`;
     }
 
     // ===== Stars / code =====
 
     function initStars() {
-      const starButton = document.getElementById("secretStar");
-      if (!starButton) return;
+      const container = document.getElementById("starContainer");
+      if (!container) return;
+
+      // background stars
+      const count = 60;
+      for (let i = 0; i < count; i++) {
+        const star = document.createElement("div");
+        star.className = "star";
+        const size = 2 + Math.random() * 3;
+        star.style.width = size + "px";
+        star.style.height = size + "px";
+        star.style.left = Math.random() * 100 + "vw";
+        star.style.top = Math.random() * 100 + "vh";
+        star.style.animationDuration = 2.5 + Math.random() * 2 + "s";
+        star.style.animationDelay = Math.random() * 3 + "s";
+        container.appendChild(star);
+      }
+
+      // secret clickable star
+      const secret = document.createElement("button");
+      secret.id = "secretStar";
+      secret.className = "star secret-star";
+      secret.type = "button";
+      secret.setAttribute("aria-label", "Secret star");
+      secret.style.top = "18%";
+      secret.style.right = "12%";
+      secret.style.animationDuration = "3s";
+      secret.style.animationDelay = "0.4s";
+      container.appendChild(secret);
 
       const starSolved =
         localStorage.getItem("advent_star_solved") === "true";
 
       if (starSolved) {
-        starButton.classList.add("disabled");
-        starButton.addEventListener("click", () => openModal("starSolvedModal"));
+        secret.addEventListener("click", () => openModal("starSolvedModal"));
       } else {
-        starButton.addEventListener("click", () => openModal("starModal"));
+        secret.addEventListener("click", () => openModal("starModal"));
       }
 
       const codeForm = document.getElementById("codeForm");
@@ -1132,8 +1127,7 @@
           codeMsg.textContent =
             "Unlocked! A secret letter has been added to your collection.";
           codeMsg.style.color = "#2f855a";
-          starButton.classList.add("disabled");
-          starButton.onclick = () => openModal("starSolvedModal");
+          secret.onclick = () => openModal("starSolvedModal");
           updateLettersUI();
           setTimeout(() => {
             closeModal("starModal");
@@ -1170,7 +1164,6 @@
       const container = document.getElementById("fireContainer");
       if (!container) return;
 
-      // Create the main glow once
       const glow = document.createElement("div");
       glow.className = "fire-glow";
       container.appendChild(glow);
@@ -1220,7 +1213,7 @@
         if (!ok) return;
 
         for (let day = 1; day <= TOTAL_DAYS; day++) {
-          localStorage.removeItem("advent_day_" + day + "_letter");
+          localStorage.removeItem("advent_day_" + day + "_letter";
         }
 
         localStorage.removeItem("advent_letters");
@@ -1275,22 +1268,18 @@
     // ===== Boot =====
 
     document.addEventListener("DOMContentLoaded", () => {
+      initStars();
       initSnow();
       initFire();
       buildCalendar();
-      initStars();
       initModals();
       initReset();
       updateLettersUI();
     });
 
-    // ===== NOTE FOR DAY PAGES =====
-    // On each /days/dayX/index.html puzzle page, when she finishes the puzzle
-    // and you know the letter for that day, call:
-    //
+    // NOTE: day sub-pages should still use:
     //   localStorage.setItem("advent_day_X_letter", "L");
-    //
-    // Replace X with the day number and "L" with the letter.
+    // to award letters.
   </script>
 </body>
 </html>
