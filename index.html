@@ -1,1017 +1,548 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Advent Calendar — Single File (Dec 1–11)</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Advent Calendar — Cozy Lantern Edition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;600;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg0:#061022;
-    --bg1:#07162a;
-    --card:#0f1b2a;
-    --accent:#f6d88b;
-    --muted:#9fb3d6;
-    --panel:#0e1724;
-    --text:#eaf3ff;
-    --highlight:#ffd992;
-    --ember:#ffcf6b;
+    --bg-1: #041022;
+    --bg-2: #08203a;
+    --card: rgba(255,255,255,0.04);
+    --accent: #ffd98a;
+    --muted: #9fb3d6;
+    --glass: rgba(255,255,255,0.03);
+    --panel: rgba(10,16,28,0.95);
   }
-  html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,Helvetica;background:linear-gradient(180deg,var(--bg0),var(--bg1));color:var(--text);overflow-y:auto;}
-  header{display:flex;justify-content:space-between;align-items:center;padding:18px 28px;}
-  h1{margin:0;font-size:1.2rem;letter-spacing:1px}
+
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial; background: linear-gradient(180deg,var(--bg-1),var(--bg-2) 60%); color:#eaf3ff; -webkit-font-smoothing:antialiased;}
+  .app{max-width:1200px;margin:0 auto;padding:22px;position:relative;z-index:1;}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  h1{margin:0;font-size:1.1rem;letter-spacing:1px}
+  .subtitle{color:var(--muted);font-size:.9rem}
+
+  /* calendar grid */
+  #calendarGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px;margin-top:22px}
+  .calendar-day{
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:12px; padding:14px; min-height:110px; position:relative; cursor:pointer; box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+    display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between; transition:transform .12s,box-shadow .12s;
+    border:1px solid rgba(255,255,255,0.03);
+  }
+  .calendar-day:hover{ transform:translateY(-6px); box-shadow:0 14px 40px rgba(0,0,0,0.7); }
+  .day-label{font-weight:800;letter-spacing:1px;color:#fff}
+  .day-sub{color:var(--muted);font-size:.85rem}
+  .lock-overlay{position:absolute;right:10px;top:10px;font-size:18px;opacity:.9}
+  .calendar-day.locked{opacity:.45;cursor:default}
+  .calendar-day.found-day{outline:2px solid rgba(255,217,150,0.12); box-shadow:0 8px 30px rgba(0,0,0,0.7) inset;}
+  .found-badge{position:absolute;left:10px;bottom:10px;background:#fff;color:#122; padding:6px 8px;border-radius:8px;font-weight:800; font-size:.85rem}
+
+  /* bottom UI */
+  #lettersFound{margin-top:20px;background:var(--glass);padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+  #lettersFound strong{display:block;margin-bottom:8px}
+  .letter-pill{display:inline-block;background:#fff;color:#102035;padding:8px 10px;margin:6px;border-radius:8px;font-weight:900}
+
   .controls{display:flex;gap:8px;align-items:center}
-  .btn{background:linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:10px;color:var(--text);cursor:pointer;font-weight:700}
-  .danger{background:linear-gradient(180deg,#ff7b7b,#ff5252);border:none;color:#fff}
-  .container{max-width:1100px;margin:12px auto;padding:12px}
-  .calendar{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-top:12px}
-  .day{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:14px; min-height:120px;position:relative;cursor:pointer;box-shadow: 0 10px 30px rgba(0,0,0,0.6);display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
-  .day .title{font-weight:700}
-  .lock{position:absolute;right:8px;top:8px;font-size:22px;opacity:0.9}
-  .foundBadge{position:absolute;left:8px;top:8px;background:var(--highlight);color:#222;padding:4px 8px;border-radius:8px;font-weight:800}
-  .muted{color:var(--muted);font-size:.95rem}
-  #lettersFound{margin-top:18px;padding:14px;border-radius:10px;background:rgba(255,255,255,0.02);min-height:56px}
-  .letterTag{display:inline-block;background:#fff;color:#072;padding:6px 9px;margin:6px;border-radius:6px;font-weight:800}
-  #secretCode{margin-top:12px;padding:12px;border-radius:10px;background:rgba(255,255,255,0.02)}
-  footer{color:var(--muted);text-align:center;margin:20px}
-  /* modal */
-  .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,12,0.6);z-index:9999}
-  .panel{background:linear-gradient(180deg,var(--panel),#071328);color:var(--text);padding:18px;border-radius:12px;max-width:1100px;width:92%;max-height:86vh;overflow:auto;position:relative;box-shadow:0 20px 40px rgba(0,0,0,0.7)}
-  .closeBtn{position:absolute;right:12px;top:12px;font-size:20px;cursor:pointer}
-  .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:12px;border-radius:10px}
+  button{background:linear-gradient(180deg,var(--accent),#ffcd6a);border:none;padding:8px 12px;border-radius:10px;color:#082029;cursor:pointer;font-weight:800;box-shadow:0 6px 16px rgba(0,0,0,0.4)}
+  .muted{color:var(--muted)}
+
+  /* modal window style */
+  .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(rgba(2,6,12,0.55), rgba(2,6,12,0.7));z-index:999;}
+  .window{
+    width:min(1100px,96%); max-height:86vh; background:linear-gradient(180deg,#071327,#071a2a); border-radius:14px; padding:14px; box-shadow:0 30px 80px rgba(0,0,0,0.8); border:1px solid rgba(255,255,255,0.04); overflow:hidden; position:relative;
+    display:flex;flex-direction:column;
+  }
+  .window.big{width:min(1400px,98%);height:88vh}
+  .window .titleRow{display:flex;align-items:center;justify-content:space-between}
+  .closeBtn{background:transparent;border:none;color:var(--muted);font-size:20px;cursor:pointer}
+  .iframeWrap{flex:1;margin-top:12px;border-radius:10px;overflow:hidden;background:#000}
+  iframe{width:100%;height:100%;border:0;display:block}
+
   /* snow */
-  .flake{position:fixed;top:-6px;width:6px;height:6px;border-radius:50%;background:white;opacity:.9;pointer-events:none;z-index:2000}
+  #snowLayer{position:fixed;left:0;right:0;top:0;height:100%;pointer-events:none;z-index:0;overflow:hidden}
+  .snow-dot{position:absolute;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.85);opacity:.9;box-shadow:0 0 6px rgba(255,255,255,0.12)}
+
   /* stars */
-  .sky{position:fixed;left:0;top:0;width:100%;height:240px;pointer-events:none;overflow:visible;z-index:50}
-  .star{position:absolute;background:linear-gradient(180deg,#fff,#dbe9ff);width:6px;height:6px;border-radius:50%;box-shadow:0 0 8px rgba(255,255,255,0.9);opacity:.85;pointer-events:auto;cursor:pointer}
-  .twinkle{animation:tw 2s infinite}
-  @keyframes tw{0%{transform:scale(.6);opacity:.5}50%{transform:scale(1.2);opacity:1}100%{transform:scale(.6);opacity:.5}}
-  /* embers */
-  .embers{position:fixed;left:0;right:0;bottom:0;height:140px;pointer-events:none;overflow:visible;z-index:100}
-  .ember{position:absolute;width:8px;height:8px;border-radius:50%;background:linear-gradient(180deg,var(--ember),#ff7b3a);opacity:.9;filter:blur(0.6px);animation:rise 3s linear forwards}
-  @keyframes rise{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-380px) scale(.5);opacity:0}}
-  /* small game UI */
-  .matching-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
-  .matching-card{height:90px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;cursor:pointer;border:2px solid rgba(0,0,0,0.08);font-size:20px;transition:transform .12s,box-shadow .12s}
-  .matching-card:hover{transform:translateY(-4px);box-shadow:0 12px 22px rgba(0,0,0,0.35)}
-  .jigsawGrid{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;justify-content:center}
-  .jigsawTile{width:64px;height:64px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:grab;overflow:hidden;border:2px solid rgba(0,0,0,0.06)}
-  .maze{display:block;padding:8px;background:#fff;border-radius:8px;overflow:auto}
-  .maze .cell{width:12px;height:12px;display:inline-block;box-sizing:border-box;border:1px solid #ccc;vertical-align:top}
-  .simonBtn{width:84px;height:84px;border-radius:10px;border:3px solid rgba(0,0,0,0.08);cursor:pointer;font-weight:900;font-size:18px}
-  .simonFlash{box-shadow:0 0 26px rgba(255,255,255,0.8);transform:scale(1.05)}
-  .grid-sudoku-9{display:grid;grid-template-columns:repeat(9,44px);gap:0;padding:6px;border-radius:8px;background:#cfe3ff}
-  .grid-sudoku-9 input{width:44px;height:44px;text-align:center;border:1px solid #7ea7ff;border-radius:0;font-weight:700;background:#fff;color:#102035;font-size:16px}
-  .hint-pill{background:#eef6ff;color:#102035;padding:6px;border-radius:8px;font-weight:800;margin-left:8px}
+  #starLayer{position:fixed;left:0;top:0;right:0;height:45vh;pointer-events:none;z-index:0}
+  .twinkle-star{position:absolute;width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.92);box-shadow:0 0 8px rgba(255,255,255,0.25);pointer-events:auto;opacity:0.9; animation:twinkle 3s linear infinite}
+  .twinkle-star.secret-star{background:linear-gradient(90deg,#fff6d6,#ffd98a); box-shadow:0 0 12px rgba(255,220,120,0.7)}
+  @keyframes twinkle{ 0%{transform:scale(.9);opacity:.6}50%{transform:scale(1.4);opacity:1}100%{transform:scale(.9);opacity:.6} }
+
+  /* embers / fire at bottom */
+  #emberCanvas{position:fixed;left:0;right:0;bottom:0;height:220px;pointer-events:none;z-index:0}
+  .lantern-glow{
+    position:fixed;left:50%;transform:translateX(-50%);bottom:8px;width:540px;height:120px;border-radius:50%;filter:blur(36px);opacity:0.6;pointer-events:none;background: radial-gradient(ellipse at center, rgba(255,200,100,0.45), rgba(255,140,40,0.12) 30%, rgba(0,0,0,0) 60%); z-index:0;
+  }
+
   /* small helpers */
-  .row{display:flex;gap:8px;align-items:center}
-  .center{text-align:center}
-  .small{font-size:.9rem;color:var(--muted)}
-  .kbd{background:#07132b;padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.03)}
+  .hintText{position:fixed;left:12px;bottom:12px;font-size:12px;color:rgba(255,255,255,0.12)}
+  .secretCodeBox{margin-top:12px;background:rgba(255,255,255,0.02);padding:12px;border-radius:8px;border:1px dashed rgba(255,255,255,0.03)}
+  .danger{background:linear-gradient(180deg,#ff9a9a,#ff6b6b);color:white;}
+
   /* responsive */
-  @media (max-width:900px){ .calendar{grid-template-columns:repeat(3,1fr)} .jigsawTile{width:44px;height:44px}}
+  @media (max-width:720px){ .calendar-day{min-height:90px;padding:10px} .day-label{font-size:.95rem} .lantern-glow{width:360px} }
+
 </style>
 </head>
 <body>
-  <div class="sky" id="sky"></div>
-  <header>
-    <div>
-      <h1>Advent Calendar — Cozy Rebuild (Dec 1–11)</h1>
-      <div class="muted">Lantern glow, snow, stars — play and collect letters.</div>
-    </div>
-    <div class="controls">
-      <button id="viewLettersBtn" class="btn">View Letters</button>
-      <button id="resetBtn" class="btn danger">Reset Progress</button>
-    </div>
-  </header>
+  <!-- visual layers -->
+  <div id="starLayer" aria-hidden="true"></div>
+  <div id="snowLayer" aria-hidden="true"></div>
+  <canvas id="emberCanvas" aria-hidden="true"></canvas>
+  <div class="lantern-glow" aria-hidden="true"></div>
 
-  <div class="container">
-    <div class="calendar" id="calendar"></div>
-
-    <div id="lettersFound">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <strong>Letters found</strong>
-        <small class="muted">Found letters cannot be recollected unless you reset</small>
+  <div class="app" id="app">
+    <header>
+      <div>
+        <h1>Advent Calendar — Cozy Lantern Edition</h1>
+        <div class="subtitle">Dark winter sky • lantern glow • the stars hold secrets</div>
       </div>
-      <div id="lettersList" style="margin-top:8px"></div>
-    </div>
+      <div class="controls">
+        <button id="resetBtn">Reset progress</button>
+        <button id="viewLettersBtn">View letters</button>
+      </div>
+    </header>
 
-    <div id="secretCode">
-      <strong>Secret code</strong>
-      <div class="muted" id="codeArea" style="margin-top:6px">Final decoding available on or after Dec 25 once letters & code are collected.</div>
-    </div>
+    <main>
+      <div id="calendarGrid" aria-live="polite" style="margin-top:18px"></div>
+
+      <div id="lettersFound" style="margin-top:18px">
+        <strong>Letters found</strong>
+        <div id="lettersList" style="margin-top:8px"></div>
+
+        <div class="secretCodeBox" id="secretCodeBox">
+          <strong>Secret code</strong>
+          <div id="secretCodeText" class="muted">Locked until Dec 25 (or when all digits found).</div>
+        </div>
+      </div>
+    </main>
+
+    <div class="hintText">the stars hold secrets</div>
   </div>
 
-  <div class="embers" id="embers"></div>
-
   <!-- modal -->
-  <div id="modal" class="modal" aria-hidden="true">
-    <div class="panel" role="dialog" aria-modal="true">
-      <div class="closeBtn" id="modalClose" title="Close">✕</div>
-      <div id="modalContent"></div>
+  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="window" id="modalWindow">
+      <div class="titleRow">
+        <div id="modalTitle" style="font-weight:800"></div>
+        <div>
+          <button class="closeBtn" id="modalClose" title="Close (Esc)">✕</button>
+        </div>
+      </div>
+      <div class="iframeWrap" id="iframeWrap">
+        <!-- iframe will be inserted here -->
+      </div>
     </div>
   </div>
 
 <script>
-/* --------------------------
-   Utilities & state
-   -------------------------- */
-const TODAY = (() => {
-  // Allow test override with ?test=decN format (e.g. ?test=dec1)
-  try{
-    const u = new URL(location.href);
-    const t = u.searchParams.get('test');
-    if(t && /^dec\d{1,2}$/i.test(t)){
-      return new Date(2025,11,parseInt(t.slice(3)));
-    }
-  }catch(e){}
-  return new Date();
-})();
-const storageKey = 'advent_single_v1';
-let state = JSON.parse(localStorage.getItem(storageKey) || '{}');
-if(!state.found) state.found = {};    // day -> true
-if(!state.sudokuHints) state.sudokuHints = 3;
-if(!state.sudokuRevealed) state.sudokuRevealed = {}; // r-c -> value
-if(!state.comboUnlocked) state.comboUnlocked = false;
-if(!state.lettersMap) state.lettersMap = {}; // day->letter mapping if randomized later
+/* ===========================
+   Persistent state & helpers
+   =========================== */
+const STORAGE_KEY = 'advent_cozy_v1';
+let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+if(!state.found) state.found = {};         // day -> collected letter or digit
+if(typeof state.comboCracked === 'undefined') state.comboCracked = false;
+if(typeof state.secretStarFound === 'undefined') state.secretStarFound = false;
 
-function saveState(){ localStorage.setItem(storageKey, JSON.stringify(state)); }
-
-/* Letters mapping (days 1..17), we use 1..11 for now per spec */
-const lettersPerDay = {1:'R',2:'T',3:'W',4:'V',5:'N',6:'P',7:'F',8:'D',9:'A',10:'U',11:'I'};
-// full set given: L,O,V,E,K,N,W,S,T,I,D,P,H,U,R,F,A (17)
-// Not yet assigned days 12-17 here; can be added later.
-
-/* Modal helpers */
-const modal = document.getElementById('modal'), modalContent = document.getElementById('modalContent');
-document.getElementById('modalClose').addEventListener('click', hideModal);
-modal.addEventListener('click', (e)=>{ if(e.target===modal) hideModal(); });
-function showModal(html, wide=false){
-  modalContent.innerHTML = html;
-  modal.style.display = 'flex';
-  modal.setAttribute('aria-hidden','false');
+/* date / test handling */
+const params = new URLSearchParams(location.search);
+let currentDate = new Date();
+if(params.get('test') && params.get('test').startsWith('dec')){
+  const n = parseInt(params.get('test').replace('dec','')) || currentDate.getDate();
+  currentDate = new Date(currentDate.getFullYear(), 11, Math.min(31, Math.max(1,n)));
 }
-function hideModal(){ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); modalContent.innerHTML=''; saveState(); buildCalendar(); }
+const todayDay = currentDate.getDate();
 
-/* --------------------------
-   Visual effects: snow, stars, embers
-   -------------------------- */
-(function makeSnow(){
-  const n = 30;
-  for(let i=0;i<n;i++){
-    const s = document.createElement('div');
-    s.className='flake';
-    const left = Math.random()*100;
-    s.style.left = left+'%';
-    s.style.opacity = 0.4 + Math.random()*0.6;
-    const size = 3 + Math.random()*6;
-    s.style.width = s.style.height = size+'px';
-    s.style.top = -(10+Math.random()*20)+'px';
-    const dur = 5000 + Math.random()*9000;
-    s.style.transition = `transform ${dur}ms linear`;
-    document.body.appendChild(s);
-    (function animateSnow(el, dur){
-      function tick(){
-        el.style.transform = `translateY(${120 + Math.random()*60}vh) translateX(${(Math.random()-0.5)*10}px)`;
-        setTimeout(()=>{ el.style.transform='translateY(-10vh)'; setTimeout(tick, 100+Math.random()*800); }, dur + Math.random()*2000);
-      }
-      setTimeout(tick, Math.random()*1000);
-    })(s,dur);
-  }
-})();
-
-/* Stars */
-(function makeStars(){
-  const sky = document.getElementById('sky');
-  const count = 24;
-  for(let i=0;i<count;i++){
-    const s = document.createElement('div');
-    s.className = 'star twinkle';
-    s.style.left = (5 + Math.random()*90) + '%';
-    s.style.top = (10 + Math.random()*120) + 'px';
-    const size = 4 + Math.random()*6;
-    s.style.width = s.style.height = size+'px';
-    s.dataset.i = i;
-    // Only one of them will be the secret star (first time)
-    if(i===3) s.dataset.secret = '1';
-    s.addEventListener('click', (e)=> onStarClick(e.currentTarget));
-    sky.appendChild(s);
-  }
-})();
-function onStarClick(el){
-  if(!el.dataset.secret) { showModal('<div class="card"><h3>Stars</h3><p class="muted">The stars hold secrets.</p><div style="margin-top:8px"><button onclick="hideModal()">Close</button></div></div>'); return; }
-  if(state.comboUnlocked){ showModal('<div class="card"><h3>Star secret</h3><p>You already unlocked the star code.</p><div style="margin-top:8px"><button onclick="hideModal()">Close</button></div></div>'); return; }
-  showModal(`<div class="card">
-    <h3>Combination Lock — Stars</h3>
-    <p>Enter the 7-digit code (found across the days). Hint: the code is 7 digits.</p>
-    <div style="margin-top:8px"><input id="comboIn" placeholder="●●●●●●●" maxlength="7" style="padding:8px;border-radius:8px"/><button id="comboTry" class="btn" style="margin-left:8px">Try</button></div>
-    <div id="comboMsg" class="muted" style="margin-top:8px">Collect digits across days (or enter directly)</div>
-    <div style="margin-top:8px"><button onclick="hideModal()">Close</button></div>
-  </div>`);
-  document.getElementById('comboTry').addEventListener('click', ()=>{
-    const v = document.getElementById('comboIn').value.trim();
-    if(v === '5201314'){ state.comboUnlocked = true; saveState(); showModal('<div class="card"><h3>Unlocked!</h3><p>The star code accepted. Well done.</p><div style="margin-top:8px"><button onclick="hideModal()">Close</button></div></div>'); }
-    else document.getElementById('comboMsg').textContent = 'Incorrect code — keep collecting.';
-  });
-}
-
-/* Embers */
-(function makeEmbers(){
-  const container = document.getElementById('embers');
-  function spawn(){
-    const e = document.createElement('div');
-    e.className='ember';
-    e.style.left = (20 + Math.random()*60) + '%';
-    e.style.bottom = '8px';
-    e.style.opacity = 0.9;
-    e.style.transform = `translateY(0)`;
-    container.appendChild(e);
-    setTimeout(()=>e.remove(), 3200);
-  }
-  setInterval(spawn, 420 + Math.random()*900);
-})();
-
-/* --------------------------
-   Calendar building
-   -------------------------- */
-const DAYS = 11;
-const dayNames = {
-  1:'Wordle',2:'Bracket City',3:'Matching (vs CPU)',4:'Jigsaw',5:'Riddle',
-  6:'Maze',7:'Color Sequence',8:'Quote Fill',9:'Spot the Difference',10:'Sudoku',11:'Minesweeper'
+/* Config: letters/digits mapping for Days 1-24 */
+const dayLetterMap = {
+  1:'L',2:'O',3:'V',4:'E',5:'K',6:'N',7:'W',8:'S',9:'T',10:'I',
+  11:'D',12:'P',13:'H',14:'U',15:'R',16:'F',17:'A'
 };
-const cal = document.getElementById('calendar');
+const dayDigitMap = {18:'5',19:'2',20:'0',21:'1',22:'3',23:'1',24:'4'};
+
+/* UI elements */
+const grid = document.getElementById('calendarGrid');
+const lettersList = document.getElementById('lettersList');
+const secretCodeText = document.getElementById('secretCodeText');
+const modal = document.getElementById('modal');
+const modalWindow = document.getElementById('modalWindow');
+const iframeWrap = document.getElementById('iframeWrap');
+const modalTitle = document.getElementById('modalTitle');
+const modalClose = document.getElementById('modalClose');
+const viewLettersBtn = document.getElementById('viewLettersBtn');
+const resetBtn = document.getElementById('resetBtn');
+
+/* days & layout */
+const TOTAL_DAYS = 31;
+
+/* ========= create calendar ========= */
 function buildCalendar(){
-  cal.innerHTML = '';
-  const month = TODAY.getMonth(), date = TODAY.getDate();
-  for(let d=1; d<=DAYS; d++){
-    const el = document.createElement('div');
-    el.className = 'day';
-    el.dataset.day = d;
-    const title = document.createElement('div'); title.className='title'; title.textContent = `Day ${d}`;
-    const sub = document.createElement('div'); sub.className='muted'; sub.textContent = dayNames[d]||'';
-    el.appendChild(title); el.appendChild(sub);
-    if(state.found[d]){
-      const badge = document.createElement('div'); badge.className='foundBadge'; badge.textContent='FOUND'; el.appendChild(badge);
+  grid.innerHTML = '';
+  for(let d=1; d<=TOTAL_DAYS; d++){
+    const box = document.createElement('div');
+    box.className = 'calendar-day';
+    const label = document.createElement('div');
+    label.className = 'day-label';
+    label.textContent = `Day ${d}`;
+    box.appendChild(label);
+
+    const sub = document.createElement('div');
+    sub.className = 'day-sub';
+    // short descriptor for first 11 days
+    const desc = {
+      1:'Wordle',2:'Bracket City',3:'Matching',4:'Jigsaw',5:'Riddle',6:'Maze',7:'Simon',8:'Quote',9:'Spot the diff',10:'Sudoku',11:'Minesweeper'
+    }[d] || '';
+    sub.textContent = desc;
+    box.appendChild(sub);
+
+    // lock / unlock logic: unlocked if d <= todayDay OR ?unlockAll=true OR ?test=decN providing test day
+    const unlockAll = location.search.includes('unlockAll=true');
+    const unlocked = unlockAll || d <= todayDay;
+    const alreadyFound = !!state.found[d];
+
+    const lockDiv = document.createElement('div');
+    lockDiv.className = 'lock-overlay';
+    if(alreadyFound){
+      // show found badge inside the day
+      const f = document.createElement('div');
+      f.className = 'found-badge';
+      f.textContent = 'Found';
+      box.appendChild(f);
+      lockDiv.textContent = '✅';
+      box.classList.add('found-day');
+      box.classList.remove('locked');
+      box.removeEventListener('click', ()=>openDay(d));
+    } else if(unlocked){
+      lockDiv.textContent = '🔓';
+      box.classList.add('unlocked');
+      box.style.cursor = 'pointer';
+      box.addEventListener('click', ()=> openDay(d));
     } else {
-      const lock = document.createElement('div'); lock.className='lock';
-      const unlocked = (month===11 && date>=d) || location.search.includes('unlockAll=true') || location.search.includes('test=dec'+d);
-      lock.textContent = unlocked ? '🔓' : '🔒';
-      el.appendChild(lock);
-      if(!unlocked) el.classList.add('locked');
+      lockDiv.textContent = '🔒';
+      box.classList.add('locked');
     }
-    el.addEventListener('click', ()=> openDay(parseInt(el.dataset.day)));
-    cal.appendChild(el);
+
+    box.appendChild(lockDiv);
+    grid.appendChild(box);
   }
-  renderLetters();
+  renderFoundLetters();
+  updateSecretCodeUI();
 }
 buildCalendar();
 
-function renderLetters(){
-  const container = document.getElementById('lettersList');
-  container.innerHTML='';
-  const keys = Object.keys(state.found||{}).sort((a,b)=>a-b);
-  if(keys.length===0) { container.innerHTML = '<div class="small muted">None yet</div>'; return; }
+/* ========== render found letters area ========== */
+function renderFoundLetters(){
+  lettersList.innerHTML = '';
+  const keys = Object.keys(state.found).map(k=>parseInt(k)).sort((a,b)=>a-b);
+  if(!keys.length){
+    lettersList.innerHTML = `<div class="muted">None yet</div>`;
+    return;
+  }
   keys.forEach(k=>{
-    const s = document.createElement('div'); s.className='letterTag'; s.textContent = `Day ${k}: ${lettersPerDay[k] || '?'}`;
-    container.appendChild(s);
+    const v = state.found[k];
+    const pill = document.createElement('span');
+    pill.className = 'letter-pill';
+    pill.textContent = `Day ${k}: ${v}`;
+    lettersList.appendChild(pill);
   });
 }
 
-/* Utility: mark letter found */
-function storeLetter(day){
-  if(state.found[day]) return;
-  state.found[day]=true;
-  saveState();
-  // show closeable modal
-  showModal(`<div class="card"><h3>Letter found!</h3><p>You collected the secret letter for Dec ${day}: <strong>${lettersPerDay[day]}</strong></p><div style="margin-top:12px"><button id="closeCollect" class="btn">Close</button></div></div>`);
-  document.getElementById('closeCollect').addEventListener('click', ()=>{ hideModal(); });
+/* ========= modal controls (iframe based) ========= */
+modalClose.addEventListener('click', hideModal);
+window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') hideModal(); });
+
+function showModalForDay(day, title, path, big=false){
+  modal.style.display = 'flex';
+  modal.setAttribute('aria-hidden','false');
+  modalWindow.classList.toggle('big', !!big);
+  modalTitle.textContent = title || `Day ${day}`;
+  iframeWrap.innerHTML = '';
+  const iframe = document.createElement('iframe');
+  iframe.src = path;
+  iframe.id = 'dayIframe';
+  iframe.setAttribute('title', `Day ${day} content`);
+  iframeWrap.appendChild(iframe);
+
+  // allow messages from day iframe to call parent APIs
+  // (days should postMessage({type:'collected', day: N, value: 'A'}) when letter found)
 }
 
-/* --------------------------
-   Day implementations
-   -------------------------- */
-
-/* Day 1 — Wordle (THORN) */
-const WORDS = ['THORN','APPLE','BRAVE','CRANE','BROOM','STONE','SHORE','PRIDE','GLOAT','PLAIN','GRACE','BRING','CANDY','LIGHT','NIGHT']; // small included dict
-function openDay1(){
-  const day=1;
-  if(state.found[day]) { showModal(`<div class="card"><h3>Already found</h3><p>Letter: <strong>${lettersPerDay[day]}</strong></p><div style="margin-top:12px"><button onclick="hideModal()" class="btn">Close</button></div></div>`); return; }
-  const html = `
-    <div class="card">
-      <h3>Dec 1 — Wordle</h3>
-      <p>Guess the 5-letter English word. When the correct word is entered, click the correct letter in the solved word to store the secret letter.</p>
-      <div id="wordRows" style="display:flex;flex-direction:column;gap:8px;margin-top:12px"></div>
-      <div style="margin-top:8px"><input id="guess1" maxlength="5" placeholder="Type a 5-letter guess" style="padding:8px;border-radius:8px"/> <button id="try1" class="btn">Try</button></div>
-      <div id="wordHintArea" class="muted" style="margin-top:12px;display:none"></div>
-    </div>`;
-  showModal(html);
-  const target = 'THORN';
-  const rows = [];
-  const rowContainer = document.getElementById('wordRows');
-
-  function renderRows(){
-    rowContainer.innerHTML='';
-    rows.forEach(r=>{
-      const node = document.createElement('div');
-      node.style.display='flex'; node.style.gap='6px';
-      for(let i=0;i<5;i++){
-        const ch = document.createElement('div');
-        ch.style.width='48px'; ch.style.height='48px'; ch.style.display='inline-flex'; ch.style.alignItems='center'; ch.style.justifyContent='center';
-        ch.style.borderRadius='8px'; ch.style.fontWeight='900'; ch.style.background='#fff'; ch.style.color='#072';
-        ch.style.userSelect='none';
-        const letter = r[i]||'';
-        ch.textContent = letter;
-        node.appendChild(ch);
-      }
-      rowContainer.appendChild(node);
-    });
-  }
-  renderRows();
-
-  // Word validator: simple dictionary check
-  function isValidWord(w){
-    return WORDS.includes(w.toUpperCase());
-  }
-
-  function colorizeRow(guess){
-    // Wordle coloring with proper repeated-letter handling:
-    const g = guess.split(''), t = target.split('');
-    const colors = Array(5).fill('absent');
-    // First pass for greens
-    for(let i=0;i<5;i++){
-      if(g[i]===t[i]){ colors[i]='green'; t[i]=null; g[i]=g[i]; }
+/* handle postMessage from day files */
+window.addEventListener('message', (ev)=>{
+  try{
+    const data = ev.data;
+    if(!data || typeof data !== 'object') return;
+    if(data.type === 'collected' && data.day && data.value){
+      // store and update UI
+      state.found[data.day] = data.value;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      buildCalendar();
+      // show small success modal (closable)
+      showSimpleModal(`Letter found! Day ${data.day}: ${data.value}`);
     }
-    // count remaining letters in target
-    const counts = {};
-    t.forEach(ch=>{ if(ch) counts[ch]=(counts[ch]||0)+1; });
-    // second pass for yellows
-    for(let i=0;i<5;i++){
-      if(colors[i]==='green') continue;
-      if(counts[g[i]]>0){ colors[i]='yellow'; counts[g[i]]--; }
-      else colors[i]='absent';
+    if(data.type === 'comboCracked'){
+      state.comboCracked = true;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      showSimpleModal('You cracked the star combination!');
     }
-    return colors;
-  }
-
-  document.getElementById('try1').addEventListener('click', ()=>{
-    const g = (document.getElementById('guess1').value||'').toUpperCase().trim();
-    if(g.length!==5) { alert('Enter 5 letters'); return; }
-    if(!isValidWord(g)) { alert('Word not in dictionary'); return; }
-    rows.push(g);
-    renderRows();
-    // color last row with colored backgrounds
-    const lastRow = rowContainer.lastChild;
-    const colors = colorizeRow(g);
-    for(let i=0;i<5;i++){
-      const cell = lastRow.children[i];
-      const letter = g[i];
-      cell.textContent = letter;
-      if(colors[i]==='green') cell.style.background = '#7cf';
-      else if(colors[i]==='yellow') cell.style.background = '#ffd56b';
-      else cell.style.background = '#e6e6e6';
-    }
-    document.getElementById('guess1').value='';
-    if(g===target){
-      const hintArea = document.getElementById('wordHintArea');
-      hintArea.style.display='block';
-      hintArea.innerHTML = `<strong>Hint revealed:</strong> <em>Heart - heat = ? (click the correct letter in the word above to store)</em>`;
-      // make the solved row clickable
-      for(let i=0;i<5;i++){
-        const cell = lastRow.children[i];
-        cell.style.cursor='pointer';
-        cell.title='Click to store letter';
-        cell.addEventListener('click', ()=>{
-          const clicked = target[i];
-          if(clicked==='R'){ storeLetter(1); hideModal(); }
-          else alert('That is not the secret letter — try another letter.');
-        });
-      }
-    }
-  });
-}
-
-/* Day 2 — Bracket City (innermost bracket solving) */
-const BRACKET_TEXT = `the Con[word after extension or [over[aggressively [[off[word before cube or Capades] with an extremely short commute] ➡️  ⬅️ amok] at 🪫🔋], with "[a [speak criti[word after [[one might be of [etizer or lication preceder]roval 🦭] up] or curtain ☎️]y of or strike a door] one is a [horror movie actor's blood [write, but not by [[most filling course] (🇫🇷) or mano (🇲🇽)]]?]]"]]e makes its final flight`;
-function openDay2(){
-  const day=2;
-  if(state.found[day]) { showModal(`<div class="card"><h3>Already found</h3><p>Letter: <strong>${lettersPerDay[day]}</strong></p><div style="margin-top:12px"><button onclick="hideModal()" class="btn">Close</button></div></div>`); return; }
-  // We'll render the bracket text and allow clicking the deepest bracket to answer
-  const html = `<div class="card"><h3>Dec 2 — Bracket City</h3>
-    <p>Solve innermost bracket prompts one at a time. Only innermost bracketed pieces are active.</p>
-    <div id="bracketArea" style="margin-top:12px;white-space:pre-wrap;font-family:monospace;background:rgba(255,255,255,0.02);padding:12px;border-radius:8px"></div>
-    <div style="margin-top:12px" id="bcMsg" class="muted">Click an innermost highlighted bracket to answer.</div>
-    <div style="margin-top:12px"><button onclick="hideModal()" class="btn">Exit</button></div></div>`;
-  showModal(html);
-  let text = BRACKET_TEXT;
-
-  function render(){
-    const area = document.getElementById('bracketArea');
-    // find all innermost bracket occurrences using regex that finds [no [ inside]
-    const inners = [];
-    let m;
-    const re = /\[([^\[\]]+)\]/g;
-    while((m=re.exec(text))!==null){
-      inners.push({start:m.index, len:m[0].length, text:m[1]});
-    }
-    // we will highlight all inners but clickable will be only those that have no brackets inside them (which regex ensures)
-    // build HTML by replacing inners with clickable spans (but must escape)
-    let out = '';
-    let last = 0;
-    re.lastIndex = 0;
-    let idx=0;
-    while((m=re.exec(text))!==null){
-      out += escapeHtml(text.slice(last, m.index));
-      const inside = m[1];
-      out += `<span class="kbd" data-inner-index="${idx}" style="background:rgba(255,255,255,0.06);margin-right:2px;cursor:pointer">${escapeHtml(inside)}</span>`;
-      last = m.index + m[0].length;
-      idx++;
-    }
-    out += escapeHtml(text.slice(last));
-    area.innerHTML = out;
-    // attach handlers to spans
-    const spans = area.querySelectorAll('span[data-inner-index]');
-    spans.forEach(span=>{
-      span.addEventListener('click', ()=>{
-        const val = prompt('Enter replacement for this prompt (one word or phrase):','');
-        if(val===null) return;
-        // Only allow replace if this span is innermost (it is), replace first occurrence of [spanText]
-        const pattern = '\\[' + escapeRegExp(span.textContent) + '\\]';
-        text = text.replace(new RegExp(pattern), val);
-        // show intermediate message
-        document.getElementById('bcMsg').textContent = 'Replaced — continue to next innermost bracket.';
-        render();
-      });
-    });
-  }
-  render();
-}
-
-/* helpers for bracket city */
-function escapeHtml(s){ return s.replace(/[&<>"']/g, (m)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
-function escapeRegExp(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
-
-/* Day 3 — Matching 30 cards vs CPU (CPU remembers seen) */
-function openDay3(){
-  const day=3;
-  if(state.found[day]) { showModal(`<div class="card"><h3>Already found</h3><p>Letter: <strong>${lettersPerDay[day]}</strong></p><div style="margin-top:12px"><button onclick="hideModal()" class="btn">Close</button></div></div>`); return; }
-  const html = `<div class="card"><h3>Dec 3 — Matching (You vs CPU)</h3>
-    <p>Find pairs. 30 cards (15 pairs). CPU remembers flips. Whoever has more pairs at the end wins; if you win you get the letter.</p>
-    <div id="matchBoard" style="margin-top:12px" class="matching-grid"></div>
-    <div style="margin-top:12px"><button id="restart3" class="btn">Restart</button><span id="matchStatus" class="muted" style="margin-left:12px"></span></div>
-    </div>`;
-  showModal(html);
-  const board=document.getElementById('matchBoard'), status=document.getElementById('matchStatus');
-  let cards=[], revealed=[], matched=[], cpuMemory={}, scores={player:0,cpu:0}, playerTurn=true, firstFlip=-1;
-  function init(){
-    const icons = ['🐶','🐱','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🦄','🐝','🐙'];
-    cards = icons.concat(icons).sort(()=>Math.random()-0.5);
-    revealed = Array(cards.length).fill(false);
-    matched = Array(cards.length).fill(false);
-    cpuMemory = {}; scores={player:0,cpu:0}; playerTurn=true; firstFlip=-1;
-    render();
-    status.textContent='Your turn.';
-  }
-  function render(){
-    board.innerHTML='';
-    for(let i=0;i<cards.length;i++){
-      const c = document.createElement('div');
-      c.className='matching-card';
-      c.style.background = matched[i] ? '#e6f8ea' : '#fff';
-      c.textContent = (matched[i] || revealed[i]) ? cards[i] : '';
-      c.dataset.i = i;
-      c.addEventListener('click', ()=>playerFlip(i));
-      board.appendChild(c);
-    }
-  }
-  function playerFlip(i){
-    if(!playerTurn) return;
-    if(revealed[i]||matched[i]) return;
-    revealIndex(i);
-    if(firstFlip===-1){ firstFlip=i; return; }
-    if(cards[firstFlip]===cards[i]){
-      matched[firstFlip]=matched[i]=true; scores.player++;
-      status.textContent = `Nice! You found a pair. Score — You: ${scores.player} CPU: ${scores.cpu}`;
-      firstFlip=-1; render(); checkEnd();
-    } else {
-      playerTurn=false; status.textContent='No match — CPU turn.';
-      setTimeout(()=>{ revealed[firstFlip]=revealed[i]=false; firstFlip=-1; render(); cpuAction(); }, 700);
-    }
-  }
-  function revealIndex(i){ revealed[i]=true; render(); }
-  function cpuAction(){
-    // update memory
-    for(let v in cpuMemory) cpuMemory[v] = cpuMemory[v].filter(idx=>!matched[idx]);
-    // if know pair, take it
-    for(const v in cpuMemory){
-      if(cpuMemory[v].length>=2){
-        const [a,b] = cpuMemory[v];
-        revealIndex(a);
-        setTimeout(()=>{ revealIndex(b); matched[a]=matched[b]=true; scores.cpu++; status.textContent=`CPU found a pair. Score — You: ${scores.player} CPU: ${scores.cpu}`; render(); checkEnd(); setTimeout(()=>cpuAction(), 600); }, 450);
-        return;
-      }
-    }
-    // otherwise flip random unseen
-    const pool = [];
-    for(let i=0;i<cards.length;i++) if(!revealed[i] && !matched[i]) pool.push(i);
-    if(pool.length===0) return;
-    const a = pool[Math.floor(Math.random()*pool.length)];
-    revealIndex(a);
-    cpuMemory[cards[a]] = Array.from(new Set([...(cpuMemory[cards[a]]||[]), a]));
-    setTimeout(()=>{
-      const seen = (cpuMemory[cards[a]]||[]).find(ii=>ii!==a && !matched[ii]);
-      let b;
-      if(seen!==undefined) b = seen;
-      else {
-        const pool2 = pool.filter(x=>x!==a);
-        b = pool2.length ? pool2[Math.floor(Math.random()*pool2.length)] : null;
-      }
-      if(b===null){ playerTurn=true; status.textContent='Your turn.'; return; }
-      revealIndex(b);
-      cpuMemory[cards[b]] = Array.from(new Set([...(cpuMemory[cards[b]]||[]), b]));
-      setTimeout(()=>{
-        if(cards[a]===cards[b]){
-          matched[a]=matched[b]=true; scores.cpu++;
-          status.textContent = `CPU found a pair. Score — You: ${scores.player} CPU: ${scores.cpu}`;
-          render(); checkEnd();
-          setTimeout(()=>cpuAction(), 600);
-        } else {
-          revealed[a]=revealed[b]=false; render(); playerTurn=true; status.textContent='Your turn.';
-        }
-      },500);
-    },600);
-  }
-  function checkEnd(){
-    if(matched.every(Boolean)){
-      let msg = `Final score — You: ${scores.player} CPU: ${scores.cpu}. `;
-      if(scores.player>scores.cpu){ msg += 'You win! Collect your letter.'; status.textContent = msg; storeLetter(3); hideModal(); }
-      else if(scores.player<scores.cpu){ msg += 'CPU wins. Try again with Restart.'; status.textContent = msg; }
-      else { msg += "It's a tie! Restart to try again."; status.textContent = msg; }
-    }
-  }
-  document.getElementById('restart3').addEventListener('click', ()=>init());
-  init();
-}
-
-/* Day 4 — Jigsaw 10x10 using img/day4.jpg with fixed bottom-left piece */
-function openDay4(){
-  const day=4;
-  if(state.found[day]) { showModal(`<div class="card"><h3>Already found</h3><p>Letter: <strong>${lettersPerDay[day]}</strong></p><div style="margin-top:12px"><button onclick="hideModal()" class="btn">Close</button></div></div>`); return; }
-  const imageURL = './img/day4.jpg'; // ensure your uploaded image is at img/day4.jpg
-  const size = 10; // 10x10
-  const total = size*size;
-  const fixedIndex = (size-1)*size; // bottom-left index e.g. row size-1, col 0
-
-  let tiles = Array.from({length:total}, (_,i)=>i+1);
-  function shuffleArr(a){ return a.sort(()=>Math.random()-0.5); }
-
-  const html = `<div class="card"><h3>Dec 4 — Jigsaw</h3>
-    <p>Drag tiles to assemble. The bottom-left piece is fixed and already in position.</p>
-    <div id="jigsaw" class="jigsawGrid" style="margin-top:12px;grid-template-columns:repeat(${size},64px)"></div>
-    <div style="margin-top:10px"><button id="shuffle4" class="btn">Shuffle</button> <button id="inspect4" class="btn" disabled>Inspect</button></div></div>`;
-  showModal(html);
-  const board = document.getElementById('jigsaw');
-
-  function render(){
-    board.innerHTML='';
-    tiles.forEach((tileNum,pos)=>{
-      const tile = document.createElement('div');
-      tile.className='jigsawTile';
-      tile.draggable = tileNum !== (fixedIndex+1); // fixed piece not draggable
-      tile.dataset.pos = pos;
-      tile.dataset.tile = tileNum;
-      const idx = tileNum-1;
-      const col = idx % size, row = Math.floor(idx/size);
-      const step = size===1?0:(100/(size-1));
-      const posX = col*step, posY = row*step;
-      tile.style.backgroundImage = `url("${imageURL}")`;
-      tile.style.backgroundSize = `${size*100}% ${size*100}%`;
-      tile.style.backgroundPosition = `${posX}% ${posY}%`;
-      // highlight fixed tile
-      if(tileNum === fixedIndex+1){
-        tile.style.outline = '3px solid rgba(255,215,140,0.9)';
-        tile.style.cursor = 'default';
-      }
-      // drag handlers
-      tile.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text/plain', tile.dataset.pos); tile.style.opacity='0.5'; });
-      tile.addEventListener('dragend', ()=>tile.style.opacity='1');
-      tile.addEventListener('dragover', e=>e.preventDefault());
-      tile.addEventListener('drop', e=>{
-        e.preventDefault();
-        const from = parseInt(e.dataTransfer.getData('text/plain'));
-        const to = parseInt(tile.dataset.pos);
-        // swap but don't move into fixed slot if trying to move fixed
-        if(tiles[to] === fixedIndex+1 || tiles[from] === fixedIndex+1) return;
-        const tmp = tiles[from]; tiles[from] = tiles[to]; tiles[to] = tmp;
-        render(); checkSolved();
-      });
-      board.appendChild(tile);
-    });
-  }
-  function shuffle(){
-    const movable = tiles.filter(x=>x !== fixedIndex+1);
-    const s = shuffleArr(movable);
-    tiles = [];
-    let si=0;
-    for(let i=0;i<total;i++){
-      if(i === fixedIndex) tiles[i] = fixedIndex+1;
-      else tiles[i] = s[si++];
-    }
-    render(); document.getElementById('inspect4').disabled = true;
-  }
-  function checkSolved(){
-    for(let i=0;i<total;i++){
-      if(tiles[i] !== i+1) return false;
-    }
-    document.getElementById('inspect4').disabled = false;
-    alert('Puzzle assembled! Click Inspect to flip and reveal the letter.');
-    return true;
-  }
-  document.getElementById('shuffle4').addEventListener('click', shuffle);
-  document.getElementById('inspect4').addEventListener('click', ()=>{
-    showModal(`<div class="card"><h3>Inspect (Back)</h3><p>The letter on the back is: <strong>${lettersPerDay[4]}</strong></p><div style="margin-top:12px"><button id="collect4" class="btn">Collect</button> <button onclick="hideModal()" class="btn">Close</button></div></div>`);
-    document.getElementById('collect4').addEventListener('click', ()=>{ storeLetter(4); hideModal(); });
-  });
-  shuffle();
-}
-
-/* Day 5 — Riddle (Honey -> N) */
-function openDay5(){
-  const day=5;
-  if(state.found[day]) { showModal(`<div class="card"><h3>Already found</h3><p>Letter: <strong>${lettersPerDay[day]}</strong></p><div style="margin-top:12px"><button onclick="hideModal()" class="btn">Close</button></div></div>`); return; }
-  showModal(`<div class="card"><h3>Dec 5 — Riddle</h3><p>“By vicious beast I'm guarded, By death on silver wings. Like gold, I last eternal, Treasure to queens and kings.”</p>
-    <div style="margin-top:8px"><input id="r5" placeholder="answer" style="padding:8px;border-radius:8px"/> <button id="r5b" class="btn">Submit</button></div></div>`);
-  document.getElementById('r5b').addEventListener('click', ()=>{
-    const v = (document.getElementById('r5').value||'').trim().toLowerCase();
-    if(v==='honey'){ storeLetter(5); hideModal(); } else alert('Not quite — try again.');
-  });
-}
-
-/* Day 6 — Maze (very large & complex) */
-function openDay6(){
-  const day=6;
-  if(state.found[day]) { showModal(`<div class="card"><h3>Already found</h3><p>Letter: <strong>${lettersPerDay[day]}</strong></p><div style="margin-top:12px"><button onclick="hideModal()" class="btn">Close</button></div></div>`); return; }
-  const rows = 51, cols=51; // very complex
-  const grid = Array(rows).fill(0).map(()=>Array(cols).fill(1));
-  function carve(r,c){
-    const dirs = [[-2,0],[2,0],[0,-2],[0,2]].sort(()=>Math.random()-0.5);
-    grid[r][c]=0;
-    for(const [dr,dc] of dirs){
-      const nr=r+dr, nc=c+dc;
-      if(nr<=0||nr>=rows-1||nc<=0||nc>=cols-1) continue;
-      if(grid[nr][nc]===1){ grid[r+dr/2][c+dc/2]=0; carve(nr,nc); }
-    }
-  }
-  carve(1,1);
-  let pr=1, pc=1, gr=rows-2, gc=cols-2;
-  const html = `<div class="card"><h3>Dec 6 — Maze (insanely complex)</h3><p>Click inside the maze then use arrow keys to move fast.</p><div id="mazeWrap" style="margin-top:12px;overflow:auto;max-height:62vh;border-radius:8px"></div><div style="margin-top:8px" class="muted">Click the maze then use arrow keys.</div></div>`;
-  showModal(html);
-  const wrap = document.getElementById('mazeWrap');
-
-  function render(){
-    wrap.innerHTML='';
-    const m = document.createElement('div'); m.className='maze';
-    m.style.width = (cols*12+20)+'px';
-    for(let r=0;r<rows;r++){
-      for(let c=0;c<cols;c++){
-        const cell = document.createElement('div'); cell.className='cell';
-        if(r===pr && c===pc) cell.style.background='red';
-        else if(r===gr && c===gc) cell.style.background='lightgreen';
-        else cell.style.background = grid[r][c]===1 ? '#111' : '#fff';
-        m.appendChild(cell);
-      }
-      const br = document.createElement('div'); br.style.clear='both'; m.appendChild(br);
-    }
-    wrap.appendChild(m);
-    m.tabIndex=0; m.focus();
-    m.onkeydown = (e)=>{ if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){ e.preventDefault(); const map={'ArrowUp':[-1,0],'ArrowDown':[1,0],'ArrowLeft':[0,-1],'ArrowRight':[0,1]}; const [dr,dc]=map[e.key]; movePlayer(dr*1,dc*1); } };
-  }
-  function movePlayer(dr,dc){
-    const nr = pr+dr, nc = pc+dc;
-    if(nr<0||nr>=rows||nc<0||nc>=cols) return;
-    if(grid[nr][nc]===1) return;
-    pr=nr; pc=nc; render();
-    if(pr===gr && pc===gc){
-      showModal(`<div class="card"><h3>The box opens!</h3><p>You found the secret letter: <strong>${lettersPerDay[6]}</strong></p><div style="margin-top:12px"><button id="close6b" class="btn">Collect</button></div></div>`);
-      document.getElementById('close6b').addEventListener('click', ()=>{ storeLetter(6); hideModal(); });
-    }
-  }
-  render();
-}
-
-/* Day 7 — Simon (color sequence, must pass 5 rounds) */
-function openDay7(){
-  const day=7;
-  if(state.found[day]) { showModal(`<div class="card"><h3>Already found</h3><p>Letter: <strong>${lettersPerDay[day]}</strong></p><div style="margin-top:12px"><button onclick="hideModal()" class="btn">Close</button></div></div>`); return; }
-  const html = `<div class="card"><h3>Dec 7 — Color Sequence</h3><p>Repeat the flashing pattern. Pass 5 rounds to earn the secret letter. Final round is insane.</p>
-    <div style="display:flex;gap:12px;margin-top:12px" id="simonRow"></div>
-    <div style="margin-top:12px"><button id="start7" class="btn">Start</button> <span id="s7msg" class="muted" style="margin-left:12px"></span></div></div>`;
-  showModal(html);
-  const simonRow = document.getElementById('simonRow');
-  const colors = ['#ff6b6b','#ffd93d','#6bff9e','#6bc3ff'];
-  const btns = [];
-  for(let i=0;i<4;i++){
-    const b = document.createElement('button'); b.className='simonBtn'; b.style.background=colors[i]; b.textContent = i+1;
-    b.addEventListener('click', ()=>{ if(accepting) handleInput(i); });
-    simonRow.appendChild(b); btns.push(b);
-  }
-  const msg = document.getElementById('s7msg');
-  let sequence=[], accepting=false, roundCount=0, roundsPassed=0;
-  async function flash(i, fast=false){
-    btns[i].classList.add('simonFlash');
-    await new Promise(r=>setTimeout(r, fast?120:420));
-    btns[i].classList.remove('simonFlash');
-  }
-  async function playSeq(seq, fast=false){
-    accepting=false;
-    for(const v of seq){ await flash(v, fast); await new Promise(r=>setTimeout(r, fast?60:220)); }
-    accepting=true;
-  }
-  async function runGame(){
-    sequence=[]; roundsPassed=0; roundCount=0; msg.textContent='Good luck!';
-    while(roundCount<6){
-      const len = 3 + roundCount;
-      // build new sequence by appending one random
-      for(let i=0;i<len-sequence.length;i++) sequence.push(Math.floor(Math.random()*4));
-      msg.textContent = `Round ${roundCount+1}: length ${sequence.length}`;
-      await playSeq(sequence, roundCount===5); // last (index 5) is bonus fast
-      // get player input
-      const ok = await getPlayerInput(sequence);
-      if(ok){ roundsPassed++; msg.textContent=`Passed ${roundCount+1}`; if(roundsPassed===5){ showModal(`<div class="card"><h3>Success</h3><p>You passed 5 rounds! Letter: <strong>${lettersPerDay[7]}</strong></p><div style="margin-top:12px"><button id="collect7" class="btn">Collect</button><button onclick="hideModal()" class="btn">Close</button></div></div>`); document.getElementById('collect7').addEventListener('click', ()=>{ storeLetter(7); hideModal(); }); return; } roundCount++; await new Promise(r=>setTimeout(r,400)); }
-      else { msg.textContent = `Failed on round ${roundCount+1}`; showModal('<div class="card"><h3>Not quite</h3><p>You failed the round. Try again from the beginning.</p><div style="margin-top:12px"><button onclick="hideModal()" class="btn">Close</button></div></div>'); return; }
-    }
-  }
-  function getPlayerInput(seq){
-    return new Promise(resolve=>{
-      let idx=0;
-      function handler(i){
-        flash(i,false);
-        if(i!==seq[idx]){ cleanup(); resolve(false); return; }
-        idx++;
-        if(idx===seq.length){ cleanup(); resolve(true); return; }
-      }
-      function cleanup(){ btns.forEach(b=>b.removeEventListener('click', onClick)); accepting=false; }
-      function onClick(e){ handler(btns.indexOf(e.currentTarget)); }
-      btns.forEach(b=>b.addEventListener('click', onClick));
-      accepting=true;
-    });
-  }
-  document.getElementById('start7').addEventListener('click', ()=>runGame());
-}
-
-/* Day 8 — Quote fill (ships -> D) */
-function openDay8(){
-  const day=8;
-  if(state.found[day]) { showModal(`<div class="card"><h3>Already found</h3><p>Letter: <strong>${lettersPerDay[day]}</strong></p><div style="margin-top:12px"><button onclick="hideModal()" class="btn">Close</button></div></div>`); return; }
-  showModal(`<div class="card"><h3>Dec 8 — Quote Fill</h3><p>Fill the blank: “I don't do ____, I don't talk about feelings”</p><div style="margin-top:8px"><input id="q8" style="padding:8px;border-radius:8px"/><button id="b8" class="btn">Submit</button> <button id="hint8" class="btn">Hint</button></div></div>`);
-  document.getElementById('b8').addEventListener('click', ()=>{ const v=(document.getElementById('q8').value||'').trim().toLowerCase(); if(v==='ships'){ storeLetter(8); hideModal(); } else alert('Try again.'); });
-  document.getElementById('hint8').addEventListener('click', ()=>alert('Hint: it’s from Lego Batman!'));
-}
-
-/* Day 9 — Spot the difference (placeholders expect img/day9_1_left.jpg etc) */
-function openDay9(){
-  const day=9;
-  if(state.found[day]) { showModal(`<div class="card"><h3>Already found</h3><p>Letter: <strong>${lettersPerDay[day]}</strong></p><div style="margin-top:12px"><button onclick="hideModal()" class="btn">Close</button></div></div>`); return; }
-  // Placeholder stages
-  const pairs = [
-    {left:'./img/day9_1_left.jpg', right:'./img/day9_1_right.jpg', x:220,y:130,r:36},
-    {left:'./img/day9_2_left.jpg', right:'./img/day9_2_right.jpg', x:110,y:60,r:30},
-    {left:'./img/day9_3_left.jpg', right:'./img/day9_3_right.jpg', x:310,y:185,r:28},
-    {left:'./img/day9_4_left.jpg', right:'./img/day9_4_right.jpg', x:260,y:95,r:32}
-  ];
-  let stage=0;
-  function renderStage(){
-    const p = pairs[stage];
-    showModal(`<div class="card"><h3>Spot the Difference — Stage ${stage+1}/4</h3>
-      <p>Click the difference on the RIGHT image.</p>
-      <div style="display:flex;gap:12px;margin-top:12px">
-        <div style="width:320px;height:220px;border:3px solid rgba(255,255,255,0.04);overflow:hidden"><img src="${p.left}" style="width:100%;height:100%;object-fit:cover"/></div>
-        <div style="width:320px;height:220px;border:3px solid rgba(255,255,255,0.04);overflow:hidden;position:relative" id="spotR"><img src="${p.right}" style="width:100%;height:100%;object-fit:cover"/></div>
-      </div>
-      <div style="margin-top:10px" class="muted">Click roughly where the difference is (placeholder coordinates used).</div>
-      <div style="margin-top:8px"><button onclick="hideModal()" class="btn">Exit</button></div>
-    </div>`);
-    const rightBox = document.getElementById('spotR');
-    rightBox.addEventListener('click', (ev)=>{
-      const rect = rightBox.getBoundingClientRect();
-      const cx = ev.clientX - rect.left, cy = ev.clientY - rect.top;
-      const scaleX = rect.width / 640, scaleY = rect.height / 420;
-      const tx = p.x * scaleX, ty = p.y * scaleY, r = p.r * ((scaleX+scaleY)/2);
-      const dist = Math.hypot(cx-tx, cy-ty);
-      if(dist <= r){
-        stage++;
-        if(stage >= pairs.length){ alert('All differences found! Letter unlocked.'); storeLetter(9); hideModal(); }
-        else { alert('Correct! Next.'); renderStage(); }
-      } else alert('Try another spot.');
-    }, {once:true});
-  }
-  renderStage();
-}
-
-/* Day 10 — Sudoku (9x9) with thick 3x3 borders, 3 hints persistent */
-function openDay10(){
-  const day=10;
-  if(state.found[day]) { showModal(`<div class="card"><h3>Already found</h3><p>Letter: <strong>${lettersPerDay[day]}</strong></p><div style="margin-top:12px"><button onclick="hideModal()" class="btn">Close</button></div></div>`); return; }
-  const puzzle = [
-    [5,3,0,0,7,0,0,0,0],
-    [6,0,0,1,9,5,0,0,0],
-    [0,9,8,0,0,0,0,6,0],
-    [8,0,0,0,6,0,0,0,3],
-    [4,0,0,8,0,3,0,0,1],
-    [7,0,0,0,2,0,0,0,6],
-    [0,6,0,0,0,0,2,8,0],
-    [0,0,0,4,1,9,0,0,5],
-    [0,0,0,0,8,0,0,7,9]
-  ];
-  const solution = [
-    [5,3,4,6,7,8,9,1,2],
-    [6,7,2,1,9,5,3,4,8],
-    [1,9,8,3,4,2,5,6,7],
-    [8,5,9,7,6,1,4,2,3],
-    [4,2,6,8,5,3,7,9,1],
-    [7,1,3,9,2,4,8,5,6],
-    [9,6,1,5,3,7,2,8,4],
-    [2,8,7,4,1,9,6,3,5],
-    [3,4,5,2,8,6,1,7,9]
-  ];
-  const html = `<div class="card"><h3>Dec 10 — Sudoku (9×9)</h3>
-    <p>Fill the grid. Use up to <strong>3 hints</strong>. Revealed hints persist across resets.</p>
-    <div id="sudWrap" style="margin-top:12px"></div>
-    <div style="margin-top:8px"><button id="sudReset" class="btn">Reset</button> <button id="sudHint" class="btn">Hint (<span id="hintLeft">${state.sudokuHints}</span>)</button> <button id="sudExit" class="btn">Exit</button></div></div>`;
-  showModal(html);
-  const wrap = document.getElementById('sudWrap');
-
-  function render(){
-    wrap.innerHTML = '';
-    const gridEl = document.createElement('div'); gridEl.className='grid-sudoku-9';
-    for(let r=0;r<9;r++){
-      for(let c=0;c<9;c++){
-        const cell = document.createElement('input'); cell.type='text'; cell.maxLength=1; cell.dataset.r=r; cell.dataset.c=c;
-        const key = `${r}-${c}`;
-        // prefilled or revealed
-        if(puzzle[r][c] && puzzle[r][c]!==0){ cell.value = puzzle[r][c]; cell.disabled=true; cell.style.background='#eaeffb'; }
-        else if(state.sudokuRevealed[key]){ cell.value = state.sudokuRevealed[key]; cell.disabled=true; cell.style.background='#fff9db'; }
-        else cell.value = '';
-        // thick 3x3 borders (black)
-        if(c%3===0) cell.style.borderLeft='3px solid #000';
-        if(r%3===0) cell.style.borderTop='3px solid #000';
-        if(c===8) cell.style.borderRight='3px solid #000';
-        if(r===8) cell.style.borderBottom='3px solid #000';
-        cell.addEventListener('input', ()=>{ cell.value = cell.value.replace(/[^1-9]/g,''); checkComplete(); });
-        gridEl.appendChild(cell);
-      }
-    }
-    wrap.appendChild(gridEl);
-  }
-  function checkComplete(){
-    const inputs = wrap.querySelectorAll('input');
-    for(const inp of inputs) if(inp.value.trim()==='') return;
-    // verify
-    for(const inp of inputs){
-      const r=parseInt(inp.dataset.r), c=parseInt(inp.dataset.c);
-      if(parseInt(inp.value)!==solution[r][c]) return;
-    }
-    showModal(`<div class="card"><h3>Sudoku solved!</h3><p>Letter found: <strong>${lettersPerDay[10]}</strong></p><div style="margin-top:12px"><button id="collect10" class="btn">Collect</button><button onclick="hideModal()" class="btn">Close</button></div></div>`);
-    document.getElementById('collect10').addEventListener('click', ()=>{ storeLetter(10); hideModal(); });
-    return true;
-  }
-  document.getElementById('sudReset').addEventListener('click', ()=>{ render(); });
-  document.getElementById('sudHint').addEventListener('click', ()=>{
-    if(state.sudokuHints<=0){ alert('No hints left'); return; }
-    for(let r=0;r<9;r++) for(let c=0;c<9;c++){
-      const key = `${r}-${c}`;
-      if(puzzle[r][c] && puzzle[r][c]!==0) continue;
-      if(state.sudokuRevealed[key]) continue;
-      state.sudokuRevealed[key] = solution[r][c];
-      state.sudokuHints = Math.max(0, state.sudokuHints-1);
-      document.getElementById('hintLeft').textContent = state.sudokuHints;
-      saveState(); render(); return;
-    }
-    alert('No suitable empty cell found for hint.');
-  });
-  document.getElementById('sudExit').addEventListener('click', ()=>hideModal());
-  render();
-}
-
-/* Day 11 — Minesweeper 25x25 first click safe */
-function openDay11(){
-  const day=11;
-  if(state.found[day]) { showModal(`<div class="card"><h3>Already found</h3><p>Letter: <strong>${lettersPerDay[day]}</strong></p><div style="margin-top:12px"><button onclick="hideModal()" class="btn">Close</button></div></div>`); return; }
-  const rows=25, cols=25, bombsTotal=100;
-  let grid = [], revealed=[], flagged=[], placed=false;
-  function buildEmpty(){ grid = Array(rows).fill(0).map(()=>Array(cols).fill(0)); revealed = Array(rows).fill(0).map(()=>Array(cols).fill(false)); flagged = Array(rows).fill(0).map(()=>Array(cols).fill(false)); placed=false; }
-  buildEmpty();
-  const html = `<div class="card"><h3>Dec 11 — Minesweeper (25×25)</h3><p>Left-click to reveal. Right-click to flag. First click is always safe.</p>
-    <div style="margin-top:8px"><button id="mineReset" class="btn">Reset</button> <button id="mineHelp" class="btn">?</button></div>
-    <div id="mineArea" style="margin-top:12px;overflow:auto;max-height:60vh;border-radius:8px"></div></div>`;
-  showModal(html);
-  const area = document.getElementById('mineArea');
-
-  function placeBombsAvoid(fr,fc){
-    let placedCount=0; const forbidden = new Set();
-    for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){ const nr=fr+dr, nc=fc+dc; if(nr>=0&&nr<rows&&nc>=0&&nc<cols) forbidden.add(`${nr}-${nc}`); }
-    while(placedCount < bombsTotal){
-      const r=Math.floor(Math.random()*rows), c=Math.floor(Math.random()*cols);
-      const k = `${r}-${c}`;
-      if(forbidden.has(k) || grid[r][c]===-1) continue;
-      grid[r][c] = -1; placedCount++;
-    }
-    for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
-      if(grid[r][c]===-1) continue;
-      let cnt=0;
-      for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){ const nr=r+dr, nc=c+dc; if(nr<0||nr>=rows||nc<0||nc>=cols) continue; if(grid[nr][nc]===-1) cnt++; }
-      grid[r][c] = cnt;
-    }
-    placed=true;
-  }
-  function render(){
-    area.innerHTML='';
-    for(let r=0;r<rows;r++){
-      const rowDiv = document.createElement('div');
-      for(let c=0;c<cols;c++){
-        const btn = document.createElement('div');
-        btn.style.width='18px'; btn.style.height='18px'; btn.style.display='inline-flex'; btn.style.alignItems='center'; btn.style.justifyContent='center';
-        btn.style.border='1px solid #c6d6ee'; btn.style.background = revealed[r][c] ? '#fff' : '#e9f3ff';
-        btn.style.fontSize='11px'; btn.style.cursor='pointer';
-        if(flagged[r][c] && !revealed[r][c]) btn.textContent='🚩';
-        else if(revealed[r][c]){
-          if(grid[r][c]===-1) btn.textContent='💣';
-          else if(grid[r][c]===0) btn.textContent='';
-          else { btn.textContent = grid[r][c]; btn.style.color = '#0b2f66'; btn.style.fontWeight='700'; }
-        }
-        (function(rr,cc,btnEl){
-          btnEl.addEventListener('click', ()=>onReveal(rr,cc));
-          btnEl.addEventListener('contextmenu', (ev)=>{ ev.preventDefault(); toggleFlag(rr,cc); });
-        })(r,c,btn);
-        rowDiv.appendChild(btn);
-      }
-      area.appendChild(rowDiv);
-    }
-  }
-  function revealCell(r,c){
-    if(r<0||r>=rows||c<0||c>=cols) return;
-    if(revealed[r][c] || flagged[r][c]) return;
-    revealed[r][c]=true;
-    if(grid[r][c]===0){
-      for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++) if(!(dr===0&&dc===0)) revealCell(r+dr,c+dc);
-    }
-  }
-  function onReveal(r,c){
-    if(!placed){ placeBombsAvoid(r,c); }
-    if(grid[r][c]===-1){
-      for(let i=0;i<rows;i++) for(let j=0;j<cols;j++) if(grid[i][j]===-1) revealed[i][j]=true;
-      render(); alert('BOOM! You hit a bomb. Try Reset.');
-      buildEmpty(); return;
-    } else {
-      revealCell(r,c); render();
-      let won=true;
-      for(let i=0;i<rows;i++) for(let j=0;j<cols;j++) if(grid[i][j]!==-1 && !revealed[i][j]) { won=false; break; }
-      if(won){ showModal(`<div class="card"><h3>Cleared!</h3><p>You cleared the minefield. Letter: <strong>${lettersPerDay[11]}</strong></p><div style="margin-top:12px"><button id="collect11" class="btn">Collect</button><button onclick="hideModal()" class="btn">Close</button></div></div>`); document.getElementById('collect11').addEventListener('click', ()=>{ storeLetter(11); hideModal(); }); }
-    }
-  }
-  function toggleFlag(r,c){ flagged[r][c]=!flagged[r][c]; render(); }
-  document.getElementById('mineReset').addEventListener('click', ()=>{ buildEmpty(); render(); });
-  document.getElementById('mineHelp').addEventListener('click', ()=>alert('Minesweeper rules:\n- Reveal all non-mine cells to win.\n- Numbers show how many mines are adjacent.\n- Right-click to flag.\n- First click is always safe.'));
-  render();
-}
-
-/* --------------------------
-   Header controls: View Letters & Reset
-   -------------------------- */
-document.getElementById('viewLettersBtn').addEventListener('click', ()=>{
-  showModal(`<div class="card"><h3>Letters Found</h3><p>${Object.keys(state.found||{}).length ? Object.keys(state.found).sort((a,b)=>a-b).map(d=>`Day ${d}: ${lettersPerDay[d]||'?'}`).join('<br/>') : '<em>None yet</em>'}</p><div style="margin-top:12px"><button class="btn" onclick="hideModal()">Close</button></div></div>`);
+  }catch(e){ console.warn('message handler error', e); }
 });
 
-document.getElementById('resetBtn').addEventListener('click', ()=>{
-  showModal(`<div class="card"><h3>Reset Progress?</h3><p>This will clear which letters you've found and most saved hints. If you have unlocked the star combo and it's after Dec 25, you may optionally shuffle content (not implemented automatic scramble).</p><div style="margin-top:12px"><button id="confirmReset" class="btn danger">Yes, reset</button> <button class="btn" onclick="hideModal()">Cancel</button></div></div>`);
-  setTimeout(()=>{
-    document.getElementById('confirmReset').addEventListener('click', ()=>{
-      state = {found:{}, sudokuHints:3, sudokuRevealed:{}, comboUnlocked:false, lettersMap:{}};
-      saveState();
-      hideModal();
-      alert('Progress reset.');
-    });
-  },10);
-});
 
-/* --------------------------
-   Final decode (on Dec 25+)
-   -------------------------- */
-function tryDecodeFinal(){
-  const required = Object.keys(lettersPerDay).filter(k=>k<=11); // days we have
-  const have = Object.keys(state.found || {}).map(x=>parseInt(x));
-  if(required.some(d=>!have.includes(d))){ alert('You must collect all letters first.'); return; }
-  const now = new Date();
-  if(now.getMonth()===11 && now.getDate()>=25 || location.search.includes('forceDecode=true')){
-    showModal(`<div class="card"><h3>Final decoding</h3>
-      <p>Final message will be revealed now:</p>
-      <pre style="background:rgba(255,255,255,0.02);padding:12px;border-radius:8px">LOVE KNOWS NOT ITS DEPTH TILL THE HOUR OF SEPARATION</pre>
-      <div style="margin-top:12px"><button class="btn" onclick="hideModal()">Close</button></div></div>`);
+/* generic small modal content for simple messages */
+function showSimpleModal(html){
+  modal.style.display = 'flex';
+  modal.setAttribute('aria-hidden','false');
+  modalWindow.classList.remove('big');
+  modalTitle.textContent = '';
+  iframeWrap.innerHTML = `<div style="padding:18px;color:#fff;font-weight:700">${html}<div style="margin-top:12px"><button onclick="hideModal()">Close</button></div></div>`;
+}
+
+/* hide modal */
+function hideModal(){
+  modal.style.display = 'none';
+  modal.setAttribute('aria-hidden','true');
+  iframeWrap.innerHTML = '';
+}
+
+/* ========== public API for day files (if loaded as same-origin iframe they can also access parent.collectLetter) ========== */
+function collectLetterFromDay(day, value){
+  state.found[day] = value;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  buildCalendar();
+  showSimpleModal(`Letter found! Day ${day}: ${value}`);
+}
+
+/* make it globally available for same-origin iframe usage */
+window.collectLetterFromDay = collectLetterFromDay;
+
+/* ========= openDay dispatcher (path assumes Option C folder names) ========= */
+function openDay(day){
+  // don't open found days
+  if(state.found[day]){ showSimpleModal(`You've already found Day ${day}'s letter.`); return; }
+
+  // if day > today and not unlocked, block
+  const unlockAll = location.search.includes('unlockAll=true');
+  if(!unlockAll && day > todayDay){
+    showSimpleModal(`Day ${day} is locked until its date.`);
+    return;
+  }
+
+  // map day -> path to /days/dayX/index.html
+  const path = `./days/day${day}/index.html`;
+  // For larger games (4,6,7,10,11) open bigger window
+  const big = [3,4,6,7,10,11].includes(day);
+  let title = `Day ${day}`;
+  switch(day){
+    case 1: title = 'Wordle — Day 1'; break;
+    case 2: title = 'Bracket City — Day 2'; break;
+    case 3: title = 'Matching — Day 3'; break;
+    case 4: title = 'Jigsaw — Day 4'; break;
+    case 5: title = 'Riddle — Day 5'; break;
+    case 6: title = 'Maze — Day 6'; break;
+    case 7: title = 'Simon — Day 7'; break;
+    case 8: title = 'Quote — Day 8'; break;
+    case 9: title = 'Spot the Diff — Day 9'; break;
+    case 10: title = 'Sudoku — Day 10'; break;
+    case 11: title = 'Minesweeper — Day 11'; break;
+  }
+  showModalForDay(day, title, path, big);
+}
+
+/* ========= secret star system ========= */
+const starLayer = document.getElementById('starLayer');
+let secretStarIndex = Math.floor(Math.random()*24)+1;
+function spawnStars(){
+  for(let i=0;i<24;i++){
+    const s = document.createElement('div');
+    s.className = 'twinkle-star';
+    s.style.left = (5 + Math.random()*90) + '%';
+    s.style.top = (5 + Math.random()*33) + '%';
+    s.style.width = (6 + Math.random()*8) + 'px';
+    s.style.height = s.style.width;
+
+    // one secret star only
+    if(i+1 === secretStarIndex && !state.secretStarFound){
+      s.classList.add('secret-star');
+      s.title = 'Secret star (click me)';
+      s.style.cursor = 'pointer';
+      s.addEventListener('click', openStarCombo);
+    } else {
+      // non-secret stars are not clickable
+      s.style.pointerEvents = 'none';
+    }
+    starLayer.appendChild(s);
+  }
+}
+spawnStars();
+
+function openStarCombo(){
+  // if already found, ignore
+  if(state.secretStarFound){
+    showSimpleModal('You already discovered the star secret.');
+    return;
+  }
+  // a small modal with input
+  modal.style.display = 'flex';
+  modal.setAttribute('aria-hidden','false');
+  modalWindow.classList.remove('big');
+  modalTitle.textContent = 'Stars — Combination Lock';
+  iframeWrap.innerHTML = `
+    <div style="padding:18px;color:#fff">
+      <p>Enter the 7-digit code you discover across Days 18–24.</p>
+      <input id="comboInput" maxlength="7" style="font-size:20px;padding:8px;width:220px;text-align:center" />
+      <div style="margin-top:12px"><button onclick="submitCombo()">Enter</button> <button onclick="hideModal()">Cancel</button></div>
+      <div style="margin-top:10px;color:var(--muted);font-size:13px">Hint: code = digits found on Days 18–24</div>
+    </div>
+  `;
+}
+function submitCombo(){
+  const v = document.getElementById('comboInput').value.trim();
+  if(v === '5201314'){
+    state.secretStarFound = true;
+    state.comboCracked = true;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    hideModal();
+    // notify and show special message (parent)
+    showSimpleModal('✨ You cracked the star combination! ✨');
+    // broadcast to iframes (if needed)
+    window.postMessage({type:'comboCracked'}, '*');
   } else {
-    alert('Final message is locked until Dec 25.');
+    showSimpleModal('Incorrect code — keep collecting the digits from Days 18–24.');
   }
 }
 
-/* Save on unload */
-window.addEventListener('beforeunload', saveState);
+/* ========= secret code UI (locked until Dec 25 or when all collected) ========= */
+function updateSecretCodeUI(){
+  // build code string from found days 18-24
+  let digits = [];
+  for(let d=18; d<=24; d++){
+    if(state.found[d]) digits.push(state.found[d]); else digits.push('_');
+  }
+  const allFound = digits.every(ch => ch !== '_');
+  secretCodeText.textContent = `Digits (Days 18–24): ${digits.join(' ')} — ${allFound ? 'All digits collected' : 'Collect all digits.'}`;
+  // final decode only available Dec 25+
+  const canDecode = currentDate >= new Date(currentDate.getFullYear(),11,25) && allFound;
+  if(canDecode){
+    // decode via provided mapping: we won't implement calculus mapping here; just show final message if all letters present
+    secretCodeText.innerHTML = `<strong>Final message unlocked:</strong><div style="margin-top:8px;background:rgba(255,255,255,0.03);padding:8px;border-radius:8px;color:#fff">LOVE KNOWS NOT ITS DEPTH TILL THE HOUR OF SEPARATION</div>`;
+  }
+}
+
+/* ========= reset / view letters ========= */
+viewLettersBtn.addEventListener('click', ()=> {
+  // show a modal listing letters and a close button
+  const keys = Object.keys(state.found).map(n=>parseInt(n)).sort((a,b)=>a-b);
+  const lines = keys.length ? keys.map(k=>`Day ${k}: ${state.found[k]}`).join('<br>') : '<em>None yet</em>';
+  modal.style.display = 'flex'; modal.setAttribute('aria-hidden','false'); modalWindow.classList.remove('big'); modalTitle.textContent = 'Letters found';
+  iframeWrap.innerHTML = `<div style="padding:18px;color:#fff">${lines}<div style="margin-top:12px"><button onclick="hideModal()">Close</button></div></div>`;
+});
+
+resetBtn.addEventListener('click', ()=> {
+  modal.style.display = 'flex'; modal.setAttribute('aria-hidden','false'); modalWindow.classList.remove('big'); modalTitle.textContent = 'Reset Progress';
+  iframeWrap.innerHTML = `<div style="padding:18px;color:#fff">
+    <p>Reset will clear all collected letters. If current date is Dec 25+ and the code was cracked, resetting could optionally reshuffle the calendar (not implemented).</p>
+    <div style="margin-top:12px"><button onclick="confirmReset()" class="danger">Confirm Reset</button> <button onclick="hideModal()">Cancel</button></div>
+  </div>`;
+});
+function confirmReset(){
+  state = {found:{}, comboCracked:false, secretStarFound:false};
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  hideModal();
+  buildCalendar();
+  showSimpleModal('Progress cleared.');
+}
+
+/* ========== Snow system (small efficient particle system) ========== */
+const snowLayer = document.getElementById('snowLayer');
+function makeSnow(count=80){
+  for(let i=0;i<count;i++){
+    const d = document.createElement('div');
+    d.className = 'snow-dot';
+    resetDot(d,true);
+    snowLayer.appendChild(d);
+    animateDot(d);
+  }
+}
+function resetDot(d, initial=false){
+  const w = Math.max(window.innerWidth,600);
+  d.style.left = (Math.random()*100) + '%';
+  d.style.top = (initial ? (-Math.random()*50) : -10) + '%';
+  d.style.opacity = (0.3 + Math.random()*0.8);
+  const s = 4 + Math.random()*8;
+  d.style.width = s+'px';
+  d.style.height = s+'px';
+}
+function animateDot(d){
+  const dur = 8000 + Math.random()*12000;
+  const end = window.innerHeight + 40;
+  const startX = parseFloat(d.style.left);
+  const dx = (Math.random()*20 - 10);
+  const startTop = parseFloat(d.style.top);
+  const start = Date.now();
+  function frame(){
+    const t = (Date.now() - start)/dur;
+    if(t >= 1){ resetDot(d); setTimeout(()=>animateDot(d), Math.random()*2000); return; }
+    d.style.top = (t*120) + '%';
+    d.style.left = (startX + dx * t) + '%';
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+makeSnow(90);
+
+/* ========== Embers (canvas) ========= */
+const emberC = document.getElementById('emberCanvas');
+const ectx = emberC.getContext?.('2d');
+function resizeCanvas(){ emberC.width = window.innerWidth; emberC.height = 220; }
+resizeCanvas(); window.addEventListener('resize', resizeCanvas);
+
+let embers = [];
+function spawnEmber(){
+  const w = emberC.width;
+  embers.push({
+    x: w/2 + (Math.random()*380 - 190),
+    y: emberC.height - 20,
+    vx: (Math.random()*2 - 1),
+    vy: - (4 + Math.random()*5),
+    life: 60 + Math.random()*80,
+    r: 2 + Math.random()*3,
+    alpha: 1
+  });
+}
+function updateEmbers(){
+  if(!ectx) return;
+  ectx.clearRect(0,0,emberC.width, emberC.height);
+  if(Math.random() < 0.25) spawnEmber();
+  embers.forEach((em,idx)=>{
+    em.x += em.vx;
+    em.y += em.vy;
+    em.vy += 0.08; // gravity
+    em.life -= 1;
+    em.alpha = Math.max(0, em.life / 120);
+    // glow
+    ectx.beginPath();
+    ectx.fillStyle = `rgba(255,180,60,${em.alpha})`;
+    ectx.shadowColor = `rgba(255,160,30,${em.alpha})`;
+    ectx.shadowBlur = 18;
+    ectx.arc(em.x, em.y, em.r, 0, Math.PI*2);
+    ectx.fill();
+    if(em.life <= 0 || em.y > emberC.height + 20) embers.splice(idx,1);
+  });
+  requestAnimationFrame(updateEmbers);
+}
+updateEmbers();
+
+/* ========== utilities ========== */
+function formatDate(d){
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+/* ensure calendar is rebuilt on load (in case state changed elsewhere) */
+window.addEventListener('focus', ()=> buildCalendar());
 </script>
 </body>
 </html>
