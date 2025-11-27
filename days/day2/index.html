@@ -1,109 +1,636 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Day 2 — Bracket City</title>
-<style>
-  body{margin:0;font-family:Inter,Arial;background:linear-gradient(180deg,#041226,#072238);color:#fff;padding:16px}
-  .wrap{max-width:980px;margin:0 auto;background:rgba(255,255,255,0.02);padding:14px;border-radius:10px}
-  h2{margin:0}
-  .bracketArea{margin-top:12px;background:rgba(0,0,0,0.2);padding:12px;border-radius:8px;line-height:1.4}
-  .controls{margin-top:12px;display:flex;gap:8px;align-items:center}
-  input{padding:8px;border-radius:8px;border:0}
-  button{background:#ffd98a;border:0;padding:8px 10px;border-radius:8px;color:#072;font-weight:800}
-  .muted{color:#b9cfe6}
-  .found{margin-top:12px;background:#fff;color:#072;padding:10px;border-radius:8px;display:flex;justify-content:space-between;align-items:center}
-</style>
+<head>
+  <meta charset="UTF-8" />
+  <title>Day 2 – Bracket City</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    :root {
+      --bg-dark: #020617;
+      --bg-mid: #111827;
+      --panel: #fdf6ed;
+      --accent: #b03a3a;
+      --accent-soft: #f4e4d0;
+      --text-main: #222;
+      --text-muted: #6b7280;
+      --border-soft: #d3c4b2;
+      --correct: #16a34a;
+      --error: #b91c1c;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #1f2937 0, #020617 55%, #000 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem 0.75rem;
+      color: var(--text-main);
+    }
+
+    .page {
+      position: relative;
+      max-width: 620px;
+      width: 100%;
+      background: var(--panel);
+      border-radius: 22px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+      padding: 1.8rem 1.5rem 1.4rem;
+      overflow: hidden;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 1.1rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      background: var(--accent-soft);
+      padding: 0.25rem 0.7rem;
+      border-radius: 999px;
+      margin-bottom: 0.45rem;
+    }
+
+    header h1 {
+      font-size: 1.7rem;
+      color: var(--accent);
+      margin-bottom: 0.15rem;
+    }
+
+    header p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .already-banner {
+      position: absolute;
+      top: 0.75rem;
+      right: 1rem;
+      font-size: 0.75rem;
+      background: #ecf8f0;
+      border-radius: 999px;
+      padding: 0.2rem 0.7rem;
+      border: 1px solid #c3e6d4;
+      color: #285943;
+    }
+
+    main {
+      margin-top: 0.4rem;
+    }
+
+    .bracket-area {
+      border-radius: 16px;
+      background: #f8ecdc;
+      border: 1px solid #e0cfb9;
+      padding: 0.75rem 0.9rem 0.8rem;
+      margin-bottom: 0.9rem;
+    }
+
+    .bracket-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 0.2rem;
+    }
+
+    #sentence {
+      font-size: 1.08rem;
+      line-height: 1.5;
+    }
+
+    .bracketed {
+      background: #fef3c7;
+      border-radius: 6px;
+      padding: 0.1rem 0.25rem;
+      border: 1px dashed #f59e0b;
+      font-weight: 600;
+    }
+
+    .controls {
+      margin-top: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .controls label {
+      font-size: 0.85rem;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    #answerInput {
+      flex: 1;
+      min-width: 0;
+      padding: 0.55rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      font-size: 0.98rem;
+    }
+
+    #answerInput:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+
+    .btn {
+      border-radius: 999px;
+      border: none;
+      padding: 0.55rem 1.1rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: var(--accent);
+      color: white;
+      white-space: nowrap;
+      transition: transform 0.1s ease, box-shadow 0.12s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-secondary {
+      background: var(--accent-soft);
+      color: #5a4032;
+      border: 1px solid #ddc7af;
+    }
+
+    .btn-secondary:hover {
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+    }
+
+    #status {
+      font-size: 0.85rem;
+      min-height: 1.1rem;
+    }
+
+    #status.error {
+      color: var(--error);
+    }
+
+    #status.success {
+      color: var(--correct);
+    }
+
+    #stepProgress {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    #currentClue {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+
+    #hintContainer {
+      display: none;
+      margin-top: 0.7rem;
+      padding: 0.65rem 0.8rem;
+      border-radius: 10px;
+      background: #fce7f3;
+      border: 1px dashed #f9a8d4;
+      font-size: 0.86rem;
+    }
+
+    #hintContainer strong {
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    /* Final sentence letters */
+
+    .final-letter {
+      display: inline-block;
+      padding: 0.1rem 0.16rem;
+      margin: 0.02rem 0.02rem;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: transform 0.08s ease, box-shadow 0.08s ease,
+        background 0.08s ease;
+    }
+
+    .final-letter:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+      background: #fee2e2;
+    }
+
+    .final-space {
+      display: inline-block;
+      width: 0.35rem;
+    }
+
+    footer {
+      margin-top: 1.2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    footer a {
+      color: #5a4032;
+      text-decoration: none;
+    }
+
+    /* Modal */
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 20;
+    }
+
+    .modal.open {
+      display: flex;
+    }
+
+    .modal-content {
+      max-width: 420px;
+      width: 100%;
+      padding: 1.2rem 1.3rem 1.05rem;
+      background: #faf5f0;
+      border-radius: 18px;
+      color: #333;
+      position: relative;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal h2 {
+      font-size: 1.1rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .modal p {
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .modal-close {
+      position: absolute;
+      right: 0.7rem;
+      top: 0.6rem;
+      border: none;
+      background: transparent;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: #555;
+    }
+
+    .modal-footer {
+      margin-top: 0.9rem;
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+  </style>
 </head>
 <body>
-  <div class="wrap">
-    <h2>Day 2 — Bracket City</h2>
-    <p class="muted">Solve the innermost bracket first. Type into the box and press Enter or Submit. Each solved bracket is replaced by your word.</p>
-
-    <div class="bracketArea" id="bracketArea"></div>
-
-    <div class="controls">
-      <input id="entry" placeholder="Type word for innermost bracket"/>
-      <button id="submit">Submit</button>
-      <button id="closeBtn">Close</button>
+  <div class="page">
+    <div class="already-banner" id="alreadyBanner" style="display:none;">
+      Letter already collected ✅
     </div>
 
-    <div id="hint" class="muted" style="margin-top:10px">Example prompt: "word before cube or Capades" → ICE</div>
+    <header>
+      <div class="badge">
+        <span>Day 2</span>
+        <span>Mini Bracket City</span>
+      </div>
+      <h1>December 2</h1>
+      <p>
+        Solve the nested brackets one by one. When you finish the chain,
+        the final sentence will hide a special letter.
+      </p>
+    </header>
 
-    <div id="foundPanel" style="display:none" class="found"><div>Letter found: <strong id="foundLetter">O</strong></div><div><button id="closeFound">Close</button></div></div>
+    <main>
+      <section class="bracket-area">
+        <div class="bracket-label">Bracket chain</div>
+        <div id="sentence"></div>
+        <div id="currentClue"></div>
+      </section>
+
+      <section class="controls">
+        <label for="answerInput">Type the exact answer to the highlighted bracket</label>
+        <div class="input-row">
+          <input
+            id="answerInput"
+            autocomplete="off"
+          />
+          <button class="btn" id="submitAnswer">Submit</button>
+        </div>
+        <p id="status"></p>
+        <p id="stepProgress"></p>
+      </section>
+
+      <section id="hintContainer">
+        <strong>Hidden-letter hint 💡</strong>
+        <p>
+          In the final sentence, find the word that describes size.
+          The letter to click is the <em>first letter</em> of that word.
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      <button class="btn btn-secondary" id="backButton">
+        ← Back to calendar
+      </button>
+      <span>Each bracket solved brings the sentence closer to us.</span>
+    </footer>
   </div>
 
-<script>
-/* Day 2 Bracket City */
-const DAY = 2;
-const COLLECT_LETTER = 'O';
+  <!-- Letter collected modal -->
+  <div class="modal" id="letterModal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="modal-close" data-close="letterModal">&times;</button>
+      <h2>Letter collected ✉️</h2>
+      <p>
+        You picked the right one. This letter has been stored in your
+        collection on the main calendar page.
+      </p>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close="letterModal">
+          Stay on this page
+        </button>
+        <button class="btn" id="goHomeFromModal">
+          Back to calendar
+        </button>
+      </div>
+    </div>
+  </div>
 
-// initial nested string from your brief (compressed to a manageable sample)
-// Use the text provided in your spec — trimmed for readability in UI:
-let source = `the Con[word after extension or [over[aggressively [[office with an extremely short commute] ➡️ ⬅️ amok] at battery], with "[a [speak criti[word after [[one might be of [etizer or lication preceder]proval] up] or curtain]y of or strike a door] one is a [horror movie actor's blood [write, but not by [[most filling course] (FR) or mano (MX)]]?]]]e makes its final flight`;
+  <script>
+    // ===== CONFIG =====
+    const DAY_LETTER_KEY = "advent_day_2_letter";
+    const HIDDEN_LETTER = "L"; // from LITTLE in the final sentence
+    const FINAL_SENTENCE = "COZY LITTLE CITY YOU AND ME";
 
-// We'll identify innermost brackets using regex
-const area = document.getElementById('bracketArea');
-const entry = document.getElementById('entry');
-document.getElementById('submit').addEventListener('click', submit);
-document.getElementById('closeBtn').addEventListener('click', closeSelf);
-document.getElementById('closeFound').addEventListener('click', closeSelf);
+    // Steps: each one is a bracketed clue that resolves into the next prompt
+    const steps = [
+      {
+        prompt: "[a 4-letter word for warm and comfy]",
+        answer: "COZY",
+      },
+      {
+        prompt: "COZY [a 6-letter word meaning \"small and cute\"] CITY",
+        answer: "LITTLE",
+      },
+      {
+        prompt: "COZY LITTLE CITY [the two people this puzzle is about (three words)]",
+        answer: "YOU AND ME",
+      }
+    ];
 
-function render(){
-  area.innerHTML = highlightBrackets(source);
-  updatePrompt();
-}
+    let currentStepIndex = 0;
+    let gameOver = false;
 
-function highlightBrackets(s){
-  // simple HTML representation that highlights innermost bracket
-  // find innermost bracket using regex
-  const inn = /\[([^\[\]]*)\]/;
-  let match = inn.exec(s);
-  if(!match) return s.replace(/\n/g,'<br/>');
-  const inner = match[1];
-  // mark that portion with a span
-  const before = s.slice(0,match.index);
-  const after = s.slice(match.index + match[0].length);
-  return before + `<mark style="background:rgba(255,217,130,0.12);padding:2px 6px;border-radius:4px">${inner}</mark>` + after;
-}
+    const sentenceEl = document.getElementById("sentence");
+    const currentClueEl = document.getElementById("currentClue");
+    const statusEl = document.getElementById("status");
+    const stepProgressEl = document.getElementById("stepProgress");
+    const answerInput = document.getElementById("answerInput");
+    const submitAnswerBtn = document.getElementById("submitAnswer");
+    const hintContainer = document.getElementById("hintContainer");
+    const alreadyBanner = document.getElementById("alreadyBanner");
 
-function updatePrompt(){
-  // find innermost bracket and show a friendly prompt
-  const inn = /\[([^\[\]]*)\]/;
-  const m = inn.exec(source);
-  if(m){
-    document.getElementById('hint').textContent = `Fill this bracket: ${m[1].slice(0,70)}... (innermost)`;
-  } else {
-    document.getElementById('hint').textContent = 'All brackets solved!';
-    // puzzle complete
-    collect();
-  }
-}
+    function setStatus(msg, type = "") {
+      statusEl.textContent = msg;
+      statusEl.className = "";
+      if (type) statusEl.classList.add(type);
+    }
 
-function submit(){
-  const val = (entry.value||'').trim();
-  if(!val){ alert('Type a word to fill the innermost bracket'); return; }
-  // replace only the first innermost bracket
-  source = source.replace(/\[([^\[\]]*)\]/, val);
-  entry.value='';
-  render();
-}
+    function normalizeAnswer(str) {
+      // Uppercase and strip extra spaces
+      return str.toUpperCase().replace(/\s+/g, " ").trim();
+    }
 
-function collect(){
-  // already collected?
-  if(window.collected) return;
-  window.collected = true;
-  // post message to parent
-  try{
-    if(window.parent && window.parent.collectLetterFromDay) window.parent.collectLetterFromDay(DAY, COLLECT_LETTER);
-    else window.parent.postMessage({type:'collected', day:DAY, value:COLLECT_LETTER}, '*');
-  }catch(e){
-    window.parent.postMessage({type:'collected', day:DAY, value:COLLECT_LETTER}, '*');
-  }
-  document.getElementById('foundPanel').style.display = 'flex';
-}
+    function answersMatch(input, expected) {
+      return normalizeAnswer(input) === normalizeAnswer(expected);
+    }
 
-function closeSelf(){ try{ window.parent.hideModal(); }catch(e){ window.parent.postMessage({type:'requestClose'}, '*'); } }
+    function renderBracketPrompt() {
+      const step = steps[currentStepIndex];
+      const text = step.prompt;
+      sentenceEl.innerHTML = "";
 
-render();
-</script>
+      const openIdx = text.indexOf("[");
+      const closeIdx = text.indexOf("]", openIdx + 1);
+
+      if (openIdx === -1 || closeIdx === -1) {
+        sentenceEl.textContent = text;
+        currentClueEl.textContent = "";
+        return;
+      }
+
+      const before = text.slice(0, openIdx);
+      const inside = text.slice(openIdx + 1, closeIdx);
+      const after = text.slice(closeIdx + 1);
+
+      if (before) {
+        const spanBefore = document.createElement("span");
+        spanBefore.textContent = before;
+        sentenceEl.appendChild(spanBefore);
+      }
+
+      const bracketSpan = document.createElement("span");
+      bracketSpan.className = "bracketed";
+      bracketSpan.textContent = inside;
+      sentenceEl.appendChild(bracketSpan);
+
+      if (after) {
+        const spanAfter = document.createElement("span");
+        spanAfter.textContent = after;
+        sentenceEl.appendChild(spanAfter);
+      }
+
+      currentClueEl.textContent = "Current bracket clue: " + inside;
+      stepProgressEl.textContent =
+        "Step " + (currentStepIndex + 1) + " of " + steps.length;
+    }
+
+    function renderFinalSentence() {
+      sentenceEl.innerHTML = "";
+      currentClueEl.textContent =
+        "Puzzle complete! The final sentence below hides a clickable letter.";
+
+      FINAL_SENTENCE.split("").forEach((ch) => {
+        if (ch === " ") {
+          const spaceSpan = document.createElement("span");
+          spaceSpan.className = "final-space";
+          spaceSpan.textContent = " ";
+          sentenceEl.appendChild(spaceSpan);
+        } else {
+          const letterSpan = document.createElement("span");
+          letterSpan.className = "final-letter";
+          letterSpan.textContent = ch;
+          letterSpan.addEventListener("click", () => handleLetterClick(ch));
+          sentenceEl.appendChild(letterSpan);
+        }
+      });
+
+      stepProgressEl.textContent = "All brackets solved.";
+    }
+
+    function handleCorrectAnswer() {
+      setStatus("Correct!", "success");
+
+      currentStepIndex++;
+      if (currentStepIndex >= steps.length) {
+        // All steps done
+        gameOver = true;
+        hintContainer.style.display = "block";
+        renderFinalSentence();
+        answerInput.disabled = true;
+        submitAnswerBtn.disabled = true;
+      } else {
+        renderBracketPrompt();
+      }
+    }
+
+    function onSubmitAnswer() {
+      if (gameOver) return;
+
+      const value = answerInput.value || "";
+      const step = steps[currentStepIndex];
+
+      if (!value.trim()) {
+        setStatus("Type an answer for the bracket.", "error");
+        return;
+      }
+
+      if (answersMatch(value, step.answer)) {
+        answerInput.value = "";
+        handleCorrectAnswer();
+      } else {
+        setStatus("Not quite. Check the clue again and try another guess.", "error");
+      }
+    }
+
+    // ===== Hidden letter logic =====
+
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      if (!modal) return;
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      if (!modal) return;
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    function handleLetterClick(letter) {
+      if (!gameOver) {
+        // Ignore clicks until the puzzle is solved
+        return;
+      }
+
+      const existing = localStorage.getItem(DAY_LETTER_KEY);
+      if (existing) {
+        openModal("letterModal");
+        return;
+      }
+
+      if (letter === HIDDEN_LETTER) {
+        localStorage.setItem(DAY_LETTER_KEY, HIDDEN_LETTER);
+        alreadyBanner.style.display = "block";
+        openModal("letterModal");
+      } else {
+        setStatus(
+          "That’s not the one. Think about which word describes size, then try its first letter.",
+          "error"
+        );
+      }
+    }
+
+    // ===== Navigation & modal wiring =====
+
+    document.getElementById("backButton").addEventListener("click", () => {
+      window.location.href = "../../index.html";
+    });
+
+    document.getElementById("goHomeFromModal").addEventListener("click", () => {
+      window.location.href = "../../index.html";
+    });
+
+    document
+      .querySelectorAll("[data-close]")
+      .forEach((btn) =>
+        btn.addEventListener("click", () =>
+          closeModal(btn.getAttribute("data-close"))
+        )
+      );
+
+    document.querySelectorAll(".modal").forEach((modal) => {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) {
+          modal.classList.remove("open");
+          modal.setAttribute("aria-hidden", "true");
+        }
+      });
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        // If a modal is open, don't trigger submit
+        if (document.querySelector(".modal.open")) return;
+        onSubmitAnswer();
+      } else if (e.key === "Escape") {
+        document
+          .querySelectorAll(".modal.open")
+          .forEach((m) => m.classList.remove("open"));
+      }
+    });
+
+    submitAnswerBtn.addEventListener("click", onSubmitAnswer);
+
+    // ===== Init =====
+    renderBracketPrompt();
+    setStatus("", "");
+    answerInput.focus();
+
+    // Show banner if letter already collected
+    if (localStorage.getItem(DAY_LETTER_KEY)) {
+      alreadyBanner.style.display = "block";
+    }
+  </script>
 </body>
 </html>
