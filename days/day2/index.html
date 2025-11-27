@@ -1,0 +1,119 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Day 1 — Wordle</title>
+<style>
+  :root{--bg:#071827;--card:#f6fbff;--accent:#7aa7ff}
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,#031124,#06243a);color:#eef7ff}
+  .wrap{max-width:760px;margin:18px auto;padding:18px}
+  .panel{background:#0b1b2b;padding:18px;border-radius:12px}
+  h2{margin:0 0 8px 0}
+  .muted{color:#9fb3d6}
+  #board{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+  .row{display:flex;gap:6px}
+  .cell{width:48px;height:48px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#022}
+  .btn{margin-left:8px;padding:8px 12px;border-radius:10px;border:none;background:var(--accent);font-weight:800;cursor:pointer}
+  #hint{margin-top:12px;color:#cde;display:none}
+  input[type=text]{padding:8px;border-radius:8px;border:0;width:220px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <h2>Day 1 — Wordle</h2>
+      <div class="muted">Guess the 5-letter word. When you guess the correct word, click the correct letter in the solved word to store the secret letter.</div>
+
+      <div id="board" aria-live="polite"></div>
+
+      <div style="margin-top:10px">
+        <input id="guess" maxlength="5" placeholder="Type a 5-letter English word"/>
+        <button id="try" class="btn">Try</button>
+      </div>
+
+      <div id="hint"><strong>Hint revealed:</strong> Heart - heat = ? (click the correct letter in the word above to store)</div>
+      <div style="margin-top:12px"><button id="closeBtn" class="btn">Close</button></div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const TARGET='THORN';
+  // Minimal dictionary — add words you like; will validate guesses.
+  const DICT = new Set(["THORN","BROOM","APPLE","SPICE","CRANE","SHINE","WORDS","LEARN","PLANT","CRAZY","GHOST","SHARD","STONE","BRAVE","PLATE"]);
+  const board = document.getElementById('board');
+  const guessInput = document.getElementById('guess');
+  const tryBtn = document.getElementById('try');
+  const hintEl = document.getElementById('hint');
+  const closeBtn = document.getElementById('closeBtn');
+
+  const rows = [];
+
+  function render(){
+    board.innerHTML = '';
+    rows.forEach((r,ri)=>{
+      const row = document.createElement('div'); row.className='row';
+      for(let i=0;i<5;i++){
+        const c = document.createElement('div'); c.className='cell';
+        const ch = r[i] || '';
+        c.textContent = ch;
+        if(ch){
+          if(ch === TARGET[i]) c.style.background = '#7cf';
+          else if(TARGET.includes(ch)) c.style.background = '#ffd56b';
+          else c.style.background = '#e6e6e6';
+        }
+        row.appendChild(c);
+      }
+      board.appendChild(row);
+    });
+  }
+
+  tryBtn.addEventListener('click', ()=>{
+    const g = (guessInput.value||'').toUpperCase();
+    if(g.length!==5){ alert('Enter 5 letters'); return; }
+    if(!DICT.has(g)){ alert('Word not in dictionary'); return; }
+    rows.push(g);
+    render();
+    guessInput.value='';
+    if(g===TARGET){
+      hintEl.style.display='block';
+      // make last row clickable
+      const lastRow = board.lastChild;
+      for(let i=0;i<5;i++){
+        const cell = lastRow.children[i];
+        cell.style.cursor='pointer';
+        cell.title='Click to collect if this is the secret letter';
+        cell.addEventListener('click', ()=>{
+          const clicked = TARGET[i];
+          if(clicked === 'R'){
+            collect('R');
+          } else {
+            alert('That is not the secret letter. Try another letter.');
+          }
+        });
+      }
+    }
+  });
+
+  function collect(letter){
+    // notify parent
+    try{ window.parent.postMessage({type:'collected', day:1, value:letter}, '*'); }catch(e){}
+    try{ if(window.parent.collectLetterFromDay) window.parent.collectLetterFromDay(1, letter); }catch(e){}
+    showFound(letter);
+  }
+
+  function showFound(letter){
+    board.innerHTML = `<div style="padding:18px;background:#082233;border-radius:10px;color:#fff;font-weight:800">Letter found! <span style="font-size:28px;margin-left:8px">${letter}</span></div>`;
+    hintEl.style.display='none';
+  }
+
+  closeBtn.addEventListener('click', ()=>{
+    try{ window.parent.hideModal(); }catch(e){ window.close(); }
+  });
+  // initial empty rows
+  render();
+})();
+</script>
+</body>
+</html>
