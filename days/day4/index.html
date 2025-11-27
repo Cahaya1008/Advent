@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Day 4 — Jigsaw</title>
+<style>
+  body{margin:0;font-family:Inter,Arial;background:linear-gradient(180deg,#041226,#072238);color:#fff;padding:12px}
+  .wrap{max-width:1100px;margin:0 auto}
+  h2{margin:0}
+  #board{display:grid;gap:6px;margin-top:12px}
+  .tile{background:#ddd;border-radius:6px;cursor:grab;overflow:hidden;display:flex;align-items:center;justify-content:center;border:2px solid rgba(0,0,0,0.06)}
+  .controls{margin-top:12px;display:flex;gap:8px}
+  button{background:#ffd98a;border:0;padding:8px 12px;border-radius:8px;color:#072;font-weight:800}
+  .muted{color:#b9cfe6}
+  .found{margin-top:12px;background:#fff;color:#072;padding:10px;border-radius:8px;display:flex;justify-content:space-between;align-items:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2>Day 4 — Jigsaw (10×10)</h2>
+  <p class="muted">Drag tiles to assemble the image. Bottom-left tile is fixed and in place to give you a start.</p>
+
+  <div id="boardWrap" style="overflow:auto">
+    <div id="board"></div>
+  </div>
+
+  <div class="controls">
+    <button id="shuffle">Shuffle</button>
+    <button id="inspect" disabled>Inspect (flip)</button>
+    <button id="closeBtn">Close</button>
+  </div>
+
+  <div id="foundPanel" style="display:none" class="found"><div>Letter found: <strong id="foundLetter">E</strong></div><div><button id="closeFound">Close</button></div></div>
+</div>
+
+<script>
+/* Day 4 Jigsaw 10x10 */
+const DAY = 4;
+const COLLECT_LETTER = 'E';
+const tilesPerRow = 10;
+const total = tilesPerRow * tilesPerRow;
+const board = document.getElementById('board');
+const shuffleBtn = document.getElementById('shuffle');
+const inspectBtn = document.getElementById('inspect');
+const closeBtn = document.getElementById('closeBtn');
+const foundPanel = document.getElementById('foundPanel');
+
+let imageURL = '../../img/day4.jpg';
+const fallback = '/img/day4.jpg';
+checkImagePath(imageURL, ok=>{
+  if(!ok) imageURL = fallback;
+  start();
+});
+
+function checkImagePath(p, cb){
+  const img = new Image();
+  img.onload = ()=>cb(true);
+  img.onerror = ()=>cb(false);
+  img.src = p;
+}
+
+function start(){
+  board.style.gridTemplateColumns = `repeat(${tilesPerRow}, 120px)`;
+  board.style.width = `${tilesPerRow*122}px`;
+  // create tile array 1..total
+  let tiles = Array.from({length: total}, (_,i)=>i+1);
+  // fix bottom-left tile: which index is bottom-left? For a grid top-left index 0, bottom-left index = (tilesPerRow-1)*tilesPerRow
+  const bottomLeftIndex = (tilesPerRow-1)*tilesPerRow; // position index where we want the correct tile
+  // ensure tile at that position is its natural tile
+  // we'll shuffle everything except that position and ensure that tile value equals position+1
+  function render(){
+    board.innerHTML = '';
+    for(let i=0;i<tiles.length;i++){
+      const t = document.createElement('div');
+      t.className='tile';
+      t.style.width = '120px'; t.style.height = '120px';
+      t.draggable = true;
+      t.dataset.pos = i; t.dataset.tile = tiles[i];
+      // compute background-position
+      const idx = tiles[i]-1;
+      const col = idx % tilesPerRow;
+      const row = Math.floor(idx / tilesPerRow);
+      const step = tilesPerRow === 1 ? 0 : (100 / (tilesPerRow - 1));
+      const posX = (col * step); const posY = (row * step);
+      t.style.backgroundImage = `url("${imageURL}")`;
+      t.style.backgroundSize = `${tilesPerRow * 100}% ${tilesPerRow * 100}%`;
+      t.style.backgroundPosition = `${posX}% ${posY}%`;
+      // bottom-left fixed visual cue
+      if(i === bottomLeftIndex){
+        t.style.outline = '3px solid rgba(255,200,80,0.9)';
+        t.dataset.fixed = 'true';
+        t.draggable = false;
+      }
+      // drag handlers
+      t.addEventListener('dragstart', (e)=>{ e.dataTransfer.setData('text/plain', t.dataset.pos); t.style.opacity = '0.6'; });
+      t.addEventListener('dragend', ()=>{ t.style.opacity = '1'; });
+      t.addEventListener('dragover', (e)=>e.preventDefault());
+      t.addEventListener('drop', (e)=>{ e.preventDefault(); const from = parseInt(e.dataTransfer.getData('text/plain')); const to = parseInt(t.dataset.pos); swap(from,to); });
+      board.appendChild(t);
+    }
+    checkSolved();
+  }
+
+  function swap(a,b){
+    // if either is fixed, don't swap
+    if(a === bottomLeftIndex || b === bottomLeftIndex) return;
+    const tmp = tiles[a]; tiles[a] = tiles[b]; tiles[b] = tmp;
+    render();
+  }
+
+  function shuffle(){
+    // Fisher-Yates shuffle except keep bottomLeftIndex as correct tile
+    // ensure tile at bottomLeftIndex has value bottomLeftIndex+1
+    // start with natural array then shuffle allowed positions
+    tiles = Array.from({length: total}, (_,i)=>i+1);
+    // produce list of indices except bottomLeftIndex and shuffle them
+    const indices = [];
+    for(let i=0;i<total;i++) if(i !== bottomLeftIndex) indices.push(i);
+    for(let i=indices.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      const a = indices[i], b = indices[j];
+      const tmp = tiles[a]; tiles[a] = tiles[b]; tiles[b] = tmp;
+    }
+    // ensure bottom-left piece lands in bottomLeftIndex (it already does since we started natural)
+    render();
+    inspectBtn.disabled = true;
+  }
+
+  function checkSolved(){
+    for(let i=0;i<tiles.length;i++){
+      if(tiles[i] !== i+1) return false;
+    }
+    inspectBtn.disabled = false;
+    alert('Puzzle assembled! Click Inspect to flip and reveal the letter.');
+    return true;
+  }
+
+  shuffleBtn.addEventListener('click', shuffle);
+  inspectBtn.addEventListener('click', ()=> {
+    // reveal letter and collect
+    try{ if(window.parent && window.parent.collectLetterFromDay) window.parent.collectLetterFromDay(DAY, COLLECT_LETTER); else window.parent.postMessage({type:'collected', day:DAY, value:COLLECT_LETTER}, '*'); }catch(e){ window.parent.postMessage({type:'collected', day:DAY, value:COLLECT_LETTER}, '*'); }
+    document.getElementById('foundLetter').textContent = COLLECT_LETTER;
+    foundPanel.style.display = 'flex';
+  });
+  closeBtn.addEventListener('click', ()=>{ try{ window.parent.hideModal(); }catch(e){ window.parent.postMessage({type:'requestClose'}, '*'); } });
+  document.getElementById('closeFound').addEventListener('click', ()=>{ try{ window.parent.hideModal(); }catch(e){ window.parent.postMessage({type:'requestClose'}, '*'); } });
+
+  render();
+}
+</script>
+</body>
+</html>
