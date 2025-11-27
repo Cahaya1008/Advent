@@ -1204,26 +1204,29 @@
 
     // ===== Reset =====
 
-    function initReset() {
-      const btn = document.getElementById("resetButton");
-      btn.addEventListener("click", () => {
-        const ok = confirm(
-          "Reset all progress? (Days, letters, stars, and final message will all be cleared.)"
-        );
-        if (!ok) return;
+    // ===== Reset =====
 
-        for (let day = 1; day <= TOTAL_DAYS; day++) {
-          localStorage.removeItem("advent_day_" + day + "_letter";
-        }
+function initReset() {
+  const btn = document.getElementById("resetButton");
+  btn.addEventListener("click", () => {
+    const ok = confirm(
+      "Reset all progress? (Days, letters, stars, and final message will all be cleared.)"
+    );
+    if (!ok) return;
 
-        localStorage.removeItem("advent_letters");
-        localStorage.removeItem("advent_star_letter");
-        localStorage.removeItem("advent_star_solved");
-        localStorage.removeItem("advent_final_unlocked");
-
-        location.reload();
-      });
+    for (let day = 1; day <= TOTAL_DAYS; day++) {
+      localStorage.removeItem("advent_day_" + day + "_letter");
     }
+
+    localStorage.removeItem("advent_letters");
+    localStorage.removeItem("advent_star_letter");
+    localStorage.removeItem("advent_star_solved");
+    localStorage.removeItem("advent_final_unlocked");
+
+    location.reload();
+  });
+}
+
 
     // ===== Modals generic close handlers =====
 
