@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Day 7 — Simon</title>
+<style>
+  body{margin:0;font-family:Inter,Arial;background:linear-gradient(180deg,#041226,#072238);color:#fff;padding:12px}
+  .wrap{max-width:780px;margin:0 auto}
+  h2{margin:0}
+  .row{display:flex;gap:12px;margin-top:12px}
+  .btn{width:100px;height:100px;border-radius:12px;border:6px solid rgba(0,0,0,0.12);display:flex;align-items:center;justify-content:center;font-weight:900;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,0.4)}
+  .col0{background:#ff6b6b} .col1{background:#ffd93d} .col2{background:#6bff9e} .col3{background:#6bc3ff}
+  .flash{filter:brightness(1.6);transform:scale(1.05);box-shadow:0 0 30px rgba(255,255,255,0.25)}
+  .controls{margin-top:12px;display:flex;gap:8px}
+  button{background:#ffd98a;border:0;padding:8px 12px;border-radius:8px;color:#072;font-weight:800}
+  .muted{color:#b9cfe6}
+  .found{margin-top:12px;background:#fff;color:#072;padding:10px;border-radius:8px;display:flex;justify-content:space-between;align-items:center}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h2>Day 7 — Color Sequence</h2>
+    <p class="muted">Repeat patterns. Pass at least <strong>5 rounds</strong> (lengths 3→7). The sixth round is a fast "impossible" bonus (optional).</p>
+
+    <div class="row">
+      <div id="b0" class="btn col0">1</div>
+      <div id="b1" class="btn col1">2</div>
+      <div id="b2" class="btn col2">3</div>
+      <div id="b3" class="btn col3">4</div>
+    </div>
+
+    <div class="controls">
+      <button id="start">Start</button>
+      <button id="closeBtn">Close</button>
+      <div id="status" class="muted" style="margin-left:12px"></div>
+    </div>
+
+    <div id="foundPanel" style="display:none" class="found"><div>Letter found: <strong id="foundLetter">W</strong></div><div><button id="closeFound">Close</button></div></div>
+  </div>
+
+<script>
+/* Day 7 Simon */
+const DAY = 7;
+const COLLECT_LETTER = 'W';
+const btns = [document.getElementById('b0'),document.getElementById('b1'),document.getElementById('b2'),document.getElementById('b3')];
+const status = document.getElementById('status');
+const rounds = [3,4,5,6,7]; // pass first 5 rounds (3..7). We'll optionally play 8th if desired
+let roundsPassed = 0;
+
+function flash(i, fast=false){
+  btns[i].classList.add('flash');
+  setTimeout(()=>btns[i].classList.remove('flash'), fast?100:350);
+}
+async function playSequence(len, fast=false){
+  const seq = [];
+  for(let i=0;i<len;i++) seq.push(Math.floor(Math.random()*4));
+  for(const s of seq){ flash(s, fast); await new Promise(r=>setTimeout(r, fast?120:480)); }
+  // get input
+  let idx = 0;
+  return new Promise(resolve=>{
+    function handler(e){
+      const i = btns.indexOf(e.target);
+      if(i===-1) return;
+      flash(i,false);
+      if(i !== seq[idx]){ cleanup(); resolve(false); return; }
+      idx++;
+      if(idx === seq.length){ cleanup(); resolve(true); }
+    }
+    function cleanup(){ btns.forEach(b=>b.removeEventListener('click', handler)); }
+    btns.forEach(b=>b.addEventListener('click', handler));
+  });
+}
+
+document.getElementById('start').addEventListener('click', async ()=>{
+  roundsPassed = 0;
+  status.textContent = 'Good luck!';
+  for(let i=0;i<rounds.length;i++){
+    const len = rounds[i];
+    status.textContent = `Round ${i+1}: length ${len}`;
+    const ok = await playSequence(len,false);
+    if(ok){
+      roundsPassed++;
+      status.textContent = `Passed round ${i+1} (${roundsPassed} passed)`;
+      if(roundsPassed >= 5){
+        // award letter once 5 rounds passed
+        try{ if(window.parent && window.parent.collectLetterFromDay) window.parent.collectLetterFromDay(DAY, COLLECT_LETTER); else window.parent.postMessage({type:'collected', day:DAY, value:COLLECT_LETTER}, '*'); }catch(e){ window.parent.postMessage({type:'collected', day:DAY, value:COLLECT_LETTER}, '*'); }
+        document.getElementById('foundLetter').textContent = COLLECT_LETTER;
+        document.getElementById('foundPanel').style.display = 'flex';
+      }
+    } else {
+      status.textContent = `Failed on round ${i+1}`;
+      alert('You failed that round. If you did not yet pass 5 rounds, no letter — try again.');
+      return;
+    }
+    await new Promise(r=>setTimeout(r,420));
+  }
+  // optional "impossible" bonus
+  status.textContent = 'Bonus insane round (just for fun)';
+  await playSequence(10,true).catch(()=>{});
+  status.textContent = 'Done';
+});
+
+document.getElementById('closeBtn').addEventListener('click', ()=>{ try{ window.parent.hideModal(); }catch(e){ window.parent.postMessage({type:'requestClose'}, '*'); } });
+document.getElementById('closeFound').addEventListener('click', ()=>{ try{ window.parent.hideModal(); }catch(e){ window.parent.postMessage({type:'requestClose'}, '*'); } });
+
+</script>
+</body>
+</html>
