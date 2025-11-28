@@ -345,28 +345,34 @@
     ]);
 
     // DIE mega-chain
+        // electron appears only once as an innermost clue
     const nodeELECTRON = bracketNode("electron", [
-      textNode("subatomic particle discovered by J.J. Thomson that orbits an atomic nucleus")
+      textNode("subatomic particle discovered by J.J. Thomson")
     ]);
+
     const nodeNEGATIVE = bracketNode("negative", [
       textNode("electric charge carried by an "),
-      nodeELECTRON
+      nodeELECTRON,
+      textNode(" in an atom")
     ]);
+
     const nodeANION = bracketNode("anion", [
       textNode("ion that has a "),
       nodeNEGATIVE,
       textNode(" charge")
     ]);
+
     const nodeHALOGEN = bracketNode("halogen", [
       textNode("periodic-table group (like fluorine and chlorine) that easily forms an "),
       nodeANION
     ]);
+
     const nodeCHLORIDE = bracketNode("chloride", [
       textNode("ion formed when a "),
       nodeHALOGEN,
-      textNode(" such as chlorine gains an "),
-      nodeELECTRON
+      textNode(" such as chlorine gains an extra electron")
     ]);
+
     const nodeNACL = bracketNode("NaCl", [
       textNode("chemical formula made of sodium and "),
       nodeCHLORIDE
