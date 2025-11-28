@@ -507,37 +507,42 @@
       ]);
 
       // ----- DIE CHAIN (BOND / MUSIC / TRIVIA) -----
-      const nodePAUL = bracketNode("Paul", [
-        textNode("first name of the left-handed bassist for The Beatles")
-      ]);
+      // ----- DIE CHAIN (FANTASY / TTRPG CHAOS) -----
 
-      const nodeMCCARTNEY = bracketNode("McCartney", [
-        textNode("surname of musician "),
-        nodePAUL,
-        textNode(", who later wrote a James Bond theme song")
-      ]);
+const nodeHOARD = bracketNode("hoard", [
+  textNode("word for a big pile of treasure guarded by some fantasy monsters")
+]);
 
-      const nodeWINGS = bracketNode("Wings", [
-        textNode("band formed by "),
-        nodeMCCARTNEY,
-        textNode(" after The Beatles broke up")
-      ]);
+const nodeSMAUG = bracketNode("Smaug", [
+  textNode("dragon who sleeps on a gold "),
+  nodeHOARD,
+  textNode(" under the Lonely Mountain in \"The Hobbit\"")
+]);
 
-      const nodeSONG = bracketNode("Live and Let Die", [
-        textNode("James Bond theme song performed by "),
-        nodeWINGS
-      ]);
+const nodeTOLKIEN = bracketNode("Tolkien", [
+  textNode("surname of the author who created the dragon "),
+  nodeSMAUG
+]);
 
-      const nodeMOVIETITLE = bracketNode("Live and Let Die", [
-        textNode("1973 James Bond film whose theme song is "),
-        nodeSONG
-      ]);
+const nodeDRAGON = bracketNode("dragon", [
+  textNode("mythical fire-breathing creature like "),
+  nodeSMAUG
+]);
 
-      const nodeDIE = bracketNode("die", [
-        textNode("final word of the title of the James Bond movie "),
-        nodeMOVIETITLE,
-        textNode(" (fill in the blank: Live and Let ___)")
-      ]);
+const nodeDND = bracketNode("Dungeons & Dragons", [
+  textNode("tabletop role-playing game whose best-known monsters include at least one "),
+  nodeDRAGON,
+  textNode(", originally co-designed by a writer named "),
+  nodeTOLKIEN,
+  textNode(" super-fan Gary Gygax")
+]);
+
+const nodeDIE = bracketNode("die", [
+  textNode("singular word for one of the polyhedral objects you roll in "),
+  nodeDND,
+  textNode(" (as in \"roll a d20 ___\")")
+]);
+
 
       // ----- ROOT SENTENCE -----
       rootNodes = [
