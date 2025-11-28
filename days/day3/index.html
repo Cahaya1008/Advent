@@ -1,166 +1,684 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Day 3 — Matching</title>
-<style>
-  body{margin:0;font-family:Inter,Arial;background:linear-gradient(180deg,#041226,#072238);color:#fff;padding:12px}
-  .wrap{max-width:980px;margin:0 auto}
-  h2{margin:0}
-  .board{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:12px}
-  .card{height:90px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:28px;color:#072;cursor:pointer;border:3px solid rgba(0,0,0,0.06)}
-  .card.revealed{background:#e6f8ea}
-  .controls{margin-top:12px;display:flex;gap:8px}
-  button{background:#ffd98a;border:0;padding:8px 12px;border-radius:8px;color:#072;font-weight:800}
-  .muted{color:#b9cfe6}
-  #status{margin-top:10px}
-  .found{margin-top:12px;background:#fff;color:#072;padding:10px;border-radius:8px;display:flex;justify-content:space-between;align-items:center}
-</style>
+<head>
+  <meta charset="UTF-8" />
+  <title>Day 3 – Matching Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: radial-gradient(circle at top, #111827, #020617 70%);
+      --panel-bg: #faf5ef;
+      --accent: #7b2333;
+      --accent-soft: #f4e4d8;
+      --text-muted: #6b7280;
+      --good: #16a34a;
+      --bad: #b91c1c;
+      --card-back: #0f172a;
+      --card-border: #e5e7eb;
+      --card-border-outer: #111827;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Poppins", sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .page {
+      background: var(--panel-bg);
+      width: 100%;
+      max-width: 960px;
+      padding: 1.6rem 1.6rem 1.3rem;
+      border-radius: 20px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.55);
+      position: relative;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 1.2rem;
+    }
+
+    header h1 {
+      font-size: 1.9rem;
+      color: var(--accent);
+      margin-bottom: 0.2rem;
+    }
+
+    header p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .already-banner {
+      position: absolute;
+      right: 1rem;
+      top: 1rem;
+      font-size: 0.8rem;
+      padding: 0.3rem 0.8rem;
+      border-radius: 999px;
+      background: #ecfdf5;
+      border: 1px solid #c6f2df;
+      color: #065f46;
+      display: none;
+    }
+
+    .info-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.8rem;
+      font-size: 0.9rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .scores span {
+      margin-right: 0.75rem;
+    }
+
+    .turn-label {
+      font-weight: 600;
+    }
+
+    .turn-you {
+      color: #16a34a;
+    }
+
+    .turn-cpu {
+      color: #b91c1c;
+    }
+
+    .grid-wrapper {
+      background: var(--card-border-outer);
+      padding: 0.6rem;
+      border-radius: 16px;
+      box-shadow: inset 0 0 0 1px #020617;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      grid-auto-rows: 80px;
+      gap: 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .grid {
+        grid-template-columns: repeat(6, 1fr);
+        grid-auto-rows: 60px;
+      }
+    }
+
+    .card {
+      position: relative;
+      border-radius: 10px;
+      background: #020617;
+      box-shadow:
+        0 0 0 2px var(--card-border),
+        0 0 0 6px #020617;
+      overflow: hidden;
+    }
+
+    .card-inner {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s, transform 0.08s, box-shadow 0.15s, color 0.15s;
+      font-size: 1.4rem;
+      color: transparent;
+      background: radial-gradient(circle at top, #1f2937, #020617 70%);
+    }
+
+    .card-inner:hover {
+      box-shadow: 0 0 0 2px #fef9c3;
+      transform: translateY(-1px);
+    }
+
+    .card-inner.disabled {
+      cursor: default;
+      box-shadow: 0 0 0 2px var(--card-border);
+      transform: none;
+    }
+
+    .card-inner.revealed,
+    .card-inner.matched {
+      color: #f9fafb;
+      background: radial-gradient(circle at top, #f97316, #7c2d12 70%);
+      font-weight: 600;
+    }
+
+    .card-inner.matched {
+      background: radial-gradient(circle at top, #22c55e, #14532d 70%);
+    }
+
+    .status-line {
+      margin-top: 0.6rem;
+      font-size: 0.9rem;
+      min-height: 1.2rem;
+    }
+
+    .status-line.good { color: var(--good); }
+    .status-line.bad { color: var(--bad); }
+    .status-line.muted { color: var(--text-muted); }
+
+    footer {
+      margin-top: 1rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 0.55rem 1.1rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: var(--accent-soft);
+      color: #5a4032;
+      border: 1px solid #d6c0b4;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    /* Modal */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 30;
+    }
+
+    .modal.open {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #fff8f0;
+      padding: 1.3rem;
+      border-radius: 18px;
+      max-width: 380px;
+      width: 100%;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.55);
+      position: relative;
+    }
+
+    .modal-content h3 {
+      margin-bottom: 0.4rem;
+      color: var(--accent);
+    }
+
+    .modal-content p {
+      font-size: 0.9rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .modal-close {
+      position: absolute;
+      right: 0.7rem;
+      top: 0.7rem;
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: #555;
+    }
+
+    .letter-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 0.1rem 0.6rem;
+      background: #ecfdf5;
+      border: 1px solid #bbf7d0;
+      font-weight: 600;
+      color: #166534;
+    }
+  </style>
 </head>
 <body>
-  <div class="wrap">
-    <h2>Day 3 — Matching (You vs CPU)</h2>
-    <p class="muted">30 cards (15 pairs). Take turns with the CPU. If you get more pairs than CPU, you win.</p>
-    <div class="board" id="board"></div>
+  <div class="page">
+    <div class="already-banner" id="alreadyBanner">Letter already collected</div>
 
-    <div id="status" class="muted"></div>
-    <div class="controls">
-      <button id="restart">Restart</button>
-      <button id="closeBtn">Close</button>
+    <header>
+      <h1>Day 3 – Matching Game</h1>
+      <p>Take turns flipping cards against a sneaky computer with perfect memory of what it has seen.</p>
+    </header>
+
+    <div class="info-bar">
+      <div class="scores">
+        <span><strong>You:</strong> <span id="scorePlayer">0</span></span>
+        <span><strong>Computer:</strong> <span id="scoreCPU">0</span></span>
+      </div>
+      <div class="turn-label">
+        Turn: <span id="turnLabel" class="turn-you">You</span>
+      </div>
     </div>
 
-    <div id="foundPanel" style="display:none" class="found"><div>Letter found: <strong id="foundLetter">V</strong></div><div><button id="closeFound">Close</button></div></div>
+    <div class="grid-wrapper">
+      <div class="grid" id="cardGrid"></div>
+    </div>
+
+    <div id="statusLine" class="status-line muted"></div>
+
+    <footer>
+      <button class="btn btn-secondary" id="backBtn">← Back to calendar</button>
+      <div>
+        <button class="btn btn-secondary" id="restartBtn">Restart game</button>
+      </div>
+    </footer>
   </div>
 
-<script>
-/* Day 3 Matching */
-const DAY = 3;
-const COLLECT_LETTER = 'V';
-const icons = ['🐶','🐱','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🦄','🐝','🐙']; // 15 unique icons
-let cards=[], revealed=[], matched=[], cpuMemory={}, scores={player:0,cpu:0}, playerTurn=true, firstFlip=-1;
-const board = document.getElementById('board');
-const status = document.getElementById('status');
+  <div class="modal" id="resultModal">
+    <div class="modal-content">
+      <button class="modal-close" data-close="resultModal">&times;</button>
+      <h3 id="resultTitle"></h3>
+      <p id="resultText"></p>
+      <p id="letterText" style="display:none;">
+        Today’s secret letter is
+        <span class="letter-pill">W</span>.
+      </p>
+      <div style="margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
+        <button class="btn btn-secondary" data-close="resultModal">Keep playing</button>
+        <button class="btn btn-primary" id="goHomeBtn">Back to calendar</button>
+      </div>
+    </div>
+  </div>
 
-document.getElementById('restart').addEventListener('click', init);
-document.getElementById('closeBtn').addEventListener('click', closeSelf);
-document.getElementById('closeFound').addEventListener('click', closeSelf);
+  <script>
+    const DAY_KEY = "advent_day_3_letter";
+    const HIDDEN_LETTER = "W";
 
-function init(){
-  const pairs = icons.concat(icons);
-  cards = pairs.sort(()=>Math.random()-0.5);
-  revealed = Array(cards.length).fill(false);
-  matched = Array(cards.length).fill(false);
-  cpuMemory = {};
-  scores = {player:0,cpu:0};
-  playerTurn = true; firstFlip=-1;
-  render(); status.textContent = 'Your turn.';
-}
+    const gridEl = document.getElementById("cardGrid");
+    const scorePlayerEl = document.getElementById("scorePlayer");
+    const scoreCPUEl = document.getElementById("scoreCPU");
+    const turnLabelEl = document.getElementById("turnLabel");
+    const statusLineEl = document.getElementById("statusLine");
+    const restartBtn = document.getElementById("restartBtn");
+    const backBtn = document.getElementById("backBtn");
+    const alreadyBanner = document.getElementById("alreadyBanner");
 
-function render(){
-  board.innerHTML = '';
-  for(let i=0;i<cards.length;i++){
-    const c = document.createElement('div');
-    c.className = 'card';
-    if(matched[i]) c.classList.add('revealed');
-    c.textContent = (matched[i] || revealed[i]) ? cards[i] : '';
-    c.dataset.i = i;
-    c.addEventListener('click', ()=>playerFlip(i));
-    board.appendChild(c);
-  }
-}
+    const modal = document.getElementById("resultModal");
+    const resultTitleEl = document.getElementById("resultTitle");
+    const resultTextEl = document.getElementById("resultText");
+    const letterTextEl = document.getElementById("letterText");
+    const goHomeBtn = document.getElementById("goHomeBtn");
 
-function revealIndex(i){
-  revealed[i] = true;
-  render();
-}
+    // Game constants
+    const ROWS = 6;
+    const COLS = 8;
+    const TOTAL_CARDS = ROWS * COLS; // 48
+    const PAIRS = TOTAL_CARDS / 2;   // 24
 
-function playerFlip(i){
-  if(!playerTurn) return;
-  if(revealed[i] || matched[i]) return;
-  revealIndex(i);
-  if(firstFlip === -1){ firstFlip = i; return; }
-  // second flip
-  if(cards[firstFlip] === cards[i]){
-    matched[firstFlip] = matched[i] = true;
-    scores.player++;
-    status.textContent = `Nice! Score — You: ${scores.player} CPU: ${scores.cpu}`;
-    firstFlip = -1; render();
-    checkEnd();
-  } else {
-    playerTurn = false;
-    status.textContent = 'No match — CPU turn.';
-    setTimeout(()=>{ revealed[firstFlip] = revealed[i] = false; firstFlip = -1; render(); cpuAction(); }, 700);
-  }
-}
+    // State
+    let cards = []; // {symbol, matched, element}
+    let currentPlayer = "player"; // "player" | "cpu"
+    let playerPairs = 0;
+    let cpuPairs = 0;
+    let flippedIndices = [];
+    let busy = false;
+    let gameOver = false;
 
-function cpuAction(){
-  // clean memory of matched
-  for(let k in cpuMemory) cpuMemory[k] = cpuMemory[k].filter(ii=>!matched[ii]);
-  // find known pair
-  for(const v in cpuMemory){
-    if(cpuMemory[v].length >= 2){
-      const [a,b] = cpuMemory[v];
-      revealIndex(a);
-      setTimeout(()=>{ revealIndex(b); matched[a]=matched[b]=true; scores.cpu++; status.textContent = `CPU found a pair. Score — You: ${scores.player} CPU: ${scores.cpu}`; render(); checkEnd(); setTimeout(()=>cpuAction(), 500); }, 450);
-      return;
-    }
-  }
-  // random pick from unrevealed/unmatched
-  const pool = [];
-  for(let i=0;i<cards.length;i++) if(!revealed[i] && !matched[i]) pool.push(i);
-  if(pool.length === 0) return;
-  const a = pool[Math.floor(Math.random()*pool.length)];
-  revealIndex(a);
-  // remember value
-  cpuMemory[cards[a]] = Array.from(new Set([...(cpuMemory[cards[a]]||[]), a]));
-  setTimeout(()=>{
-    // try to find a match known
-    const seen = (cpuMemory[cards[a]]||[]).find(ii=>ii!==a && !matched[ii]);
-    let b;
-    if(seen !== undefined) b = seen;
-    else {
-      const pool2 = pool.filter(x=>x!==a);
-      b = pool2.length ? pool2[Math.floor(Math.random()*pool2.length)] : null;
-    }
-    if(b === null){ playerTurn = true; status.textContent = 'Your turn.'; return; }
-    revealIndex(b);
-    cpuMemory[cards[b]] = Array.from(new Set([...(cpuMemory[cards[b]]||[]), b]));
-    setTimeout(()=>{
-      if(cards[a] === cards[b]){
-        matched[a]=matched[b]=true; scores.cpu++; status.textContent = `CPU found a pair. Score — You: ${scores.player} CPU: ${scores.cpu}`; render(); checkEnd(); setTimeout(()=>cpuAction(),500);
-      } else {
-        revealed[a]=revealed[b]=false; render(); playerTurn = true; status.textContent = 'Your turn.';
+    // CPU memory: symbol -> set of indices it has seen (unmatched)
+    const cpuMemory = new Map();
+
+    function init() {
+      if (localStorage.getItem(DAY_KEY)) {
+        alreadyBanner.style.display = "block";
       }
-    }, 500);
-  }, 600);
-}
-
-function checkEnd(){
-  if(matched.every(Boolean)){
-    let msg = `Final score — You: ${scores.player} CPU: ${scores.cpu}. `;
-    if(scores.player > scores.cpu){
-      msg += 'You win! Collect your letter.';
-      status.textContent = msg;
-      collect();
-    } else if(scores.player < scores.cpu){
-      msg += 'CPU wins. Restart to try again.';
-      status.textContent = msg;
-    } else {
-      msg += "It's a tie. Restart to try again.";
-      status.textContent = msg;
+      setupGame();
+      restartBtn.addEventListener("click", setupGame);
+      backBtn.addEventListener("click", () => {
+        window.location.href = "../../index.html";
+      });
+      goHomeBtn.addEventListener("click", () => {
+        window.location.href = "../../index.html";
+      });
+      document.querySelectorAll("[data-close]").forEach(btn => {
+        btn.addEventListener("click", () => closeModal(btn.dataset.close));
+      });
     }
-  }
-}
 
-function collect(){
-  try{
-    if(window.parent && window.parent.collectLetterFromDay) window.parent.collectLetterFromDay(DAY, COLLECT_LETTER);
-    else window.parent.postMessage({type:'collected', day:DAY, value:COLLECT_LETTER}, '*');
-  }catch(e){ window.parent.postMessage({type:'collected', day:DAY, value:COLLECT_LETTER}, '*'); }
-  document.getElementById('foundPanel').style.display = 'flex';
-}
+    function setupGame() {
+      // Reset state
+      cards = [];
+      flippedIndices = [];
+      playerPairs = 0;
+      cpuPairs = 0;
+      currentPlayer = "player";
+      busy = false;
+      gameOver = false;
+      cpuMemory.clear();
+      scorePlayerEl.textContent = "0";
+      scoreCPUEl.textContent = "0";
+      turnLabelEl.textContent = "You";
+      turnLabelEl.className = "turn-label turn-you";
+      statusLineEl.textContent = "Your turn. Flip two cards.";
+      statusLineEl.className = "status-line muted";
+      gridEl.innerHTML = "";
 
-function closeSelf(){ try{ window.parent.hideModal(); }catch(e){ window.parent.postMessage({type:'requestClose'}, '*'); } }
+      // Create symbols A–X (24 letters)
+      const symbols = [];
+      for (let i = 0; i < PAIRS; i++) {
+        symbols.push(String.fromCharCode(65 + i)); // 'A' + i
+      }
+      const deckSymbols = shuffle([...symbols, ...symbols]); // 48 entries
 
-init();
-</script>
+      for (let i = 0; i < TOTAL_CARDS; i++) {
+        const card = {
+          symbol: deckSymbols[i],
+          matched: false,
+          element: null
+        };
+        const cardDiv = document.createElement("div");
+        cardDiv.className = "card";
+
+        const inner = document.createElement("div");
+        inner.className = "card-inner";
+        inner.dataset.index = i.toString();
+        inner.textContent = "?";
+        inner.addEventListener("click", onPlayerCardClick);
+
+        cardDiv.appendChild(inner);
+        gridEl.appendChild(cardDiv);
+
+        card.element = inner;
+        cards.push(card);
+      }
+    }
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function onPlayerCardClick(e) {
+      if (currentPlayer !== "player" || busy || gameOver) return;
+      const index = parseInt(e.currentTarget.dataset.index, 10);
+      flipCard("player", index);
+    }
+
+    function flipCard(who, index) {
+      const card = cards[index];
+      if (!card || card.matched) return;
+      if (flippedIndices.includes(index)) return;
+
+      // Do not allow more than 2 flips at once
+      if (flippedIndices.length >= 2) return;
+
+      revealCard(index);
+      rememberForCPU(index);
+
+      flippedIndices.push(index);
+
+      if (flippedIndices.length === 2) {
+        busy = true;
+        setTimeout(() => {
+          resolvePair(who);
+        }, 650);
+      }
+    }
+
+    function revealCard(index) {
+      const card = cards[index];
+      if (!card) return;
+      card.element.classList.add("revealed");
+      card.element.textContent = card.symbol;
+    }
+
+    function hideCard(index) {
+      const card = cards[index];
+      if (!card) return;
+      card.element.classList.remove("revealed");
+      if (!card.matched) {
+        card.element.textContent = "?";
+      }
+    }
+
+    function rememberForCPU(index) {
+      const card = cards[index];
+      if (!card || card.matched) return;
+      const sym = card.symbol;
+      if (!cpuMemory.has(sym)) {
+        cpuMemory.set(sym, new Set());
+      }
+      cpuMemory.get(sym).add(index);
+    }
+
+    function cleanupCPUMemoryForMatched(symbol, indices) {
+      const set = cpuMemory.get(symbol);
+      if (!set) return;
+      indices.forEach(i => set.delete(i));
+      if (set.size === 0) {
+        cpuMemory.delete(symbol);
+      }
+    }
+
+    function resolvePair(who) {
+      const [i1, i2] = flippedIndices;
+      const c1 = cards[i1];
+      const c2 = cards[i2];
+
+      if (c1 && c2 && c1.symbol === c2.symbol) {
+        // Match
+        c1.matched = true;
+        c2.matched = true;
+        c1.element.classList.add("matched", "disabled");
+        c2.element.classList.add("matched", "disabled");
+        cleanupCPUMemoryForMatched(c1.symbol, [i1, i2]);
+
+        if (who === "player") {
+          playerPairs++;
+          scorePlayerEl.textContent = playerPairs.toString();
+          statusLineEl.textContent = "You found a pair! You go again.";
+          statusLineEl.className = "status-line good";
+        } else {
+          cpuPairs++;
+          scoreCPUEl.textContent = cpuPairs.toString();
+          statusLineEl.textContent = "Computer found a pair and goes again…";
+          statusLineEl.className = "status-line bad";
+        }
+
+        flippedIndices = [];
+        busy = false;
+
+        if (playerPairs + cpuPairs === PAIRS) {
+          endGame();
+        } else {
+          // Same player goes again
+          if (who === "cpu") {
+            setTimeout(cpuTurn, 700);
+          }
+        }
+      } else {
+        // No match: hide them again
+        hideCard(i1);
+        hideCard(i2);
+        flippedIndices = [];
+        busy = false;
+
+        // Switch player
+        if (who === "player") {
+          currentPlayer = "cpu";
+          turnLabelEl.textContent = "Computer";
+          turnLabelEl.className = "turn-label turn-cpu";
+          statusLineEl.textContent = "Computer’s turn…";
+          statusLineEl.className = "status-line muted";
+          setTimeout(cpuTurn, 750);
+        } else {
+          currentPlayer = "player";
+          turnLabelEl.textContent = "You";
+          turnLabelEl.className = "turn-label turn-you";
+          statusLineEl.textContent = "Your turn. Flip two cards.";
+          statusLineEl.className = "status-line muted";
+        }
+      }
+    }
+
+    function cpuTurn() {
+      if (gameOver || currentPlayer !== "cpu") return;
+      busy = true;
+
+      const knownPair = findKnownPair();
+      if (knownPair) {
+        const [i1, i2] = knownPair;
+        setTimeout(() => {
+          flipCard("cpu", i1);
+          setTimeout(() => {
+            flipCard("cpu", i2);
+          }, 500);
+        }, 400);
+        return;
+      }
+
+      // No known pair: flip one unknown (if possible), then choose best second.
+      const firstIndex = chooseRandomForCPU(null);
+      setTimeout(() => {
+        flipCard("cpu", firstIndex);
+        setTimeout(() => {
+          const secondIndex = chooseRandomForCPU(firstIndex);
+          flipCard("cpu", secondIndex);
+        }, 500);
+      }, 400);
+    }
+
+    function findKnownPair() {
+      for (const [sym, set] of cpuMemory.entries()) {
+        const indices = [...set].filter(i => !cards[i].matched);
+        if (indices.length >= 2) {
+          return [indices[0], indices[1]];
+        }
+      }
+      return null;
+    }
+
+    function chooseRandomForCPU(firstIndex) {
+      const unmatchedIndices = cards
+        .map((c, idx) => ({ c, idx }))
+        .filter(obj => !obj.c.matched)
+        .map(obj => obj.idx);
+
+      if (firstIndex !== null && firstIndex !== undefined) {
+        // If we know a partner for firstIndex's symbol, use it
+        const s = cards[firstIndex].symbol;
+        const seen = cpuMemory.get(s);
+        if (seen) {
+          const candidates = [...seen].filter(i => i !== firstIndex && !cards[i].matched);
+          if (candidates.length > 0) {
+            return candidates[0];
+          }
+        }
+
+        // Otherwise, prefer still-unseen indices
+        const seenAll = new Set();
+        for (const set of cpuMemory.values()) {
+          for (const n of set.values()) seenAll.add(n);
+        }
+        const unseen = unmatchedIndices.filter(i => i !== firstIndex && !seenAll.has(i));
+        if (unseen.length > 0) {
+          return unseen[Math.floor(Math.random() * unseen.length)];
+        }
+
+        const remaining = unmatchedIndices.filter(i => i !== firstIndex);
+        return remaining[Math.floor(Math.random() * remaining.length)];
+      }
+
+      // First flip of a turn: prefer completely unseen cards
+      const seenAll = new Set();
+      for (const set of cpuMemory.values()) {
+        for (const n of set.values()) seenAll.add(n);
+      }
+      const unseen = unmatchedIndices.filter(i => !seenAll.has(i));
+      if (unseen.length > 0) {
+        return unseen[Math.floor(Math.random() * unseen.length)];
+      }
+      return unmatchedIndices[Math.floor(Math.random() * unmatchedIndices.length)];
+    }
+
+    function endGame() {
+      gameOver = true;
+      busy = true;
+
+      let title, text, playerWon = false;
+
+      if (playerPairs > cpuPairs) {
+        title = "You win! 🎉";
+        text = `You found ${playerPairs} pairs, the computer found ${cpuPairs}.`;
+        playerWon = true;
+      } else if (cpuPairs > playerPairs) {
+        title = "The computer wins…";
+        text = `Computer found ${cpuPairs} pairs, you found ${playerPairs}. Try again!`;
+      } else {
+        title = "It’s a tie!";
+        text = `You both found ${playerPairs} pairs.`;
+      }
+
+      resultTitleEl.textContent = title;
+      resultTextEl.textContent = text;
+
+      if (playerWon) {
+        letterTextEl.style.display = "block";
+        if (!localStorage.getItem(DAY_KEY)) {
+          localStorage.setItem(DAY_KEY, HIDDEN_LETTER);
+          alreadyBanner.style.display = "block";
+        }
+      } else {
+        letterTextEl.style.display = "none";
+      }
+
+      openModal("resultModal");
+    }
+
+    function openModal(id) {
+      document.getElementById(id).classList.add("open");
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove("open");
+    }
+
+    // Init
+    init();
+  </script>
 </body>
 </html>
