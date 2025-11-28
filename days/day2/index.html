@@ -7,636 +7,856 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --panel-bg: #faf5ef;
-      --highlight-inner: #adc2ff;
-      --correct: #16a34a;
-      --error: #b91c1c;
-      --text-muted: #6b7280;
+      --bg: #111827;
+      --bg-soft: #fdf6ed;
       --accent: #7b2333;
-      --accent-light: #f4e4d8;
+      --accent-soft: #f4e4d8;
+      --text-main: #111827;
+      --muted: #6b7280;
+      --good: #15803d;
+      --bad: #b91c1c;
+      --bracket-bg: #dbeafe;
+      --bracket-border: #93c5fd;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     body {
-      font-family: "Poppins", sans-serif;
-      background: radial-gradient(circle at top, #1a2333, #040611 70%);
+      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #020617 0, #111827 40%, #020617 100%);
       min-height: 100vh;
-      padding: 1.5rem;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 1.5rem 0.75rem;
+      color: var(--text-main);
     }
 
     .page {
-      background: var(--panel-bg);
+      max-width: 900px;
       width: 100%;
-      max-width: 760px;
+      background: var(--bg-soft);
+      border-radius: 22px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
       padding: 1.6rem 1.6rem 1.3rem;
-      border-radius: 20px;
-      box-shadow: 0 10px 35px rgba(0,0,0,0.45);
       position: relative;
     }
 
-    header { text-align: center; margin-bottom: 1rem; }
+    header {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
 
     header h1 {
+      font-size: 2rem;
       color: var(--accent);
-      font-size: 1.8rem;
-      margin-bottom: 0.3rem;
+      margin-bottom: 0.2rem;
     }
 
     header p {
       font-size: 0.9rem;
-      color: var(--text-muted);
+      color: var(--muted);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      background: var(--accent-soft);
+      padding: 0.22rem 0.6rem;
+      border-radius: 999px;
+      margin-bottom: 0.3rem;
+      color: #5a2b2b;
     }
 
     .already-banner {
       position: absolute;
+      top: 0.75rem;
       right: 1rem;
-      top: 1rem;
-      font-size: 0.8rem;
-      padding: 0.3rem 0.8rem;
-      border-radius: 999px;
+      font-size: 0.75rem;
       background: #ecfdf5;
-      border: 1px solid #c6f2df;
-      color: #065f46;
+      border-radius: 999px;
+      padding: 0.2rem 0.6rem;
+      border: 1px solid #bbf7d0;
+      color: #166534;
       display: none;
     }
 
-    #puzzleSentence {
-      line-height: 1.6;
-      font-size: 1.05rem;
-      background: #fff;
-      padding: 1rem;
+    main {
+      margin-top: 0.3rem;
+    }
+
+    #puzzleContainer {
       border-radius: 14px;
-      border: 1px solid #e4dfd9;
-      margin-bottom: 1rem;
-      min-height: 70px;
-      word-wrap: break-word;
+      padding: 0.9rem 1rem;
+      background: #fff;
+      box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.06);
+      font-size: 1rem;
+      line-height: 1.6;
     }
 
-    .bracket {
-      background: var(--highlight-inner);
-      border-radius: 6px;
-      padding: 0 4px;
-      border: 1px dashed #90aaff;
-      cursor: pointer;
+    .bracket-innermost {
+      background: var(--bracket-bg);
+      border-radius: 8px;
+      border: 1px dashed var(--bracket-border);
+      padding: 0.1rem 0.15rem;
+      margin: 0 0.05rem;
     }
 
-    #currentClue {
-      margin-top: 0.2rem;
+    .bracket-innermost-inner {
+      font-weight: 600;
+    }
+
+    .controls {
+      margin-top: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .controls label {
       font-size: 0.9rem;
-      color: var(--text-muted);
-      min-height: 1.2rem;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
     }
 
     #answerInput {
-      width: 100%;
-      padding: 0.7rem 1rem;
-      border-radius: 12px;
-      border: 1px solid #d4c8bc;
-      margin-top: 0.7rem;
-      font-size: 1rem;
+      flex: 1;
+      min-width: 180px;
+      padding: 0.5rem 0.7rem;
+      border-radius: 999px;
+      border: 1px solid #d1c2b4;
+      font-size: 0.95rem;
     }
 
-    #submitAnswer {
-      margin-top: 0.6rem;
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      padding: 0.65rem 1.1rem;
-      border-radius: 12px;
-      font-size: 0.9rem;
-      cursor: pointer;
-    }
-
-    #submitAnswer:hover {
-      box-shadow: 0 4px 12px rgba(0,0,0,0.18);
-      transform: translateY(-1px);
-    }
-
-    #status {
-      margin-top: 0.5rem;
-      min-height: 1.2rem;
-      font-size: 0.85rem;
-    }
-
-    #status.error { color: var(--error); }
-    #status.success { color: var(--correct); }
-
-    #stepProgress {
-      margin-top: 0.5rem;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
-    #hintContainer {
-      display: none;
-      margin-top: 1rem;
-      background: #fef3c7;
-      padding: 0.9rem;
-      border-radius: 12px;
-      border: 1px dashed #fcd34d;
-      font-size: 0.88rem;
-    }
-
-    footer {
-      margin-top: 1.3rem;
-      text-align: center;
+    #answerInput:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
     }
 
     .btn {
-      background: var(--accent);
-      color: white;
+      border-radius: 999px;
       border: none;
-      padding: 0.6rem 1rem;
-      border-radius: 10px;
-      cursor: pointer;
+      padding: 0.48rem 1.1rem;
       font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+      white-space: nowrap;
+      transition: transform 0.1s ease, box-shadow 0.12s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
     }
 
     .btn-secondary {
-      background: var(--accent-light);
+      background: #f1e4d4;
       color: #5a4032;
-      border: 1px solid #d6c0b4;
+      border: 1px solid #d5c4b0;
     }
+
+    .btn-secondary:hover {
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    #statusLine {
+      font-size: 0.85rem;
+      min-height: 1.2rem;
+    }
+
+    #statusLine.good {
+      color: var(--good);
+    }
+
+    #statusLine.bad {
+      color: var(--bad);
+    }
+
+    #statusLine.muted {
+      color: var(--muted);
+    }
+
+    #hintBox {
+      margin-top: 0.6rem;
+      padding: 0.55rem 0.75rem;
+      background: #f8ecdc;
+      border-radius: 10px;
+      border: 1px dashed #d1b491;
+      font-size: 0.85rem;
+    }
+
+    #hintBox strong {
+      font-weight: 600;
+    }
+
+    footer {
+      margin-top: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      font-size: 0.8rem;
+    }
+
+    .final-word {
+      cursor: pointer;
+      border-radius: 6px;
+      padding: 0 0.1rem;
+      transition: background 0.12s ease, box-shadow 0.12s ease;
+    }
+
+    .final-word:hover {
+      background: #fee2e2;
+      box-shadow: 0 0 0 1px #fecaca;
+    }
+
+    .final-word.secret-ready {
+      box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.7);
+    }
+
+    /* Modal */
 
     .modal {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.55);
+      background: rgba(0, 0, 0, 0.55);
       display: none;
       align-items: center;
       justify-content: center;
       padding: 1rem;
-      z-index: 20;
+      z-index: 40;
     }
 
-    .modal.open { display: flex; }
+    .modal.open {
+      display: flex;
+    }
 
     .modal-content {
-      background: #fff8f0;
-      padding: 1.3rem;
-      border-radius: 18px;
-      max-width: 380px;
+      max-width: 420px;
       width: 100%;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+      padding: 1.2rem 1.3rem 1.05rem;
+      background: #faf5f0;
+      border-radius: 18px;
+      color: #333;
       position: relative;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal h2 {
+      font-size: 1.1rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .modal p {
+      font-size: 0.9rem;
+      line-height: 1.45;
     }
 
     .modal-close {
       position: absolute;
       right: 0.7rem;
-      top: 0.7rem;
-      background: none;
+      top: 0.6rem;
       border: none;
+      background: transparent;
       font-size: 1.2rem;
       cursor: pointer;
       color: #555;
+    }
+
+    .modal-footer {
+      margin-top: 0.9rem;
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .letter-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 0.1rem 0.6rem;
+      background: #ecfdf5;
+      border: 1px solid #bbf7d0;
+      font-weight: 600;
+      color: #166534;
+      margin-left: 0.25rem;
     }
   </style>
 </head>
 <body>
   <div class="page">
-    <div class="already-banner" id="alreadyBanner">Letter already collected</div>
+    <div class="already-banner" id="alreadyBanner">
+      Letter already collected ✅
+    </div>
 
     <header>
+      <div class="badge">
+        <span>Day 2</span> <span>Bracket City</span>
+      </div>
       <h1>Day 2 – Bracket City</h1>
       <p>Type the answer to <em>any</em> blue bracket and hit Enter. You can solve them in any order.</p>
     </header>
 
-    <div id="puzzleSentence"></div>
-    <div id="currentClue"></div>
+    <main>
+      <section id="puzzleContainer">
+        <div id="puzzleText"></div>
+      </section>
 
-    <input id="answerInput" placeholder="Type an answer for any blue bracket…" autocomplete="off" />
-    <button id="submitAnswer">Submit</button>
+      <section class="controls">
+        <label for="answerInput" id="inputLabel">Type an answer for any blue bracket…</label>
+        <div class="input-row">
+          <input id="answerInput" autocomplete="off" />
+          <button class="btn" id="submitAnswer">Submit</button>
+        </div>
+        <p id="statusLine" class="muted"></p>
+      </section>
 
-    <div id="status"></div>
-    <div id="stepProgress"></div>
-
-    <div id="hintContainer">
-      <strong>Hint:</strong>
-      When the brackets are gone, finish the old childhood rhyme that follows “hope to die.”  
-      Type the part that begins with <em>“stick…”</em>
-  </div>
+      <section id="hintBox">
+        <p><strong>Letter hint:</strong> In the final sentence, click the word that comes immediately after “my”. The secret letter is the <strong>first letter</strong> of that word.</p>
+        <p id="oathHint" style="margin-top:0.35rem;">
+          After all the brackets disappear, finish the childhood rhyme that follows “hope to die.” Type the part that begins with <em>“swallow…”</em>
+        </p>
+      </section>
+    </main>
 
     <footer>
-      <button class="btn-secondary" id="backBtn">← Back to calendar</button>
+      <button class="btn btn-secondary" id="backButton">← Back to calendar</button>
+      <span>Each day hides at most one letter.</span>
     </footer>
   </div>
 
-  <div class="modal" id="letterModal">
+  <!-- Letter collected modal -->
+  <div class="modal" id="letterModal" aria-hidden="true">
     <div class="modal-content">
       <button class="modal-close" data-close="letterModal">&times;</button>
-      <h3>Letter collected!</h3>
-      <p>Your secret letter has been saved to the calendar.</p>
-      <div style="margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
-        <button class="btn-secondary" data-close="letterModal">Stay here</button>
-        <button class="btn" id="goHome">Back to calendar</button>
+      <h2>Letter collected ✉️</h2>
+      <p>
+        Needle oath sworn, promise sealed. This letter has been stored in your collection
+        on the main calendar page.
+      </p>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close="letterModal">
+          Stay on this page
+        </button>
+        <button class="btn" id="goHomeFromModal">
+          Back to calendar
+        </button>
       </div>
     </div>
   </div>
 
   <script>
-    const DAY_KEY = "advent_day_2_letter";
+    // ===== CONFIG =====
+    const DAY_LETTER_KEY = "advent_day_2_letter";
     const HIDDEN_LETTER = "H";
     const FINAL_SENTENCE = "Cross my heart, hope to die";
-    const OATH_PHRASE = "stick a needle in my eye";
+    const OATH_TARGET = "swallow a thousand needles if i lie";
 
-    const puzzleEl = document.getElementById("puzzleSentence");
-    const clueEl = document.getElementById("currentClue");
-    const inputEl = document.getElementById("answerInput");
-    const statusEl = document.getElementById("status");
-    const progressEl = document.getElementById("stepProgress");
-    const hintEl = document.getElementById("hintContainer");
+    // ===== STATE =====
+    let rootNodes = [];
+    let allBracketNodes = [];
+    let finalPhase = false;
+    let oathUnlocked = false;
+
+    const puzzleTextEl = document.getElementById("puzzleText");
+    const answerInput = document.getElementById("answerInput");
+    const submitAnswerBtn = document.getElementById("submitAnswer");
+    const statusLineEl = document.getElementById("statusLine");
     const alreadyBanner = document.getElementById("alreadyBanner");
 
-    let finalPhase = false;
-
-    // --- node helpers ---
-    let idCounter = 0;
-    function makeId(prefix) {
-      idCounter += 1;
-      return prefix + "_" + idCounter;
+    // ===== HELPERS FOR NODE CREATION =====
+    let nextId = 1;
+    function textNode(text) {
+      return { type: "text", text };
     }
-    function textNode(t) { return { type: "text", text: t }; }
+
     function bracketNode(answer, children) {
-      return { type: "bracket", id: makeId("b"), answer, children, solved: false, innermost: false };
+      const node = {
+        type: "bracket",
+        id: nextId++,
+        answer: answer.toString(), // keep original case
+        answerNormalized: normalizeAnswer(answer.toString()),
+        children,
+        solved: false
+      };
+      allBracketNodes.push(node);
+      return node;
     }
 
-    // ===== BUILD PUZZLE =====
-    // Cross: C + Ross chain
-    const nodePAIN = bracketNode("pain", [
-      textNode("what you feel if you accidentally jab your finger with a palette knife")
-    ]);
-    const nodeJOY = bracketNode("joy", [
-      textNode('emotion in the title of Bob Ross’s show, "The ___ of Painting"')
-    ]);
-    const nodeROSS = bracketNode("Ross", [
-      textNode("famous "),
-      nodePAIN,
-      textNode("ter Bob ____ who hosted the "),
-      nodeJOY,
-      textNode(" of Painting")
-    ]);
-
-    // HEART mega-chain (fixed to avoid repeated phrases)
-    const nodeMUSCLE = bracketNode("muscle", [
-      textNode("type of tissue that contracts to move or pump parts of your body")
-    ]);
-
-    const nodeCARDIAC = bracketNode("cardiac", [
-      textNode("kind of "),
-      nodeMUSCLE,
-      textNode(" found only in the organ that pumps blood")
-    ]);
-
-    const nodeCHAMBERS = bracketNode("4", [
-      textNode("number of chambers in a human heart made of "),
-      nodeCARDIAC
-    ]);
-
-    const nodeVALENTINE = bracketNode("Valentine", [
-      textNode("holiday famous for cards covered in little cartoon hearts")
-    ]);
-
-    const nodeFEBRUARY = bracketNode("February", [
-      textNode("month that includes "),
-      nodeVALENTINE,
-      textNode("'s Day")
-    ]);
-
-    const nodeFOURTEEN = bracketNode("14", [
-      textNode("day of "),
-      nodeFEBRUARY,
-      textNode(" on which "),
-      nodeVALENTINE,
-      textNode("'s Day is celebrated")
-    ]);
-
-    const nodeHEARTS = bracketNode("hearts", [
-      textNode("playing-card suit that uses the same symbol drawn on "),
-      nodeVALENTINE,
-      textNode("'s Day cards")
-    ]);
-
-    const nodeHEART = bracketNode("heart", [
-      textNode("organ with "),
-      nodeCHAMBERS,
-      textNode(" chambers whose symbol on "),
-      nodeVALENTINE,
-      textNode("'s Day cards is the "),
-      nodeHEARTS,
-      textNode(" suit")
-    ]);
-
-    // HOPE chain
-    const nodeEVITA = bracketNode("Evita", [
-      textNode("Andrew Lloyd Webber musical about Argentine First Lady Eva Perón")
-    ]);
-    const nodeDESPAIR = bracketNode("despair", [
-      textNode("what theatre fans might feel if "),
-      nodeEVITA,
-      textNode(" closed the night before opening")
-    ]);
-    const nodeHOPE = bracketNode("hope", [
-      textNode("opposite of "),
-      nodeDESPAIR
-    ]);
-
-    // DIE mega-chain
-        // electron appears only once as an innermost clue
-    const nodeELECTRON = bracketNode("electron", [
-      textNode("subatomic particle discovered by J.J. Thomson")
-    ]);
-
-    const nodeNEGATIVE = bracketNode("negative", [
-      textNode("electric charge carried by an "),
-      nodeELECTRON,
-      textNode(" in an atom")
-    ]);
-
-    const nodeANION = bracketNode("anion", [
-      textNode("ion that has a "),
-      nodeNEGATIVE,
-      textNode(" charge")
-    ]);
-
-    const nodeHALOGEN = bracketNode("halogen", [
-      textNode("periodic-table group (like fluorine and chlorine) that easily forms an "),
-      nodeANION
-    ]);
-
-    const nodeCHLORIDE = bracketNode("chloride", [
-      textNode("ion formed when the "),
-      nodeHALOGEN,
-      textNode(" chlorine gains an extra electron")
-    ]);
-
-    const nodeNACL = bracketNode("NaCl", [
-      textNode("chemical formula made of sodium and "),
-      nodeCHLORIDE
-    ]);
-    const nodeIONIC = bracketNode("ionic", [
-      textNode("type of bond in "),
-      nodeNACL,
-      textNode(" (as in a(n) ___ bond)")
-    ]);
-    const nodeBONDWORD = bracketNode("Bond", [
-      textNode("surname shared by this kind of "),
-      nodeIONIC,
-      textNode(" bond and fictional agent James ___")
-    ]);
-    const nodeFLEMING = bracketNode("Fleming", [
-      textNode("author Ian ______ who created James "),
-      nodeBONDWORD
-    ]);
-    const nodeGOLDENEYE = bracketNode("GoldenEye", [
-      textNode("Nintendo shooter based on a film about the character created by "),
-      nodeFLEMING
-    ]);
-    const nodeN64 = bracketNode("N64", [
-      textNode("abbreviated nickname of the console that hosted "),
-      nodeGOLDENEYE
-    ]);
-    const node1996 = bracketNode("1996", [
-      textNode("year the "),
-      nodeN64,
-      textNode(" launched in North America")
-    ]);
-    const nodeMOORE = bracketNode("Moore", [
-      textNode("surname of Roger _____, who played James Bond long before "),
-      node1996
-    ]);
-    const nodeTITLE = bracketNode("Live", [
-      textNode("Bond film starring Roger "),
-      nodeMOORE,
-      textNode(' whose title, is ___ and let die')
-    ]);
-    const nodeDIE = bracketNode("die", [
-      textNode("final word of the title of the James Bond Movie Live and let ___"),
-    ]);
-
-    const rootNodes = [
-      textNode("C"),
-      nodeROSS,
-      textNode(" my "),
-      nodeHEART,
-      textNode(", "),
-      nodeHOPE,
-      textNode(" to "),
-      nodeDIE
-    ];
-
-    // ===== COLLECT BRACKETS =====
-    const allBrackets = [];
-    const bracketById = {};
-    function collectBrackets(nodes) {
-      for (const n of nodes) {
-        if (n.type === "bracket") {
-          allBrackets.push(n);
-          bracketById[n.id] = n;
-          collectBrackets(n.children);
-        }
-      }
-    }
-    collectBrackets(rootNodes);
-
-    // ===== HELPERS =====
-    function computeInnermostFlags(nodes) {
-      function recurse(node) {
-        if (node.type === "text") return;
-        let hasUnsolvedChild = false;
-        for (const child of node.children) {
-          if (child.type === "bracket") {
-            recurse(child);
-            if (!child.solved) hasUnsolvedChild = true;
-          }
-        }
-        node.innermost = !node.solved && !hasUnsolvedChild;
-      }
-      nodes.forEach(n => { if (n.type === "bracket") recurse(n); });
+    function normalizeAnswer(str) {
+      return str.trim().toLowerCase();
     }
 
-    function getBracketDisplayText(node) {
-      function renderChildren(children) {
-        let s = "";
-        for (const child of children) {
-          if (child.type === "text") s += child.text;
-          else if (child.type === "bracket") {
-            if (child.solved) s += child.answer;
-            else s += "[" + renderChildren(child.children) + "]";
-          }
-        }
-        return s;
-      }
-      return "[" + renderChildren(node.children) + "]";
+    // ===== BUILD THE NUCLEAR PUZZLE TREE =====
+    function buildPuzzle() {
+      allBracketNodes = [];
+      nextId = 1;
+
+      // ----- CROSS CHAIN -----
+      const nodeBOB = bracketNode("Bob", [
+        textNode("first name of the landscape painter with big hair who hosted a PBS show about calm clouds and happy little trees")
+      ]);
+
+      const nodeROSS = bracketNode("Ross", [
+        textNode("surname of painter "),
+        nodeBOB,
+        textNode(" whose TV show taught wet-on-wet oil painting")
+      ]);
+
+      const nodeJOY = bracketNode("joy", [
+        textNode("emotion in the title of that show: \"The ___ of Painting\"")
+      ]);
+
+      const nodeCROSS = bracketNode("Cross", [
+        textNode("word formed by putting the letter C in front of the surname "),
+        nodeROSS,
+        textNode(", host of The "),
+        nodeJOY,
+        textNode(" of Painting")
+      ]);
+
+      // ----- MY CHAIN -----
+      const nodeEGO = bracketNode("ego", [
+        textNode("Latin word Sigmund Freud used for the part of the mind that means \"I\"")
+      ]);
+
+      const nodeMY = bracketNode("my", [
+        textNode("English possessive determiner that is the form of the pronoun whose Latin equivalent is "),
+        nodeEGO,
+        textNode(" (as in \"___ notebook\")")
+      ]);
+
+      // ----- HEART CHAIN -----
+      const nodeFOURSUITS = bracketNode("four", [
+        textNode("number of suits in a standard deck of playing cards")
+      ]);
+
+      const nodeRED = bracketNode("red", [
+        textNode("color shared by the hearts and diamonds suits in most decks of cards")
+      ]);
+
+      const nodeVALENTINE = bracketNode("Valentine", [
+        textNode("saint whose name labels the February 14 holiday associated with romantic love")
+      ]);
+
+      const nodeHEARTSUIT = bracketNode("hearts", [
+        textNode("playing-card suit decorated with symbols of love on "),
+        nodeVALENTINE,
+        textNode(" Day, one of the "),
+        nodeFOURSUITS,
+        textNode(" suits, usually colored "),
+        nodeRED
+      ]);
+
+      const nodeHEART = bracketNode("heart", [
+        textNode("organ that pumps blood and is commonly symbolized by the playing-card suit "),
+        nodeHEARTSUIT
+      ]);
+
+      // ----- HOPE CHAIN -----
+      const nodeZEUS = bracketNode("Zeus", [
+        textNode("king of the Greek gods, who in some myths gave a certain woman a box or jar")
+      ]);
+
+      const nodePANDORA = bracketNode("Pandora", [
+        textNode("woman from Greek myth who opened a container from "),
+        nodeZEUS,
+        textNode(" and released many troubles into the world")
+      ]);
+
+      const nodeBOX = bracketNode("box", [
+        textNode("kind of container associated with "),
+        nodePANDORA,
+        textNode(" in a famous myth")
+      ]);
+
+      const nodeHOPE = bracketNode("hope", [
+        textNode("the one good thing said to remain inside "),
+        nodeBOX,
+        textNode(" after all the evils escaped in that myth")
+      ]);
+
+      // ----- TO CHAIN -----
+      const nodeTWO = bracketNode("two", [
+        textNode("number of things in a pair")
+      ]);
+
+      const nodeTO = bracketNode("to", [
+        textNode("short preposition that is a homophone of the number "),
+        nodeTWO
+      ]);
+
+      // ----- DIE CHAIN (BOND / MUSIC / TRIVIA) -----
+      const nodePAUL = bracketNode("Paul", [
+        textNode("first name of the left-handed bassist for The Beatles")
+      ]);
+
+      const nodeMCCARTNEY = bracketNode("McCartney", [
+        textNode("surname of musician "),
+        nodePAUL,
+        textNode(", who later wrote a James Bond theme song")
+      ]);
+
+      const nodeWINGS = bracketNode("Wings", [
+        textNode("band formed by "),
+        nodeMCCARTNEY,
+        textNode(" after The Beatles broke up")
+      ]);
+
+      const nodeSONG = bracketNode("Live and Let Die", [
+        textNode("James Bond theme song performed by "),
+        nodeWINGS
+      ]);
+
+      const nodeMOVIETITLE = bracketNode("Live and Let Die", [
+        textNode("1973 James Bond film whose theme song is "),
+        nodeSONG
+      ]);
+
+      const nodeDIE = bracketNode("die", [
+        textNode("final word of the title of the James Bond movie "),
+        nodeMOVIETITLE,
+        textNode(" (fill in the blank: Live and Let ___)")
+      ]);
+
+      // ----- ROOT SENTENCE -----
+      rootNodes = [
+        nodeCROSS,
+        textNode(" "),
+        nodeMY,
+        textNode(" "),
+        nodeHEART,
+        textNode(", "),
+        nodeHOPE,
+        textNode(" "),
+        nodeTO,
+        textNode(" "),
+        nodeDIE
+      ];
     }
 
     // ===== RENDERING =====
-    let selectedId = null;
+    function getInnermostUnsolvedIds() {
+      const innermost = new Set();
 
-    function renderNodes(nodes, parentEl) {
-      for (const node of nodes) {
-        if (node.type === "text") {
-          parentEl.appendChild(document.createTextNode(node.text));
-        } else if (node.type === "bracket") {
-          if (node.solved) {
-            parentEl.appendChild(document.createTextNode(node.answer));
-          } else if (node.innermost) {
-            const span = document.createElement("span");
-            span.className = "bracket";
-            span.dataset.id = node.id;
-            span.addEventListener("click", () => {
-              selectedId = node.id;
-              clueEl.textContent = "Selected clue: " + getBracketDisplayText(node);
-              statusEl.textContent = "";
-              statusEl.className = "";
-              inputEl.focus();
-            });
-            span.appendChild(document.createTextNode("["));
-            renderNodes(node.children, span);
-            span.appendChild(document.createTextNode("]"));
-            parentEl.appendChild(span);
-          } else {
-            parentEl.appendChild(document.createTextNode("["));
-            renderNodes(node.children, parentEl);
-            parentEl.appendChild(document.createTextNode("]"));
+      function dfs(node) {
+        if (node.type !== "bracket" || node.solved) {
+          if (node.children) node.children.forEach(dfs);
+          return;
+        }
+
+        let hasUnsolvedChild = false;
+        if (node.children) {
+          for (const child of node.children) {
+            if (child.type === "bracket" && !child.solved) {
+              hasUnsolvedChild = true;
+              dfs(child);
+            } else if (child.children) {
+              dfs(child);
+            }
           }
         }
+        if (!hasUnsolvedChild) {
+          innermost.add(node.id);
+        }
       }
+
+      rootNodes.forEach(dfs);
+      return innermost;
     }
 
     function renderPuzzle() {
-      computeInnermostFlags(rootNodes);
-      puzzleEl.innerHTML = "";
-      renderNodes(rootNodes, puzzleEl);
-      updateProgress();
-    }
+      if (finalPhase) return; // final sentence uses its own renderer
 
-    function updateProgress() {
-      const total = allBrackets.length;
-      const solved = allBrackets.filter(b => b.solved).length;
-      progressEl.textContent = `Solved ${solved} of ${total} brackets`;
-    }
+      const innermost = getInnermostUnsolvedIds();
 
-    function allSolved() {
-      return allBrackets.every(b => b.solved);
-    }
-
-    function getInnermostUnsolvedBrackets() {
-      return allBrackets.filter(b => b.innermost && !b.solved);
-    }
-
-    // ===== ANSWERING =====
-    function submitAnswer() {
-      const guessRaw = (inputEl.value || "").trim();
-      if (!guessRaw) {
-        statusEl.textContent = "Type an answer.";
-        statusEl.className = "error";
-        return;
-      }
-
-      if (finalPhase) {
-        const normalized = guessRaw.toLowerCase();
-        if (localStorage.getItem(DAY_KEY)) {
-          openModal("letterModal");
-          return;
+      function renderNode(node) {
+        if (node.type === "text") {
+          return document.createTextNode(node.text);
         }
-        if (normalized === OATH_PHRASE) {
-          statusEl.textContent = "Oath accepted.";
-          statusEl.className = "success";
-          inputEl.value = "";
-          localStorage.setItem(DAY_KEY, HIDDEN_LETTER);
-          alreadyBanner.style.display = "block";
-          openModal("letterModal");
+
+        if (node.solved) {
+          return document.createTextNode(node.answer);
+        }
+
+        // unsolved bracket
+        const isInner = innermost.has(node.id);
+        const wrapper = document.createElement("span");
+
+        if (isInner) {
+          wrapper.className = "bracket-innermost";
+          const innerSpan = document.createElement("span");
+          innerSpan.className = "bracket-innermost-inner";
+
+          innerSpan.appendChild(document.createTextNode("["));
+          node.children.forEach((child) => innerSpan.appendChild(renderNode(child)));
+          innerSpan.appendChild(document.createTextNode("]"));
+
+          wrapper.appendChild(innerSpan);
         } else {
-          statusEl.textContent = 'The oath has to be exactly "stick...".';
-          statusEl.className = "error";
+          // outer brackets appear as normal text with no special color
+          wrapper.appendChild(document.createTextNode("["));
+          node.children.forEach((child) => wrapper.appendChild(renderNode(child)));
+          wrapper.appendChild(document.createTextNode("]"));
         }
-        return;
+
+        return wrapper;
       }
 
-      const guess = guessRaw.toUpperCase();
+      puzzleTextEl.innerHTML = "";
+      rootNodes.forEach((n) => puzzleTextEl.appendChild(renderNode(n)));
 
-      if (selectedId) {
-        const node = bracketById[selectedId];
-        if (node && !node.solved && guess === node.answer.toUpperCase()) {
-          solveBracket(node);
-          return;
-        }
-      }
-
-      const candidates = getInnermostUnsolvedBrackets();
-      const match = candidates.find(b => guess === b.answer.toUpperCase());
-
-      if (match) {
-        solveBracket(match);
+      const remaining = allBracketNodes.filter((n) => !n.solved).length;
+      if (remaining > 0) {
+        setStatus(`Brackets remaining: ${remaining}`, "muted");
       } else {
-        statusEl.textContent = "No innermost bracket matches that answer. Check spelling?";
-        statusEl.className = "error";
-      }
-    }
-
-    function solveBracket(node) {
-      node.solved = true;
-      statusEl.textContent = "Correct!";
-      statusEl.className = "success";
-      selectedId = null;
-      clueEl.textContent = "";
-      inputEl.value = "";
-
-      if (allSolved()) {
+        // All solved: enter final phase
         showFinalSentence();
-      } else {
-        renderPuzzle();
       }
     }
 
-    // ===== FINAL PHASE =====
+    // ===== STATUS =====
+    function setStatus(msg, tone) {
+      statusLineEl.textContent = msg;
+      statusLineEl.className = "";
+      if (tone) statusLineEl.classList.add(tone);
+    }
+
+    // ===== FINAL SENTENCE PHASE =====
     function showFinalSentence() {
       finalPhase = true;
-      puzzleEl.textContent = FINAL_SENTENCE;
-      statusEl.textContent = "";
-      statusEl.className = "";
-      clueEl.textContent = "";
-      progressEl.textContent = "";
-      hintEl.style.display = "block";
-      inputEl.value = "";
-      inputEl.placeholder = "Finish the rhyme…";
+      const container = document.createElement("span");
+
+      const parts = [
+        { text: "Cross", isWord: true },
+        { text: " ", isWord: false },
+        { text: "my", isWord: true },
+        { text: " ", isWord: false },
+        { text: "heart", isWord: true },
+        { text: ",", isWord: false },
+        { text: " ", isWord: false },
+        { text: "hope", isWord: true },
+        { text: " ", isWord: false },
+        { text: "to", isWord: true },
+        { text: " ", isWord: false },
+        { text: "die", isWord: true }
+      ];
+
+      parts.forEach((part, idx) => {
+        if (!part.isWord) {
+          container.appendChild(document.createTextNode(part.text));
+        } else {
+          const span = document.createElement("span");
+          span.className = "final-word";
+          span.dataset.index = String(idx);
+          span.textContent = part.text;
+          container.appendChild(span);
+        }
+      });
+
+      puzzleTextEl.innerHTML = "";
+      puzzleTextEl.appendChild(container);
+
+      document.getElementById("inputLabel").textContent =
+        "Finish the rhyme that begins with “swallow…”";
+      answerInput.value = "";
+      answerInput.placeholder = "Finish the rhyme that begins with “swallow…”";
+      setStatus(
+        "All brackets solved! Now finish the childhood promise to unlock the letter.",
+        "good"
+      );
     }
 
-    // ===== MODAL / NAV =====
+    function attachFinalWordClicks() {
+      const wordEls = document.querySelectorAll(".final-word");
+      wordEls.forEach((el) => {
+        if (oathUnlocked) {
+          el.classList.add("secret-ready");
+        }
+        el.addEventListener("click", () => {
+          const word = el.textContent || "";
+          handleFinalWordClick(word);
+        });
+      });
+    }
+
+    function handleFinalWordClick(word) {
+      if (!oathUnlocked) {
+        setStatus("Make the needle promise first, then click the word after “my”.", "bad");
+        return;
+      }
+
+      const normalizedWord = word.toLowerCase();
+      if (normalizedWord !== "heart") {
+        setStatus("That’s not the word immediately after “my”. Try again.", "bad");
+        return;
+      }
+
+      if (localStorage.getItem(DAY_LETTER_KEY)) {
+        openModal("letterModal");
+        return;
+      }
+
+      localStorage.setItem(DAY_LETTER_KEY, HIDDEN_LETTER);
+      alreadyBanner.style.display = "block";
+      openModal("letterModal");
+    }
+
+    // ===== INPUT HANDLING =====
+    function handleSubmit() {
+      const raw = answerInput.value.trim();
+      if (!raw) return;
+
+      if (!finalPhase) {
+        handleBracketAnswer(raw);
+      } else {
+        handleOathInput(raw);
+      }
+      answerInput.value = "";
+    }
+
+    function handleBracketAnswer(raw) {
+      const guess = normalizeAnswer(raw);
+      if (!guess) return;
+
+      const target = allBracketNodes.find(
+        (n) => !n.solved && n.answerNormalized === guess
+      );
+
+      if (!target) {
+        setStatus("No unsolved bracket is expecting that answer.", "bad");
+        return;
+      }
+
+      target.solved = true;
+      setStatus(`Solved a bracket: ${target.answer}`, "good");
+      renderPuzzle();
+    }
+
+    function normalizeOath(str) {
+      return str
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+    }
+
+    function handleOathInput(raw) {
+      const norm = normalizeOath(raw);
+      if (norm === OATH_TARGET) {
+        if (!oathUnlocked) {
+          oathUnlocked = true;
+          setStatus(
+            "Promise accepted. Now click the word that comes immediately after “my”.",
+            "good"
+          );
+          attachFinalWordClicks();
+        } else {
+          setStatus(
+            "You’ve already unlocked the letter. Click the word after “my”.",
+            "muted"
+          );
+        }
+      } else {
+        setStatus("That doesn’t quite match the rhyme. Think playground-style.", "bad");
+      }
+    }
+
+    // ===== MODAL + NAV =====
     function openModal(id) {
-      document.getElementById(id).classList.add("open");
+      const modal = document.getElementById(id);
+      if (!modal) return;
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
     }
+
     function closeModal(id) {
-      document.getElementById(id).classList.remove("open");
+      const modal = document.getElementById(id);
+      if (!modal) return;
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
     }
-
-    document.querySelectorAll("[data-close]").forEach(btn => {
-      btn.addEventListener("click", () => closeModal(btn.dataset.close));
-    });
-
-    document.getElementById("backBtn").addEventListener("click", () => {
-      window.location.href = "../../index.html";
-    });
-    document.getElementById("goHome").addEventListener("click", () => {
-      window.location.href = "../../index.html";
-    });
-    document.getElementById("submitAnswer").addEventListener("click", submitAnswer);
-
-    document.addEventListener("keydown", e => {
-      if (e.key === "Enter") submitAnswer();
-      else if (e.key === "Escape") closeModal("letterModal");
-    });
 
     // ===== INIT =====
-    if (localStorage.getItem(DAY_KEY)) {
-      alreadyBanner.style.display = "block";
+    function init() {
+      if (localStorage.getItem(DAY_LETTER_KEY)) {
+        alreadyBanner.style.display = "block";
+      }
+
+      buildPuzzle();
+      renderPuzzle();
+
+      submitAnswerBtn.addEventListener("click", handleSubmit);
+      answerInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") handleSubmit();
+      });
+
+      document.getElementById("backButton").addEventListener("click", () => {
+        window.location.href = "../../index.html";
+      });
+
+      document
+        .getElementById("goHomeFromModal")
+        .addEventListener("click", () => {
+          window.location.href = "../../index.html";
+        });
+
+      document
+        .querySelectorAll("[data-close]")
+        .forEach((btn) =>
+          btn.addEventListener("click", () =>
+            closeModal(btn.getAttribute("data-close"))
+          )
+        );
+
+      document.querySelectorAll(".modal").forEach((modal) => {
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal) {
+            modal.classList.remove("open");
+            modal.setAttribute("aria-hidden", "true");
+          }
+        });
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          document
+            .querySelectorAll(".modal.open")
+            .forEach((m) => m.classList.remove("open"));
+        }
+      });
+
+      // In final phase, we recreate the words, so we attach clicks there too.
+      // If oath gets unlocked later, clicks will be allowed.
+      // Attach after DOMContentLoaded and whenever final sentence is shown.
+      const observer = new MutationObserver(() => {
+        if (finalPhase) attachFinalWordClicks();
+      });
+      observer.observe(puzzleTextEl, { childList: true, subtree: true });
+
+      setStatus("Solve any innermost blue bracket to start collapsing the madness.", "muted");
     }
-    renderPuzzle();
+
+    init();
   </script>
 </body>
 </html>
