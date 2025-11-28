@@ -385,13 +385,13 @@
     // ===== CONFIG =====
     const ANSWER = "THORN";
     const MAX_GUESSES = 6;
-    const DAY_LETTER_KEY = "advent_day_1_letter"; // will store "R"
+    const DAY_LETTER_KEY = "advent_day_1_letter"; // stored letter key
     const HIDDEN_LETTER = "R";
 
     // ===== STATE =====
     let currentRow = 0;
     let gameOver = false;
-    let dictionary = new Set([ANSWER]); // fallback
+    let dictionary = new Set([ANSWER]); // always include the answer
 
     const boardEl = document.getElementById("board");
     const guessInput = document.getElementById("guessInput");
@@ -420,8 +420,8 @@
     }
 
     // ===== DICTIONARY LOAD =====
-    // Optional: create a text file `wordlist-5-letter.txt` in this folder,
-    // one word per line, to use a bigger dictionary.
+    // `wordlist-5-letter.txt` should be in the same folder as this file:
+    // days/day1/wordlist-5-letter.txt
     fetch("wordlist-5-letter.txt")
       .then((resp) => resp.text())
       .then((text) => {
@@ -430,20 +430,10 @@
           .map((w) => w.trim().toUpperCase())
           .filter((w) => w.length === 5)
           .forEach((w) => dictionary.add(w));
-        //start here
-        .then((text) => {
-  text
-    .split(/\r?\n/)
-    .map((w) => w.trim().toUpperCase())
-    .filter((w) => w.length === 5)
-    .forEach((w) => dictionary.add(w));
-
-  console.log("Dictionary loaded:", dictionary.size, "words");
-})
-            //delete here
+        console.log("Dictionary loaded:", dictionary.size, "words");
       })
-      .catch(() => {
-        // If it fails, fallback to just ANSWER + a few extras for testing
+      .catch((err) => {
+        console.warn("Dictionary load failed, using fallback.", err);
         ["APPLE", "BRAIN", "SMILE", "WORDS"].forEach((w) =>
           dictionary.add(w)
         );
@@ -514,7 +504,7 @@
       }
     }
 
-    function handleWin(guess) {
+    function handleWin() {
       gameOver = true;
       setStatus("Nice! You found the word.", "success");
       hintContainer.style.display = "block";
@@ -525,8 +515,7 @@
       gameOver = true;
       setStatus(`Out of guesses. The word was ${answer}.`, "error");
       hintContainer.style.display = "block";
-      // Still allow letter selection from the (non-existent) correct row? No.
-      // The letter is only collectible if she actually solves it.
+      // No letter if the puzzle wasn't solved.
     }
 
     function onSubmitGuess() {
@@ -554,7 +543,7 @@
       revealGuess(guess, evaluation);
 
       if (guess === ANSWER) {
-        handleWin(guess);
+        handleWin();
       } else {
         currentRow++;
         if (currentRow >= MAX_GUESSES) {
@@ -588,7 +577,7 @@
         return;
       }
 
-      // She has to pick the right letter based on the hint.
+      // Must pick the correct letter based on the hint.
       if (letter === HIDDEN_LETTER) {
         localStorage.setItem(DAY_LETTER_KEY, HIDDEN_LETTER);
         alreadyBanner.style.display = "block";
