@@ -332,9 +332,8 @@
       </section>
 
       <section id="hintBox">
-        <p><strong>Letter hint:</strong> In the final sentence, click the word that comes immediately after “my”. The secret letter is the <strong>first letter</strong> of that word.</p>
         <p id="oathHint" style="margin-top:0.35rem;">
-          After all the brackets disappear, finish the childhood rhyme that follows “hope to die.” Type the part that begins with <em>“swallow…”</em>
+          After all the brackets disappear, finish the childhood rhyme that follows “hope to die.” Type the part that begins with <em>“stick…”</em>
         </p>
       </section>
     </main>
@@ -370,7 +369,7 @@
     const DAY_LETTER_KEY = "advent_day_2_letter";
     const HIDDEN_LETTER = "H";
     const FINAL_SENTENCE = "Cross my heart, hope to die";
-    const OATH_TARGET = "swallow a thousand needles if i lie";
+    const OATH_TARGET = "stick a needle in my eye";
 
     // ===== STATE =====
     let rootNodes = [];
@@ -683,9 +682,9 @@ const nodeDIE = bracketNode("die", [
       puzzleTextEl.appendChild(container);
 
       document.getElementById("inputLabel").textContent =
-        "Finish the rhyme that begins with “swallow…”";
+        "Finish the rhyme that begins with “stick…”";
       answerInput.value = "";
-      answerInput.placeholder = "Finish the rhyme that begins with “swallow…”";
+      answerInput.placeholder = "Finish the rhyme that begins with “stick…”";
       setStatus(
         "All brackets solved! Now finish the childhood promise to unlock the letter.",
         "good"
