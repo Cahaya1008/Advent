@@ -14,7 +14,6 @@
       --text-muted: #6b7280;
       --good: #16a34a;
       --bad: #b91c1c;
-      --card-back: #0f172a;
       --card-border: #e5e7eb;
       --card-border-outer: #111827;
     }
@@ -109,15 +108,15 @@
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(8, 1fr);
-      grid-auto-rows: 80px;
+      grid-template-columns: repeat(5, 1fr);
+      grid-auto-rows: 90px;
       gap: 0.5rem;
     }
 
     @media (max-width: 768px) {
       .grid {
-        grid-template-columns: repeat(6, 1fr);
-        grid-auto-rows: 60px;
+        grid-template-columns: repeat(3, 1fr);
+        grid-auto-rows: 70px;
       }
     }
 
@@ -140,7 +139,7 @@
       cursor: pointer;
       user-select: none;
       transition: background 0.15s, transform 0.08s, box-shadow 0.15s, color 0.15s;
-      font-size: 1.4rem;
+      font-size: 2rem;
       color: transparent;
       background: radial-gradient(circle at top, #1f2937, #020617 70%);
     }
@@ -213,7 +212,6 @@
       cursor: default;
     }
 
-    /* Modal */
     .modal {
       position: fixed;
       inset: 0;
@@ -279,7 +277,7 @@
 
     <header>
       <h1>Day 3 – Matching Game</h1>
-      <p>Take turns flipping cards against a sneaky computer with perfect memory of what it has seen.</p>
+      <p>Match cozy little Christmas emojis against a computer with a very suspicious memory.</p>
     </header>
 
     <div class="info-bar">
@@ -343,9 +341,9 @@
 
     // Game constants
     const ROWS = 6;
-    const COLS = 8;
-    const TOTAL_CARDS = ROWS * COLS; // 48
-    const PAIRS = TOTAL_CARDS / 2;   // 24
+    const COLS = 5;
+    const TOTAL_CARDS = ROWS * COLS; // 30
+    const PAIRS = TOTAL_CARDS / 2;   // 15
 
     // State
     let cards = []; // {symbol, matched, element}
@@ -394,12 +392,14 @@
       statusLineEl.className = "status-line muted";
       gridEl.innerHTML = "";
 
-      // Create symbols A–X (24 letters)
-      const symbols = [];
-      for (let i = 0; i < PAIRS; i++) {
-        symbols.push(String.fromCharCode(65 + i)); // 'A' + i
-      }
-      const deckSymbols = shuffle([...symbols, ...symbols]); // 48 entries
+      // 15 Christmas-y emoji pairs
+      const symbols = [
+        "🎄","🎁","❄️","⛄️","🦌",
+        "🧣","🧤","🔔","⭐️","🕯️",
+        "🍪","🧦","🎅","🤶","🧸"
+      ];
+
+      const deckSymbols = shuffle([...symbols, ...symbols]); // 30 entries
 
       for (let i = 0; i < TOTAL_CARDS; i++) {
         const card = {
@@ -413,7 +413,7 @@
         const inner = document.createElement("div");
         inner.className = "card-inner";
         inner.dataset.index = i.toString();
-        inner.textContent = "?";
+        inner.textContent = "✺"; // back of card icon
         inner.addEventListener("click", onPlayerCardClick);
 
         cardDiv.appendChild(inner);
@@ -443,7 +443,6 @@
       if (!card || card.matched) return;
       if (flippedIndices.includes(index)) return;
 
-      // Do not allow more than 2 flips at once
       if (flippedIndices.length >= 2) return;
 
       revealCard(index);
@@ -471,7 +470,7 @@
       if (!card) return;
       card.element.classList.remove("revealed");
       if (!card.matched) {
-        card.element.textContent = "?";
+        card.element.textContent = "✺";
       }
     }
 
@@ -571,7 +570,7 @@
         return;
       }
 
-      // No known pair: flip one unknown (if possible), then choose best second.
+      // No known pair: random logic with preference for unseen
       const firstIndex = chooseRandomForCPU(null);
       setTimeout(() => {
         flipCard("cpu", firstIndex);
