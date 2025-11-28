@@ -12,9 +12,9 @@
     :root {
       --bg: #020617;
       --card-frame: #f5f5f5;
-      --card-main: #0f172a;     /* C: midnight blue */
-      --card-main2: #111827;    /* darker bottom for a soft gradient */
-      --gold: #b68a2a;          /* E: soft gold accent */
+      --card-main: #0f172a;     /* midnight blue */
+      --card-main2: #111827;    /* darker bottom */
+      --gold: #b68a2a;          /* soft gold accent */
       --locked: rgba(0, 0, 0, 0.45);
       --completed: #2f9f5b;
       --accent: #f9f0d9;
@@ -260,13 +260,21 @@
       position: relative;
       background: var(--card-frame);
       border-radius: 14px;
-      padding: 4px;
+      padding: 5px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
       overflow: hidden;
+      height: 90px;           /* <-- fixed height for chunky cards */
+    }
+
+    @media (min-width: 900px) {
+      .day-tile-inner {
+        height: 110px;
+      }
     }
 
     /* solid card */
     .present-top {
+      width: 100%;
       height: 100%;
       border-radius: 10px;
       background: linear-gradient(to bottom, var(--card-main), var(--card-main2));
@@ -289,7 +297,7 @@
     .present-number {
       position: relative;
       font-weight: 700;
-      font-size: 1.25rem;
+      font-size: 1.35rem;
       color: var(--accent);
       text-shadow: 0 0 6px rgba(0, 0, 0, 0.7);
     }
@@ -478,7 +486,7 @@
       cursor: pointer;
       background: #f8f1e1;
       color: #6b3c3c;
-      transition: transform 0.1s ease, box-shadow 0.12s ease,
+      transition: transform 0.1s.ease, box-shadow 0.12s ease,
         filter 0.1s ease;
     }
 
@@ -789,7 +797,6 @@
     const STAR_LETTER = "O";
     const STAR_CODE = "5201314";
 
-    // If true, ignore date locks entirely (overrides test parameter)
     const IGNORE_DATE_LOCKS = false;
 
     // Simulated date from ?test=decNN query
