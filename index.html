@@ -311,45 +311,53 @@
       display: none !important;
     }
 
-    .day-tile.locked .day-tile-inner::after,
-    .day-tile.completed .day-tile-inner::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      background: var(--locked);
-      display: block;
-    }
+    /* --- Locked / completed states --- */
 
-    .day-tile.locked .lock-icon,
-    .day-tile.completed .check-icon {
-      position: absolute;
-      inset: 0;
-      margin: auto;
-      width: 26px;
-      height: 26px;
-      border-radius: 999px;
-      background: rgba(0, 0, 0, 0.55);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 3;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-    }
+/* Locked: no dark overlay, just a small lock badge */
+.day-tile.locked .day-tile-inner::after {
+  content: none;
+}
 
-    .lock-icon span,
-    .check-icon span {
-      font-size: 1.1rem;
-      color: #fff;
-    }
+/* Completed: soft green tint, but keep the number fully readable */
+.day-tile.completed .day-tile-inner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(18, 95, 54, 0.35);
+}
 
-    .day-tile.completed .day-tile-inner::after {
-      background: rgba(18, 95, 54, 0.7);
-    }
+/* Icons sit in the top-right corner, over the number (but not covering it) */
+.day-tile.locked .lock-icon,
+.day-tile.completed .check-icon {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  font-size: 0.95rem;
+}
 
-    .day-tile.completed .check-icon {
-      background: #2f9f5b;
-    }
+/* Different backgrounds for lock vs check */
+.day-tile.locked .lock-icon {
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.day-tile.completed .check-icon {
+  background: #2f9f5b;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.lock-icon span,
+.check-icon span {
+  color: #fff;
+}
 
     .day-tile.available:hover {
       transform: translateY(-4px);
