@@ -76,7 +76,6 @@
       word-wrap: break-word;
     }
 
-    /* Only innermost brackets are highlighted */
     .bracket {
       background: var(--highlight-inner);
       border-radius: 6px;
@@ -163,8 +162,6 @@
       border: 1px solid #d6c0b4;
     }
 
-    /* modal */
-
     .modal {
       position: fixed;
       inset: 0;
@@ -220,7 +217,7 @@
 
     <div id="hintContainer">
       <strong>Final step:</strong>
-      When the brackets are gone, type <em>“stick a needle in my eye”</em> below to claim today’s letter.
+      When the brackets are gone, type <em>“swallow a thousand needles if I lie”</em> below to claim today’s letter.
     </div>
 
     <footer>
@@ -241,11 +238,10 @@
   </div>
 
   <script>
-    // ===== basic config =====
     const DAY_KEY = "advent_day_2_letter";
-    const HIDDEN_LETTER = "H"; // first letter of "heart"
+    const HIDDEN_LETTER = "H";
     const FINAL_SENTENCE = "Cross my heart, hope to die";
-    const OATH_PHRASE = "stick a needle in my eye";
+    const OATH_PHRASE = "swallow a thousand needles if i lie";
 
     const puzzleEl = document.getElementById("puzzleSentence");
     const clueEl = document.getElementById("currentClue");
@@ -255,43 +251,27 @@
     const hintEl = document.getElementById("hintContainer");
     const alreadyBanner = document.getElementById("alreadyBanner");
 
-    let finalPhase = false; // true after all brackets solved
+    let finalPhase = false;
 
-    // ===== Bracket tree model =====
+    // --- node helpers ---
     let idCounter = 0;
     function makeId(prefix) {
       idCounter += 1;
       return prefix + "_" + idCounter;
     }
-
-    function textNode(t) {
-      return { type: "text", text: t };
-    }
-
+    function textNode(t) { return { type: "text", text: t }; }
     function bracketNode(answer, children) {
-      return {
-        type: "bracket",
-        id: makeId("b"),
-        answer,
-        children,
-        solved: false,
-        innermost: false
-      };
+      return { type: "bracket", id: makeId("b"), answer, children, solved: false, innermost: false };
     }
 
-    // ===== Build puzzle =====
-    //
-    // C[ROSS] my [HEART], [HOPE] to [DIE]
-
-    // ---- ROSS chain ----
+    // ===== BUILD PUZZLE =====
+    // Cross: C + Ross chain
     const nodePAIN = bracketNode("pain", [
       textNode("what you feel if you accidentally jab your finger with a palette knife")
     ]);
-
     const nodeJOY = bracketNode("joy", [
       textNode('emotion in the title of Bob Ross’s show, "The ___ of Painting"')
     ]);
-
     const nodeROSS = bracketNode("Ross", [
       textNode("famous "),
       nodePAIN,
@@ -300,15 +280,15 @@
       textNode(" of Painting")
     ]);
 
-    // ---- HEART mega-chain ----
+    // HEART mega-chain (fixed to avoid repeated phrases)
     const nodeMUSCLE = bracketNode("muscle", [
-      textNode("type of tissue that can be skeletal, smooth, or cardiac")
+      textNode("type of tissue that contracts to move or pump parts of your body")
     ]);
 
     const nodeCARDIAC = bracketNode("cardiac", [
       textNode("kind of "),
       nodeMUSCLE,
-      textNode(" found only in the organ that pumps blood through your body")
+      textNode(" found only in the organ that pumps blood")
     ]);
 
     const nodeCHAMBERS = bracketNode("4", [
@@ -316,41 +296,12 @@
       nodeCARDIAC
     ]);
 
-    const nodeAORTA = bracketNode("aorta", [
-      textNode("largest artery leaving one of those "),
-      nodeCHAMBERS,
-      textNode(" chambers")
-    ]);
-
-    const nodeOXYGEN = bracketNode("oxygen", [
-      textNode("gas carried by blood leaving the "),
-      nodeAORTA
-    ]);
-
-    const nodeRED = bracketNode("red", [
-      textNode("color usually used to draw blood rich in "),
-      nodeOXYGEN
-    ]);
-
-    const nodeLOVE = bracketNode("love", [
-      textNode("emotion commonly symbolized by a "),
-      nodeRED,
-      textNode(" ♥ on greeting cards")
-    ]);
-
-    const nodeHEARTS = bracketNode("hearts", [
-      textNode("playing-card suit decorated with symbols of "),
-      nodeLOVE
-    ]);
-
     const nodeVALENTINE = bracketNode("Valentine", [
-      textNode("holiday where people draw lots of "),
-      nodeHEARTS,
-      textNode(" on cards")
+      textNode("holiday famous for cards covered in little cartoon hearts")
     ]);
 
     const nodeFEBRUARY = bracketNode("February", [
-      textNode("month that contains "),
+      textNode("month that includes "),
       nodeVALENTINE,
       textNode("'s Day")
     ]);
@@ -363,115 +314,104 @@
       textNode("'s Day is celebrated")
     ]);
 
+    const nodeHEARTS = bracketNode("hearts", [
+      textNode("playing-card suit that uses the same symbol drawn on "),
+      nodeVALENTINE,
+      textNode("'s Day cards")
+    ]);
+
     const nodeHEART = bracketNode("heart", [
       textNode("organ with "),
       nodeCHAMBERS,
-      textNode(" chambers whose symbol in cartoons, cards, and on "),
-      nodeFOURTEEN,
-      textNode(" is the "),
+      textNode(" chambers whose symbol on "),
+      nodeVALENTINE,
+      textNode("'s Day cards is the "),
       nodeHEARTS,
       textNode(" suit")
     ]);
 
-    // ---- HOPE chain ----
+    // HOPE chain
     const nodeEVITA = bracketNode("Evita", [
       textNode("Andrew Lloyd Webber musical about Argentine First Lady Eva Perón")
     ]);
-
     const nodeDESPAIR = bracketNode("despair", [
       textNode("what theatre fans might feel if "),
       nodeEVITA,
       textNode(" closed the night before opening")
     ]);
-
     const nodeHOPE = bracketNode("hope", [
       textNode("opposite of "),
       nodeDESPAIR
     ]);
 
-    // ---- DIE mega-chain ----
+    // DIE mega-chain
     const nodeELECTRON = bracketNode("electron", [
       textNode("subatomic particle discovered by J.J. Thomson that orbits an atomic nucleus")
     ]);
-
     const nodeNEGATIVE = bracketNode("negative", [
       textNode("electric charge carried by an "),
       nodeELECTRON
     ]);
-
     const nodeANION = bracketNode("anion", [
       textNode("ion that has a "),
       nodeNEGATIVE,
       textNode(" charge")
     ]);
-
     const nodeHALOGEN = bracketNode("halogen", [
       textNode("periodic-table group (like fluorine and chlorine) that easily forms an "),
       nodeANION
     ]);
-
     const nodeCHLORIDE = bracketNode("chloride", [
       textNode("ion formed when a "),
       nodeHALOGEN,
       textNode(" such as chlorine gains an "),
       nodeELECTRON
     ]);
-
     const nodeNACL = bracketNode("NaCl", [
       textNode("chemical formula made of sodium and "),
       nodeCHLORIDE
     ]);
-
     const nodeIONIC = bracketNode("ionic", [
       textNode("type of bond in "),
       nodeNACL,
       textNode(" (as in a(n) ___ bond)")
     ]);
-
     const nodeBONDWORD = bracketNode("Bond", [
       textNode("surname shared by this kind of "),
       nodeIONIC,
       textNode(" bond and fictional agent James ___")
     ]);
-
     const nodeFLEMING = bracketNode("Fleming", [
       textNode("author Ian ______ who created James "),
       nodeBONDWORD
     ]);
-
     const nodeGOLDENEYE = bracketNode("GoldenEye", [
       textNode("Nintendo shooter based on a film about the character created by "),
       nodeFLEMING
     ]);
-
     const nodeN64 = bracketNode("N64", [
       textNode("abbreviated nickname of the console that hosted "),
       nodeGOLDENEYE
     ]);
-
     const node1996 = bracketNode("1996", [
       textNode("year the "),
       nodeN64,
       textNode(" launched in North America")
     ]);
-
     const nodeMOORE = bracketNode("Moore", [
       textNode("surname of Roger _____, who played James Bond long before "),
       node1996
     ]);
-
     const nodeTITLE = bracketNode("LiveAndLetDie", [
       textNode("Bond film starring Roger "),
       nodeMOORE,
       textNode(' whose title, written without spaces, is this answer')
     ]);
-
     const nodeDIE = bracketNode("die", [
       textNode("final word of the title "),
       nodeTITLE
     ]);
 
-    // Root sentence structure
     const rootNodes = [
       textNode("C"),
       nodeROSS,
@@ -483,10 +423,9 @@
       nodeDIE
     ];
 
-    // ===== Collect brackets =====
+    // ===== COLLECT BRACKETS =====
     const allBrackets = [];
     const bracketById = {};
-
     function collectBrackets(nodes) {
       for (const n of nodes) {
         if (n.type === "bracket") {
@@ -498,11 +437,10 @@
     }
     collectBrackets(rootNodes);
 
-    // ===== helpers =====
+    // ===== HELPERS =====
     function computeInnermostFlags(nodes) {
       function recurse(node) {
         if (node.type === "text") return;
-
         let hasUnsolvedChild = false;
         for (const child of node.children) {
           if (child.type === "bracket") {
@@ -512,9 +450,7 @@
         }
         node.innermost = !node.solved && !hasUnsolvedChild;
       }
-      nodes.forEach(n => {
-        if (n.type === "bracket") recurse(n);
-      });
+      nodes.forEach(n => { if (n.type === "bracket") recurse(n); });
     }
 
     function getBracketDisplayText(node) {
@@ -523,11 +459,8 @@
         for (const child of children) {
           if (child.type === "text") s += child.text;
           else if (child.type === "bracket") {
-            if (child.solved) {
-              s += child.answer;
-            } else {
-              s += "[" + renderChildren(child.children) + "]";
-            }
+            if (child.solved) s += child.answer;
+            else s += "[" + renderChildren(child.children) + "]";
           }
         }
         return s;
@@ -535,7 +468,7 @@
       return "[" + renderChildren(node.children) + "]";
     }
 
-    // ===== rendering =====
+    // ===== RENDERING =====
     let selectedId = null;
 
     function renderNodes(nodes, parentEl) {
@@ -549,7 +482,6 @@
             const span = document.createElement("span");
             span.className = "bracket";
             span.dataset.id = node.id;
-
             span.addEventListener("click", () => {
               selectedId = node.id;
               clueEl.textContent = "Selected clue: " + getBracketDisplayText(node);
@@ -557,11 +489,9 @@
               statusEl.className = "";
               inputEl.focus();
             });
-
             span.appendChild(document.createTextNode("["));
             renderNodes(node.children, span);
             span.appendChild(document.createTextNode("]"));
-
             parentEl.appendChild(span);
           } else {
             parentEl.appendChild(document.createTextNode("["));
@@ -593,7 +523,7 @@
       return allBrackets.filter(b => b.innermost && !b.solved);
     }
 
-    // ===== answering =====
+    // ===== ANSWERING =====
     function submitAnswer() {
       const guessRaw = (inputEl.value || "").trim();
       if (!guessRaw) {
@@ -602,7 +532,6 @@
         return;
       }
 
-      // Final phase: oath phrase instead of bracket answers
       if (finalPhase) {
         const normalized = guessRaw.toLowerCase();
         if (localStorage.getItem(DAY_KEY)) {
@@ -617,7 +546,7 @@
           alreadyBanner.style.display = "block";
           openModal("letterModal");
         } else {
-          statusEl.textContent = "The oath has to be exactly \"stick a needle in my eye\".";
+          statusEl.textContent = 'The oath has to be exactly "swallow a thousand needles if I lie".';
           statusEl.className = "error";
         }
         return;
@@ -625,18 +554,14 @@
 
       const guess = guessRaw.toUpperCase();
 
-      // Try selected bracket first
       if (selectedId) {
         const node = bracketById[selectedId];
-        if (node && !node.solved) {
-          if (guess === node.answer.toUpperCase()) {
-            solveBracket(node);
-            return;
-          }
+        if (node && !node.solved && guess === node.answer.toUpperCase()) {
+          solveBracket(node);
+          return;
         }
       }
 
-      // Otherwise, try any innermost bracket
       const candidates = getInnermostUnsolvedBrackets();
       const match = candidates.find(b => guess === b.answer.toUpperCase());
 
@@ -663,7 +588,7 @@
       }
     }
 
-    // ===== final phase =====
+    // ===== FINAL PHASE =====
     function showFinalSentence() {
       finalPhase = true;
       puzzleEl.textContent = FINAL_SENTENCE;
@@ -673,14 +598,13 @@
       progressEl.textContent = "";
       hintEl.style.display = "block";
       inputEl.value = "";
-      inputEl.placeholder = 'Type: "stick a needle in my eye"';
+      inputEl.placeholder = 'Type: "swallow a thousand needles if I lie"';
     }
 
-    // ===== modal / nav =====
+    // ===== MODAL / NAV =====
     function openModal(id) {
       document.getElementById(id).classList.add("open");
     }
-
     function closeModal(id) {
       document.getElementById(id).classList.remove("open");
     }
@@ -692,26 +616,20 @@
     document.getElementById("backBtn").addEventListener("click", () => {
       window.location.href = "../../index.html";
     });
-
     document.getElementById("goHome").addEventListener("click", () => {
       window.location.href = "../../index.html";
     });
-
     document.getElementById("submitAnswer").addEventListener("click", submitAnswer);
 
     document.addEventListener("keydown", e => {
-      if (e.key === "Enter") {
-        submitAnswer();
-      } else if (e.key === "Escape") {
-        closeModal("letterModal");
-      }
+      if (e.key === "Enter") submitAnswer();
+      else if (e.key === "Escape") closeModal("letterModal");
     });
 
-    // ===== init =====
+    // ===== INIT =====
     if (localStorage.getItem(DAY_KEY)) {
       alreadyBanner.style.display = "block";
     }
-
     renderPuzzle();
   </script>
 </body>
