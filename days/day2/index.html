@@ -242,7 +242,7 @@
     const DAY_KEY = "advent_day_2_letter";
     const HIDDEN_LETTER = "H";
     const FINAL_SENTENCE = "Cross my heart, hope to die";
-    const OATH_PHRASE = "swallow a thousand needles if i lie";
+    const OATH_PHRASE = "stick a needle in my eye";
 
     const puzzleEl = document.getElementById("puzzleSentence");
     const clueEl = document.getElementById("currentClue");
@@ -553,7 +553,7 @@
           alreadyBanner.style.display = "block";
           openModal("letterModal");
         } else {
-          statusEl.textContent = 'The oath has to be exactly "swallow a thousand needles if I lie".';
+          statusEl.textContent = 'The oath has to be exactly "stick a needle in my eye".';
           statusEl.className = "error";
         }
         return;
@@ -605,7 +605,7 @@
       progressEl.textContent = "";
       hintEl.style.display = "block";
       inputEl.value = "";
-      inputEl.placeholder = 'Type: "swallow a thousand needles if I lie"';
+      inputEl.placeholder = 'Type: "stick a needle in my eye"';
     }
 
     // ===== MODAL / NAV =====
