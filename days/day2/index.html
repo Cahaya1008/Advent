@@ -4,73 +4,47 @@
   <meta charset="UTF-8" />
   <title>Day 2 – Bracket City</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
-    rel="stylesheet"
-  />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg-dark: #020617;
-      --bg-mid: #111827;
-      --panel: #fdf6ed;
-      --accent: #b03a3a;
-      --accent-soft: #f4e4d0;
-      --text-main: #222;
-      --text-muted: #6b7280;
-      --border-soft: #d3c4b2;
+      --panel-bg: #faf5ef;
+      --highlight: #dfe7ff;
+      --highlight-inner: #adc2ff;
       --correct: #16a34a;
       --error: #b91c1c;
+      --text-muted: #6b7280;
+      --accent: #7b2333;
+      --accent-light: #f4e4d8;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
-        "Segoe UI", sans-serif;
+      font-family: "Poppins", sans-serif;
+      background: radial-gradient(circle at top, #1a2333, #040611 70%);
       min-height: 100vh;
-      background: radial-gradient(circle at top, #1f2937 0, #020617 55%, #000 100%);
+      padding: 1.5rem;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 1.5rem 0.75rem;
-      color: var(--text-main);
     }
 
     .page {
-      position: relative;
-      max-width: 620px;
+      background: var(--panel-bg);
       width: 100%;
-      background: var(--panel);
-      border-radius: 22px;
-      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
-      padding: 1.8rem 1.5rem 1.4rem;
-      overflow: hidden;
+      max-width: 720px;
+      padding: 1.6rem;
+      border-radius: 20px;
+      box-shadow: 0 10px 35px rgba(0,0,0,0.45);
+      position: relative;
     }
 
-    header {
-      text-align: center;
-      margin-bottom: 1.1rem;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      font-size: 0.8rem;
-      background: var(--accent-soft);
-      padding: 0.25rem 0.7rem;
-      border-radius: 999px;
-      margin-bottom: 0.45rem;
-    }
+    header { text-align: center; margin-bottom: 1rem; }
 
     header h1 {
-      font-size: 1.7rem;
       color: var(--accent);
-      margin-bottom: 0.15rem;
+      font-size: 1.8rem;
+      margin-bottom: 0.3rem;
     }
 
     header p {
@@ -80,193 +54,118 @@
 
     .already-banner {
       position: absolute;
-      top: 0.75rem;
       right: 1rem;
-      font-size: 0.75rem;
-      background: #ecf8f0;
-      border-radius: 999px;
-      padding: 0.2rem 0.7rem;
-      border: 1px solid #c3e6d4;
-      color: #285943;
-    }
-
-    main {
-      margin-top: 0.4rem;
-    }
-
-    .bracket-area {
-      border-radius: 16px;
-      background: #f8ecdc;
-      border: 1px solid #e0cfb9;
-      padding: 0.75rem 0.9rem 0.8rem;
-      margin-bottom: 0.9rem;
-    }
-
-    .bracket-label {
+      top: 1rem;
       font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-muted);
-      margin-bottom: 0.2rem;
+      padding: 0.3rem 0.8rem;
+      border-radius: 999px;
+      background: #ecfdf5;
+      border: 1px solid #c6f2df;
+      color: #065f46;
+      display: none;
     }
 
-    #sentence {
-      font-size: 1.08rem;
-      line-height: 1.5;
+    /* bracket area */
+    #puzzleSentence {
+      line-height: 1.6;
+      font-size: 1.05rem;
+      background: #fff;
+      padding: 1rem;
+      border-radius: 14px;
+      border: 1px solid #e4dfd9;
+      margin-bottom: 1rem;
+      min-height: 60px;
     }
 
-    .bracketed {
-      background: #fef3c7;
+    .bracket {
+      background: var(--highlight);
       border-radius: 6px;
-      padding: 0.1rem 0.25rem;
-      border: 1px dashed #f59e0b;
-      font-weight: 600;
+      padding: 0 4px;
+      cursor: pointer;
+      transition: background 0.15s;
+      border: 1px dashed #90aaff;
     }
 
-    .controls {
-      margin-top: 0.75rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.45rem;
-      margin-bottom: 0.4rem;
+    .bracket.innermost {
+      background: var(--highlight-inner);
     }
 
-    .controls label {
-      font-size: 0.85rem;
-    }
-
-    .input-row {
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
+    /* controls */
+    #currentClue {
+      margin-top: 0.3rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
     }
 
     #answerInput {
-      flex: 1;
-      min-width: 0;
-      padding: 0.55rem 0.75rem;
-      border-radius: 999px;
-      border: 1px solid var(--border-soft);
-      font-size: 0.98rem;
+      width: 100%;
+      padding: 0.7rem 1rem;
+      border-radius: 12px;
+      border: 1px solid #d4c8bc;
+      margin-top: 0.7rem;
+      font-size: 1rem;
     }
 
-    #answerInput:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 1px;
-    }
-
-    .btn {
-      border-radius: 999px;
-      border: none;
-      padding: 0.55rem 1.1rem;
-      font-size: 0.9rem;
-      font-weight: 500;
-      cursor: pointer;
+    #submitAnswer {
+      margin-top: 0.6rem;
       background: var(--accent);
-      color: white;
-      white-space: nowrap;
-      transition: transform 0.1s ease, box-shadow 0.12s ease;
+      color: #fff;
+      border: none;
+      padding: 0.65rem 1.1rem;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      cursor: pointer;
     }
 
-    .btn:hover {
+    #submitAnswer:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.18);
       transform: translateY(-1px);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    }
-
-    .btn-secondary {
-      background: var(--accent-soft);
-      color: #5a4032;
-      border: 1px solid #ddc7af;
-    }
-
-    .btn-secondary:hover {
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
     }
 
     #status {
+      margin-top: 0.5rem;
+      min-height: 1.2rem;
       font-size: 0.85rem;
-      min-height: 1.1rem;
     }
 
-    #status.error {
-      color: var(--error);
-    }
-
-    #status.success {
-      color: var(--correct);
-    }
+    #status.error { color: var(--error); }
+    #status.success { color: var(--correct); }
 
     #stepProgress {
+      margin-top: 0.5rem;
       font-size: 0.8rem;
       color: var(--text-muted);
     }
 
-    #currentClue {
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      margin-top: 0.15rem;
-    }
-
+    /* hint */
     #hintContainer {
       display: none;
-      margin-top: 0.7rem;
-      padding: 0.65rem 0.8rem;
-      border-radius: 10px;
-      background: #fce7f3;
-      border: 1px dashed #f9a8d4;
-      font-size: 0.86rem;
+      margin-top: 1rem;
+      background: #fef3c7;
+      padding: 0.9rem;
+      border-radius: 12px;
+      border: 1px dashed #fcd34d;
+      font-size: 0.88rem;
     }
 
-    #hintContainer strong {
-      display: block;
-      margin-bottom: 0.25rem;
-    }
-
-    /* Final sentence letters */
-
-    .final-letter {
+    /* final clickable letters */
+    .letter {
       display: inline-block;
-      padding: 0.1rem 0.16rem;
-      margin: 0.02rem 0.02rem;
+      padding: 2px 3px;
       cursor: pointer;
       border-radius: 4px;
-      transition: transform 0.08s ease, box-shadow 0.08s ease,
-        background 0.08s ease;
+      transition: background 0.1s;
     }
 
-    .final-letter:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    .letter:hover {
       background: #fee2e2;
     }
 
-    .final-space {
-      display: inline-block;
-      width: 0.35rem;
-    }
-
-    footer {
-      margin-top: 1.2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 0.6rem;
-      flex-wrap: wrap;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
-    footer a {
-      color: #5a4032;
-      text-decoration: none;
-    }
-
-    /* Modal */
-
+    /* modal */
     .modal {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.55);
+      background: rgba(0,0,0,0.55);
       display: none;
       align-items: center;
       justify-content: center;
@@ -274,363 +173,281 @@
       z-index: 20;
     }
 
-    .modal.open {
-      display: flex;
-    }
+    .modal.open { display: flex; }
 
     .modal-content {
-      max-width: 420px;
-      width: 100%;
-      padding: 1.2rem 1.3rem 1.05rem;
-      background: #faf5f0;
+      background: #fff8f0;
+      padding: 1.3rem;
       border-radius: 18px;
-      color: #333;
+      max-width: 380px;
+      width: 100%;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
       position: relative;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    }
-
-    .modal h2 {
-      font-size: 1.1rem;
-      margin-bottom: 0.35rem;
-    }
-
-    .modal p {
-      font-size: 0.9rem;
-      line-height: 1.45;
     }
 
     .modal-close {
       position: absolute;
       right: 0.7rem;
-      top: 0.6rem;
+      top: 0.7rem;
+      background: none;
       border: none;
-      background: transparent;
       font-size: 1.2rem;
       cursor: pointer;
       color: #555;
     }
 
-    .modal-footer {
-      margin-top: 0.9rem;
-      display: flex;
-      justify-content: flex-end;
-      gap: 0.5rem;
-      flex-wrap: wrap;
+    .btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.6rem 1rem;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .btn-secondary {
+      background: var(--accent-light);
+      color: #5a4032;
+      border: 1px solid #d6c0b4;
+    }
+
+    footer {
+      margin-top: 1.3rem;
+      text-align: center;
+    }
+
+    footer button {
+      margin-top: 0.4rem;
     }
   </style>
 </head>
 <body>
   <div class="page">
-    <div class="already-banner" id="alreadyBanner" style="display:none;">
-      Letter already collected ✅
-    </div>
+
+    <div class="already-banner" id="alreadyBanner">Letter already collected</div>
 
     <header>
-      <div class="badge">
-        <span>Day 2</span>
-        <span>Mini Bracket City</span>
-      </div>
-      <h1>December 2</h1>
-      <p>
-        Solve the nested brackets one by one. When you finish the chain,
-        the final sentence will hide a special letter.
-      </p>
+      <h1>Day 2 – Bracket City</h1>
+      <p>Solve *any* innermost bracket. When all brackets disappear, the hidden letter will reveal itself.</p>
     </header>
 
-    <main>
-      <section class="bracket-area">
-        <div class="bracket-label">Bracket chain</div>
-        <div id="sentence"></div>
-        <div id="currentClue"></div>
-      </section>
+    <div id="puzzleSentence"></div>
+    <div id="currentClue"></div>
 
-      <section class="controls">
-        <label for="answerInput">Type the exact answer to the highlighted bracket</label>
-        <div class="input-row">
-          <input
-            id="answerInput"
-            autocomplete="off"
-          />
-          <button class="btn" id="submitAnswer">Submit</button>
-        </div>
-        <p id="status"></p>
-        <p id="stepProgress"></p>
-      </section>
+    <input id="answerInput" placeholder="Type answer for selected bracket…" />
+    <button id="submitAnswer">Submit</button>
 
-      <section id="hintContainer">
-        <strong>Hidden-letter hint 💡</strong>
-        <p>
-          In the final sentence, find the word that describes size.
-          The letter to click is the <em>first letter</em> of that word.
-        </p>
-      </section>
-    </main>
+    <div id="status"></div>
+    <div id="stepProgress"></div>
+
+    <div id="hintContainer">
+      <strong>Hint for hidden letter:</strong>
+      In the final sentence, find the word describing size. Click its first letter.
+    </div>
 
     <footer>
-      <button class="btn btn-secondary" id="backButton">
-        ← Back to calendar
-      </button>
-      <span>Each bracket solved brings the sentence closer to us.</span>
+      <button class="btn-secondary" id="backBtn">← Back to calendar</button>
     </footer>
   </div>
 
-  <!-- Letter collected modal -->
-  <div class="modal" id="letterModal" aria-hidden="true">
+  <!-- modal -->
+  <div class="modal" id="letterModal">
     <div class="modal-content">
       <button class="modal-close" data-close="letterModal">&times;</button>
-      <h2>Letter collected ✉️</h2>
-      <p>
-        You picked the right one. This letter has been stored in your
-        collection on the main calendar page.
-      </p>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" data-close="letterModal">
-          Stay on this page
-        </button>
-        <button class="btn" id="goHomeFromModal">
-          Back to calendar
-        </button>
+      <h3>Letter collected!</h3>
+      <p>Your letter has been added to the main calendar.</p>
+      <div style="margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
+        <button class="btn-secondary" data-close="letterModal">Stay</button>
+        <button class="btn" id="goHome">Back to calendar</button>
       </div>
     </div>
   </div>
 
   <script>
-    // ===== CONFIG =====
-    const DAY_LETTER_KEY = "advent_day_2_letter";
-    const HIDDEN_LETTER = "L"; // from LITTLE in the final sentence
+    const DAY_KEY = "advent_day_2_letter";
     const FINAL_SENTENCE = "COZY LITTLE CITY YOU AND ME";
+    const HIDDEN_LETTER = "L";
 
-    // Steps: each one is a bracketed clue that resolves into the next prompt
-    const steps = [
-      {
-        prompt: "[a 4-letter word for warm and comfy]",
-        answer: "COZY",
-      },
-      {
-        prompt: "COZY [a 6-letter word meaning \"small and cute\"] CITY",
-        answer: "LITTLE",
-      },
-      {
-        prompt: "COZY LITTLE CITY [the two people this puzzle is about (three words)]",
-        answer: "YOU AND ME",
-      }
-    ];
+    /* The bracket city puzzle structure */
+    let puzzleText = 
+`C[letter after R]o[last letter of "moss"]s 
+m[y="why" homophone] 
+h[what suit has ♥]a[r sound spelled A-R-R]t, 
+h[what you feel when expecting good things]o[past tense of "hop"]e 
+t[word after "to ___ or not to ___"] 
+d[Roman numeral for 500][vowel in "die"]`;
 
-    let currentStepIndex = 0;
-    let gameOver = false;
+    const answers = {
+      "letter after R": "S",
+      "last letter of \"moss\"": "S",
+      "y=\"why\" homophone": "Y",
+      "what suit has ♥": "HEART",
+      "r sound spelled A-R-R": "ARR",
+      "what you feel when expecting good things": "HOPE",
+      "past tense of \"hop\"": "HOPPED",
+      "word after \"to ___ or not to ___\"": "BE",
+      "Roman numeral for 500": "D",
+      "vowel in \"die\"": "I"
+    };
 
-    const sentenceEl = document.getElementById("sentence");
-    const currentClueEl = document.getElementById("currentClue");
+    const puzzleEl = document.getElementById("puzzleSentence");
+    const clueEl = document.getElementById("currentClue");
+    const answerInput = document.getElementById("answerInput");
     const statusEl = document.getElementById("status");
     const stepProgressEl = document.getElementById("stepProgress");
-    const answerInput = document.getElementById("answerInput");
-    const submitAnswerBtn = document.getElementById("submitAnswer");
     const hintContainer = document.getElementById("hintContainer");
     const alreadyBanner = document.getElementById("alreadyBanner");
 
-    function setStatus(msg, type = "") {
-      statusEl.textContent = msg;
-      statusEl.className = "";
-      if (type) statusEl.classList.add(type);
+    let selectedBracket = null;
+
+    function renderPuzzle() {
+      puzzleEl.innerHTML = "";
+      let idx = 0;
+      let str = puzzleText;
+
+      let bracketRegex = /\[([^\[\]]+)\]/g;
+      let match;
+      let lastIndex = 0;
+
+      const parts = [];
+
+      while ((match = bracketRegex.exec(str)) !== null) {
+        const before = str.slice(lastIndex, match.index);
+        if (before) parts.push(document.createTextNode(before));
+
+        const clue = match[1];
+        const isInnermost = !clue.includes("[") && !clue.includes("]");
+
+        const span = document.createElement("span");
+        span.className = "bracket" + (isInnermost ? " innermost" : "");
+        span.textContent = "[" + clue + "]";
+        span.dataset.clue = clue;
+
+        if (isInnermost) {
+          span.addEventListener("click", () => selectBracket(span));
+        }
+
+        parts.push(span);
+
+        lastIndex = match.index + match[0].length;
+      }
+
+      if (lastIndex < str.length) {
+        parts.push(document.createTextNode(str.slice(lastIndex)));
+      }
+
+      parts.forEach(p => puzzleEl.appendChild(p));
+      updateProgress();
     }
 
-    function normalizeAnswer(str) {
-      // Uppercase and strip extra spaces
-      return str.toUpperCase().replace(/\s+/g, " ").trim();
+    function selectBracket(el) {
+      selectedBracket = el.dataset.clue;
+      clueEl.textContent = "Current clue: " + selectedBracket;
+      statusEl.textContent = "";
+      answerInput.value = "";
+      answerInput.focus();
     }
 
-    function answersMatch(input, expected) {
-      return normalizeAnswer(input) === normalizeAnswer(expected);
-    }
-
-    function renderBracketPrompt() {
-      const step = steps[currentStepIndex];
-      const text = step.prompt;
-      sentenceEl.innerHTML = "";
-
-      const openIdx = text.indexOf("[");
-      const closeIdx = text.indexOf("]", openIdx + 1);
-
-      if (openIdx === -1 || closeIdx === -1) {
-        sentenceEl.textContent = text;
-        currentClueEl.textContent = "";
+    function submitAnswer() {
+      if (!selectedBracket) {
+        statusEl.textContent = "Select an innermost bracket first.";
+        statusEl.className = "error";
         return;
       }
 
-      const before = text.slice(0, openIdx);
-      const inside = text.slice(openIdx + 1, closeIdx);
-      const after = text.slice(closeIdx + 1);
+      const input = answerInput.value.trim().toUpperCase();
+      const expected = answers[selectedBracket].toUpperCase();
 
-      if (before) {
-        const spanBefore = document.createElement("span");
-        spanBefore.textContent = before;
-        sentenceEl.appendChild(spanBefore);
+      if (input === expected) {
+        statusEl.textContent = "Correct!";
+        statusEl.className = "success";
+
+        puzzleText = puzzleText.replace("[" + selectedBracket + "]", expected);
+        selectedBracket = null;
+        clueEl.textContent = "";
+
+        checkCompletion();
+        renderPuzzle();
+      } else {
+        statusEl.textContent = "Not quite. Try again.";
+        statusEl.className = "error";
       }
-
-      const bracketSpan = document.createElement("span");
-      bracketSpan.className = "bracketed";
-      bracketSpan.textContent = inside;
-      sentenceEl.appendChild(bracketSpan);
-
-      if (after) {
-        const spanAfter = document.createElement("span");
-        spanAfter.textContent = after;
-        sentenceEl.appendChild(spanAfter);
-      }
-
-      currentClueEl.textContent = "Current bracket clue: " + inside;
-      stepProgressEl.textContent =
-        "Step " + (currentStepIndex + 1) + " of " + steps.length;
     }
 
-    function renderFinalSentence() {
-      sentenceEl.innerHTML = "";
-      currentClueEl.textContent =
-        "Puzzle complete! The final sentence below hides a clickable letter.";
+    function checkCompletion() {
+      if (!puzzleText.includes("[")) {
+        revealFinalSentence();
+      }
+    }
 
-      FINAL_SENTENCE.split("").forEach((ch) => {
-        if (ch === " ") {
-          const spaceSpan = document.createElement("span");
-          spaceSpan.className = "final-space";
-          spaceSpan.textContent = " ";
-          sentenceEl.appendChild(spaceSpan);
-        } else {
-          const letterSpan = document.createElement("span");
-          letterSpan.className = "final-letter";
-          letterSpan.textContent = ch;
-          letterSpan.addEventListener("click", () => handleLetterClick(ch));
-          sentenceEl.appendChild(letterSpan);
+    function revealFinalSentence() {
+      puzzleEl.innerHTML = "";
+      FINAL_SENTENCE.split("").forEach(ch => {
+        const span = document.createElement("span");
+        span.textContent = ch;
+        if (ch !== " ") {
+          span.className = "letter";
+          span.addEventListener("click", () => pickLetter(ch));
         }
+        puzzleEl.appendChild(span);
       });
 
-      stepProgressEl.textContent = "All brackets solved.";
+      stepProgressEl.textContent = "";
+      hintContainer.style.display = "block";
     }
 
-    function handleCorrectAnswer() {
-      setStatus("Correct!", "success");
-
-      currentStepIndex++;
-      if (currentStepIndex >= steps.length) {
-        // All steps done
-        gameOver = true;
-        hintContainer.style.display = "block";
-        renderFinalSentence();
-        answerInput.disabled = true;
-        submitAnswerBtn.disabled = true;
-      } else {
-        renderBracketPrompt();
-      }
-    }
-
-    function onSubmitAnswer() {
-      if (gameOver) return;
-
-      const value = answerInput.value || "";
-      const step = steps[currentStepIndex];
-
-      if (!value.trim()) {
-        setStatus("Type an answer for the bracket.", "error");
-        return;
-      }
-
-      if (answersMatch(value, step.answer)) {
-        answerInput.value = "";
-        handleCorrectAnswer();
-      } else {
-        setStatus("Not quite. Check the clue again and try another guess.", "error");
-      }
-    }
-
-    // ===== Hidden letter logic =====
-
-    function openModal(id) {
-      const modal = document.getElementById(id);
-      if (!modal) return;
-      modal.classList.add("open");
-      modal.setAttribute("aria-hidden", "false");
-    }
-
-    function closeModal(id) {
-      const modal = document.getElementById(id);
-      if (!modal) return;
-      modal.classList.remove("open");
-      modal.setAttribute("aria-hidden", "true");
-    }
-
-    function handleLetterClick(letter) {
-      if (!gameOver) {
-        // Ignore clicks until the puzzle is solved
-        return;
-      }
-
-      const existing = localStorage.getItem(DAY_LETTER_KEY);
-      if (existing) {
+    function pickLetter(letter) {
+      if (localStorage.getItem(DAY_KEY)) {
         openModal("letterModal");
         return;
       }
 
       if (letter === HIDDEN_LETTER) {
-        localStorage.setItem(DAY_LETTER_KEY, HIDDEN_LETTER);
+        localStorage.setItem(DAY_KEY, letter);
         alreadyBanner.style.display = "block";
         openModal("letterModal");
       } else {
-        setStatus(
-          "That’s not the one. Think about which word describes size, then try its first letter.",
-          "error"
-        );
+        statusEl.textContent = "That's not the right letter.";
+        statusEl.className = "error";
       }
     }
 
-    // ===== Navigation & modal wiring =====
+    function updateProgress() {
+      const total = Object.keys(answers).length;
+      const solved = total - (puzzleText.match(/\[/g) || []).length;
+      stepProgressEl.textContent = `Solved ${solved} of ${total}`;
+    }
 
-    document.getElementById("backButton").addEventListener("click", () => {
+    function openModal(id) {
+      document.getElementById(id).classList.add("open");
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove("open");
+    }
+
+    document.getElementById("submitAnswer").onclick = submitAnswer;
+    document.getElementById("backBtn").onclick = () => {
       window.location.href = "../../index.html";
-    });
-
-    document.getElementById("goHomeFromModal").addEventListener("click", () => {
+    };
+    document.getElementById("goHome").onclick = () => {
       window.location.href = "../../index.html";
+    };
+    document.querySelectorAll("[data-close]").forEach(btn =>
+      btn.onclick = () => closeModal(btn.dataset.close)
+    );
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "Enter") submitAnswer();
+      if (e.key === "Escape") closeModal("letterModal");
     });
 
-    document
-      .querySelectorAll("[data-close]")
-      .forEach((btn) =>
-        btn.addEventListener("click", () =>
-          closeModal(btn.getAttribute("data-close"))
-        )
-      );
-
-    document.querySelectorAll(".modal").forEach((modal) => {
-      modal.addEventListener("click", (e) => {
-        if (e.target === modal) {
-          modal.classList.remove("open");
-          modal.setAttribute("aria-hidden", "true");
-        }
-      });
-    });
-
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        // If a modal is open, don't trigger submit
-        if (document.querySelector(".modal.open")) return;
-        onSubmitAnswer();
-      } else if (e.key === "Escape") {
-        document
-          .querySelectorAll(".modal.open")
-          .forEach((m) => m.classList.remove("open"));
-      }
-    });
-
-    submitAnswerBtn.addEventListener("click", onSubmitAnswer);
-
-    // ===== Init =====
-    renderBracketPrompt();
-    setStatus("", "");
-    answerInput.focus();
-
-    // Show banner if letter already collected
-    if (localStorage.getItem(DAY_LETTER_KEY)) {
+    if (localStorage.getItem(DAY_KEY)) {
       alreadyBanner.style.display = "block";
     }
+
+    renderPuzzle();
   </script>
 </body>
 </html>
