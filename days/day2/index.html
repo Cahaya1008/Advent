@@ -142,27 +142,6 @@
       font-size: 0.88rem;
     }
 
-    .final-word {
-      display: inline-block;
-      padding: 1px 4px;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background 0.1s;
-    }
-
-    .final-word:hover {
-      background: #fee2e2;
-    }
-
-    .final-word.correct {
-      background: #dcfce7;
-    }
-
-    .final-word.disabled {
-      cursor: default;
-      pointer-events: none;
-    }
-
     footer {
       margin-top: 1.3rem;
       text-align: center;
@@ -240,8 +219,8 @@
     <div id="stepProgress"></div>
 
     <div id="hintContainer">
-      <strong>Letter hint:</strong>
-      In the final sentence, click the word that comes immediately after “my”. The secret letter is the first letter of that word.
+      <strong>Final step:</strong>
+      When the brackets are gone, type <em>“stick a needle in my eye”</em> below to claim today’s letter.
     </div>
 
     <footer>
@@ -266,7 +245,7 @@
     const DAY_KEY = "advent_day_2_letter";
     const HIDDEN_LETTER = "H"; // first letter of "heart"
     const FINAL_SENTENCE = "Cross my heart, hope to die";
-    const CORRECT_WORD_INDEX = 2; // 0-based: ["Cross","my","heart,","hope","to","die"]
+    const OATH_PHRASE = "stick a needle in my eye";
 
     const puzzleEl = document.getElementById("puzzleSentence");
     const clueEl = document.getElementById("currentClue");
@@ -276,11 +255,9 @@
     const hintEl = document.getElementById("hintContainer");
     const alreadyBanner = document.getElementById("alreadyBanner");
 
-    // ===== Bracket tree model =====
-    // Node:
-    // { type: 'text', text }
-    // { type: 'bracket', id, answer, children: [...], solved: false, innermost: false }
+    let finalPhase = false; // true after all brackets solved
 
+    // ===== Bracket tree model =====
     let idCounter = 0;
     function makeId(prefix) {
       idCounter += 1;
@@ -306,8 +283,7 @@
     //
     // C[ROSS] my [HEART], [HOPE] to [DIE]
 
-    // ---- ROSS chain (painter / art) ----
-
+    // ---- ROSS chain ----
     const nodePAIN = bracketNode("pain", [
       textNode("what you feel if you accidentally jab your finger with a palette knife")
     ]);
@@ -324,8 +300,7 @@
       textNode(" of Painting")
     ]);
 
-    // ---- HEART mega-chain (anatomy / love / cards / dates) ----
-
+    // ---- HEART mega-chain ----
     const nodeMUSCLE = bracketNode("muscle", [
       textNode("type of tissue that can be skeletal, smooth, or cardiac")
     ]);
@@ -398,8 +373,7 @@
       textNode(" suit")
     ]);
 
-    // ---- HOPE chain (musical / theatre) ----
-
+    // ---- HOPE chain ----
     const nodeEVITA = bracketNode("Evita", [
       textNode("Andrew Lloyd Webber musical about Argentine First Lady Eva Perón")
     ]);
@@ -415,8 +389,7 @@
       nodeDESPAIR
     ]);
 
-    // ---- DIE mega-chain (physics / chemistry / Bond / games) ----
-
+    // ---- DIE mega-chain ----
     const nodeELECTRON = bracketNode("electron", [
       textNode("subatomic particle discovered by J.J. Thomson that orbits an atomic nucleus")
     ]);
@@ -511,7 +484,6 @@
     ];
 
     // ===== Collect brackets =====
-
     const allBrackets = [];
     const bracketById = {};
 
@@ -527,7 +499,6 @@
     collectBrackets(rootNodes);
 
     // ===== helpers =====
-
     function computeInnermostFlags(nodes) {
       function recurse(node) {
         if (node.type === "text") return;
@@ -565,7 +536,6 @@
     }
 
     // ===== rendering =====
-
     let selectedId = null;
 
     function renderNodes(nodes, parentEl) {
@@ -594,7 +564,6 @@
 
             parentEl.appendChild(span);
           } else {
-            // Non-innermost unsolved: plain text, no highlight
             parentEl.appendChild(document.createTextNode("["));
             renderNodes(node.children, parentEl);
             parentEl.appendChild(document.createTextNode("]"));
@@ -625,7 +594,6 @@
     }
 
     // ===== answering =====
-
     function submitAnswer() {
       const guessRaw = (inputEl.value || "").trim();
       if (!guessRaw) {
@@ -634,9 +602,30 @@
         return;
       }
 
+      // Final phase: oath phrase instead of bracket answers
+      if (finalPhase) {
+        const normalized = guessRaw.toLowerCase();
+        if (localStorage.getItem(DAY_KEY)) {
+          openModal("letterModal");
+          return;
+        }
+        if (normalized === OATH_PHRASE) {
+          statusEl.textContent = "Oath accepted.";
+          statusEl.className = "success";
+          inputEl.value = "";
+          localStorage.setItem(DAY_KEY, HIDDEN_LETTER);
+          alreadyBanner.style.display = "block";
+          openModal("letterModal");
+        } else {
+          statusEl.textContent = "The oath has to be exactly \"stick a needle in my eye\".";
+          statusEl.className = "error";
+        }
+        return;
+      }
+
       const guess = guessRaw.toUpperCase();
 
-      // 1. If a bracket is selected, try that first.
+      // Try selected bracket first
       if (selectedId) {
         const node = bracketById[selectedId];
         if (node && !node.solved) {
@@ -647,7 +636,7 @@
         }
       }
 
-      // 2. Otherwise, try any innermost unsolved bracket.
+      // Otherwise, try any innermost bracket
       const candidates = getInnermostUnsolvedBrackets();
       const match = candidates.find(b => guess === b.answer.toUpperCase());
 
@@ -675,56 +664,19 @@
     }
 
     // ===== final phase =====
-
     function showFinalSentence() {
-      puzzleEl.innerHTML = "";
+      finalPhase = true;
+      puzzleEl.textContent = FINAL_SENTENCE;
       statusEl.textContent = "";
       statusEl.className = "";
       clueEl.textContent = "";
       progressEl.textContent = "";
-
-      const words = FINAL_SENTENCE.split(" ");
-      words.forEach((w, idx) => {
-        const span = document.createElement("span");
-        span.textContent = w;
-        span.className = "final-word";
-        span.dataset.index = idx.toString();
-
-        span.addEventListener("click", () => onFinalWordClick(idx, span));
-
-        puzzleEl.appendChild(span);
-        if (idx !== words.length - 1) {
-          puzzleEl.appendChild(document.createTextNode(" "));
-        }
-      });
-
       hintEl.style.display = "block";
-    }
-
-    function onFinalWordClick(index, span) {
-      if (localStorage.getItem(DAY_KEY)) {
-        openModal("letterModal");
-        return;
-      }
-
-      if (index === CORRECT_WORD_INDEX) {
-        span.classList.add("correct");
-        span.classList.add("disabled");
-        localStorage.setItem(DAY_KEY, HIDDEN_LETTER);
-        alreadyBanner.style.display = "block";
-        openModal("letterModal");
-
-        document.querySelectorAll(".final-word").forEach(w => {
-          w.classList.add("disabled");
-        });
-      } else {
-        statusEl.textContent = "That’s not the word the hint is pointing to.";
-        statusEl.className = "error";
-      }
+      inputEl.value = "";
+      inputEl.placeholder = 'Type: "stick a needle in my eye"';
     }
 
     // ===== modal / nav =====
-
     function openModal(id) {
       document.getElementById(id).classList.add("open");
     }
@@ -756,7 +708,6 @@
     });
 
     // ===== init =====
-
     if (localStorage.getItem(DAY_KEY)) {
       alreadyBanner.style.display = "block";
     }
