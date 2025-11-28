@@ -430,6 +430,15 @@
           .map((w) => w.trim().toUpperCase())
           .filter((w) => w.length === 5)
           .forEach((w) => dictionary.add(w));
+        .then((text) => {
+  text
+    .split(/\r?\n/)
+    .map((w) => w.trim().toUpperCase())
+    .filter((w) => w.length === 5)
+    .forEach((w) => dictionary.add(w));
+
+  console.log("Dictionary loaded:", dictionary.size, "words");
+})
       })
       .catch(() => {
         // If it fails, fallback to just ANSWER + a few extras for testing
