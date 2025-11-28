@@ -227,7 +227,7 @@
 
     <header>
       <h1>Day 2 – Bracket City</h1>
-      <p>Type the answer to <em>any</em> blue bracket and press Enter. You can solve them in any order.</p>
+      <p>Type the answer to <em>any</em> blue bracket and hit Enter. You can solve them in any order.</p>
     </header>
 
     <div id="puzzleSentence"></div>
@@ -277,7 +277,7 @@
     const alreadyBanner = document.getElementById("alreadyBanner");
 
     // ===== Bracket tree model =====
-    // Node shape:
+    // Node:
     // { type: 'text', text }
     // { type: 'bracket', id, answer, children: [...], solved: false, innermost: false }
 
@@ -302,22 +302,21 @@
       };
     }
 
-    // ===== Build painter / trivia-flavored puzzle =====
+    // ===== Build puzzle =====
     //
     // C[ROSS] my [HEART], [HOPE] to [DIE]
 
-    // PAIN
-    const nodePAIN = bracketNode("PAIN", [
+    // ---- ROSS chain (painter / art) ----
+
+    const nodePAIN = bracketNode("pain", [
       textNode("what you feel if you accidentally jab your finger with a palette knife")
     ]);
 
-    // JOY
-    const nodeJOY = bracketNode("JOY", [
+    const nodeJOY = bracketNode("joy", [
       textNode('emotion in the title of Bob Ross’s show, "The ___ of Painting"')
     ]);
 
-    // ROSS (outer bracket using PAIN and JOY)
-    const nodeROSS = bracketNode("ROSS", [
+    const nodeROSS = bracketNode("Ross", [
       textNode("famous "),
       nodePAIN,
       textNode("ter Bob ____ who hosted the "),
@@ -325,38 +324,178 @@
       textNode(" of Painting")
     ]);
 
-    // HEARTS
-    const nodeHEARTS = bracketNode("HEARTS", [
-      textNode("playing-card suit that shares its name with the organ people draw as the ♥ shape")
+    // ---- HEART mega-chain (anatomy / love / cards / dates) ----
+
+    const nodeMUSCLE = bracketNode("muscle", [
+      textNode("type of tissue that can be skeletal, smooth, or cardiac")
     ]);
 
-    // HEART (outer bracket)
-    const nodeHEART = bracketNode("HEART", [
-      textNode("singular form of "),
-      nodeHEARTS
+    const nodeCARDIAC = bracketNode("cardiac", [
+      textNode("kind of "),
+      nodeMUSCLE,
+      textNode(" found only in the organ that pumps blood through your body")
     ]);
 
-    // EVITA
-    const nodeEVITA = bracketNode("EVITA", [
+    const nodeCHAMBERS = bracketNode("4", [
+      textNode("number of chambers in a human heart made of "),
+      nodeCARDIAC
+    ]);
+
+    const nodeAORTA = bracketNode("aorta", [
+      textNode("largest artery leaving one of those "),
+      nodeCHAMBERS,
+      textNode(" chambers")
+    ]);
+
+    const nodeOXYGEN = bracketNode("oxygen", [
+      textNode("gas carried by blood leaving the "),
+      nodeAORTA
+    ]);
+
+    const nodeRED = bracketNode("red", [
+      textNode("color usually used to draw blood rich in "),
+      nodeOXYGEN
+    ]);
+
+    const nodeLOVE = bracketNode("love", [
+      textNode("emotion commonly symbolized by a "),
+      nodeRED,
+      textNode(" ♥ on greeting cards")
+    ]);
+
+    const nodeHEARTS = bracketNode("hearts", [
+      textNode("playing-card suit decorated with symbols of "),
+      nodeLOVE
+    ]);
+
+    const nodeVALENTINE = bracketNode("Valentine", [
+      textNode("holiday where people draw lots of "),
+      nodeHEARTS,
+      textNode(" on cards")
+    ]);
+
+    const nodeFEBRUARY = bracketNode("February", [
+      textNode("month that contains "),
+      nodeVALENTINE,
+      textNode("'s Day")
+    ]);
+
+    const nodeFOURTEEN = bracketNode("14", [
+      textNode("day of "),
+      nodeFEBRUARY,
+      textNode(" on which "),
+      nodeVALENTINE,
+      textNode("'s Day is celebrated")
+    ]);
+
+    const nodeHEART = bracketNode("heart", [
+      textNode("organ with "),
+      nodeCHAMBERS,
+      textNode(" chambers whose symbol in cartoons, cards, and on "),
+      nodeFOURTEEN,
+      textNode(" is the "),
+      nodeHEARTS,
+      textNode(" suit")
+    ]);
+
+    // ---- HOPE chain (musical / theatre) ----
+
+    const nodeEVITA = bracketNode("Evita", [
       textNode("Andrew Lloyd Webber musical about Argentine First Lady Eva Perón")
     ]);
 
-    // DESPAIR
-    const nodeDESPAIR = bracketNode("DESPAIR", [
-      textNode('what theatre fans might feel if '),
+    const nodeDESPAIR = bracketNode("despair", [
+      textNode("what theatre fans might feel if "),
       nodeEVITA,
-      textNode(' closed the night before opening')
+      textNode(" closed the night before opening")
     ]);
 
-    // HOPE
-    const nodeHOPE = bracketNode("HOPE", [
+    const nodeHOPE = bracketNode("hope", [
       textNode("opposite of "),
       nodeDESPAIR
     ]);
 
-    // DIE
-    const nodeDIE = bracketNode("DIE", [
-      textNode('word that finishes the James Bond title "Live and Let ___"')
+    // ---- DIE mega-chain (physics / chemistry / Bond / games) ----
+
+    const nodeELECTRON = bracketNode("electron", [
+      textNode("subatomic particle discovered by J.J. Thomson that orbits an atomic nucleus")
+    ]);
+
+    const nodeNEGATIVE = bracketNode("negative", [
+      textNode("electric charge carried by an "),
+      nodeELECTRON
+    ]);
+
+    const nodeANION = bracketNode("anion", [
+      textNode("ion that has a "),
+      nodeNEGATIVE,
+      textNode(" charge")
+    ]);
+
+    const nodeHALOGEN = bracketNode("halogen", [
+      textNode("periodic-table group (like fluorine and chlorine) that easily forms an "),
+      nodeANION
+    ]);
+
+    const nodeCHLORIDE = bracketNode("chloride", [
+      textNode("ion formed when a "),
+      nodeHALOGEN,
+      textNode(" such as chlorine gains an "),
+      nodeELECTRON
+    ]);
+
+    const nodeNACL = bracketNode("NaCl", [
+      textNode("chemical formula made of sodium and "),
+      nodeCHLORIDE
+    ]);
+
+    const nodeIONIC = bracketNode("ionic", [
+      textNode("type of bond in "),
+      nodeNACL,
+      textNode(" (as in a(n) ___ bond)")
+    ]);
+
+    const nodeBONDWORD = bracketNode("Bond", [
+      textNode("surname shared by this kind of "),
+      nodeIONIC,
+      textNode(" bond and fictional agent James ___")
+    ]);
+
+    const nodeFLEMING = bracketNode("Fleming", [
+      textNode("author Ian ______ who created James "),
+      nodeBONDWORD
+    ]);
+
+    const nodeGOLDENEYE = bracketNode("GoldenEye", [
+      textNode("Nintendo shooter based on a film about the character created by "),
+      nodeFLEMING
+    ]);
+
+    const nodeN64 = bracketNode("N64", [
+      textNode("abbreviated nickname of the console that hosted "),
+      nodeGOLDENEYE
+    ]);
+
+    const node1996 = bracketNode("1996", [
+      textNode("year the "),
+      nodeN64,
+      textNode(" launched in North America")
+    ]);
+
+    const nodeMOORE = bracketNode("Moore", [
+      textNode("surname of Roger _____, who played James Bond long before "),
+      node1996
+    ]);
+
+    const nodeTITLE = bracketNode("LiveAndLetDie", [
+      textNode("Bond film starring Roger "),
+      nodeMOORE,
+      textNode(' whose title, written without spaces, is this answer')
+    ]);
+
+    const nodeDIE = bracketNode("die", [
+      textNode("final word of the title "),
+      nodeTITLE
     ]);
 
     // Root sentence structure
@@ -371,7 +510,8 @@
       nodeDIE
     ];
 
-    // Collect brackets for progress / lookup
+    // ===== Collect brackets =====
+
     const allBrackets = [];
     const bracketById = {};
 
@@ -407,7 +547,6 @@
     }
 
     function getBracketDisplayText(node) {
-      // For "Current clue" – show bracket as it currently appears.
       function renderChildren(children) {
         let s = "";
         for (const child of children) {
@@ -455,7 +594,7 @@
 
             parentEl.appendChild(span);
           } else {
-            // Non-innermost unsolved: plain text with brackets, no highlight
+            // Non-innermost unsolved: plain text, no highlight
             parentEl.appendChild(document.createTextNode("["));
             renderNodes(node.children, parentEl);
             parentEl.appendChild(document.createTextNode("]"));
@@ -497,7 +636,7 @@
 
       const guess = guessRaw.toUpperCase();
 
-      // 1. If a bracket is selected, try that one first.
+      // 1. If a bracket is selected, try that first.
       if (selectedId) {
         const node = bracketById[selectedId];
         if (node && !node.solved) {
@@ -508,7 +647,7 @@
         }
       }
 
-      // 2. Otherwise (or if wrong), try any innermost unsolved bracket.
+      // 2. Otherwise, try any innermost unsolved bracket.
       const candidates = getInnermostUnsolvedBrackets();
       const match = candidates.find(b => guess === b.answer.toUpperCase());
 
