@@ -8,7 +8,6 @@
   <style>
     :root {
       --panel-bg: #faf5ef;
-      --highlight: #dfe7ff;
       --highlight-inner: #adc2ff;
       --correct: #16a34a;
       --error: #b91c1c;
@@ -77,16 +76,12 @@
       word-wrap: break-word;
     }
 
+    /* Only innermost brackets are highlighted */
     .bracket {
-      background: var(--highlight);
+      background: var(--highlight-inner);
       border-radius: 6px;
       padding: 0 4px;
       border: 1px dashed #90aaff;
-      cursor: default;
-    }
-
-    .bracket.innermost {
-      background: var(--highlight-inner);
       cursor: pointer;
     }
 
@@ -232,13 +227,13 @@
 
     <header>
       <h1>Day 2 – Bracket City</h1>
-      <p>Solve any innermost bracket. When all brackets vanish, the sentence appears and hides today’s letter.</p>
+      <p>Type the answer to <em>any</em> blue bracket and press Enter. You can solve them in any order.</p>
     </header>
 
     <div id="puzzleSentence"></div>
     <div id="currentClue"></div>
 
-    <input id="answerInput" placeholder="Type answer for selected bracket…" autocomplete="off" />
+    <input id="answerInput" placeholder="Type an answer for any blue bracket…" autocomplete="off" />
     <button id="submitAnswer">Submit</button>
 
     <div id="status"></div>
@@ -307,59 +302,64 @@
       };
     }
 
-    // Build puzzle:
+    // ===== Build painter / trivia-flavored puzzle =====
     //
     // C[ROSS] my [HEART], [HOPE] to [DIE]
 
-    // CROSS: C + outer bracket that uses nested PAIN / JOY
+    // PAIN
     const nodePAIN = bracketNode("PAIN", [
-      textNode("the feeling if you cut your finger with a knife")
+      textNode("what you feel if you accidentally jab your finger with a palette knife")
     ]);
 
+    // JOY
     const nodeJOY = bracketNode("JOY", [
-      textNode("emotion the same as happiness")
+      textNode('emotion in the title of Bob Ross’s show, "The ___ of Painting"')
     ]);
 
+    // ROSS (outer bracket using PAIN and JOY)
     const nodeROSS = bracketNode("ROSS", [
       textNode("famous "),
       nodePAIN,
       textNode("ter Bob ____ who hosted the "),
       nodeJOY,
-      textNode(" of painting")
+      textNode(" of Painting")
     ]);
 
-    // HEART: nested HEARTS -> HEART
+    // HEARTS
     const nodeHEARTS = bracketNode("HEARTS", [
-      textNode("poker suit represented by the ♥ symbol")
+      textNode("playing-card suit that shares its name with the organ people draw as the ♥ shape")
     ]);
 
+    // HEART (outer bracket)
     const nodeHEART = bracketNode("HEART", [
       textNode("singular form of "),
       nodeHEARTS
     ]);
 
-    // HOPE: nested EVITA -> DESPAIR -> HOPE
+    // EVITA
     const nodeEVITA = bracketNode("EVITA", [
-      textNode('Andrew Lloyd Webber musical about the First Lady of Argentina')
+      textNode("Andrew Lloyd Webber musical about Argentine First Lady Eva Perón")
     ]);
 
+    // DESPAIR
     const nodeDESPAIR = bracketNode("DESPAIR", [
-      textNode("what you might feel if "),
+      textNode('what theatre fans might feel if '),
       nodeEVITA,
-      textNode(' ended with "Don\'t Hope for Me, Argentina" instead')
+      textNode(' closed the night before opening')
     ]);
 
+    // HOPE
     const nodeHOPE = bracketNode("HOPE", [
       textNode("opposite of "),
       nodeDESPAIR
     ]);
 
-    // DIE: simple but precise
+    // DIE
     const nodeDIE = bracketNode("DIE", [
-      textNode('word that finishes the James Bond film title "Live and Let ___"')
+      textNode('word that finishes the James Bond title "Live and Let ___"')
     ]);
 
-    // Root sequence
+    // Root sentence structure
     const rootNodes = [
       textNode("C"),
       nodeROSS,
@@ -371,7 +371,7 @@
       nodeDIE
     ];
 
-    // Collect all bracket nodes for progress & lookup
+    // Collect brackets for progress / lookup
     const allBrackets = [];
     const bracketById = {};
 
@@ -436,27 +436,29 @@
         } else if (node.type === "bracket") {
           if (node.solved) {
             parentEl.appendChild(document.createTextNode(node.answer));
-          } else {
+          } else if (node.innermost) {
             const span = document.createElement("span");
             span.className = "bracket";
-            if (node.innermost) {
-              span.classList.add("innermost");
-              span.addEventListener("click", () => {
-                selectedId = node.id;
-                clueEl.textContent = "Current clue: " + getBracketDisplayText(node);
-                statusEl.textContent = "";
-                statusEl.className = "";
-                inputEl.value = "";
-                inputEl.focus();
-              });
-            }
             span.dataset.id = node.id;
+
+            span.addEventListener("click", () => {
+              selectedId = node.id;
+              clueEl.textContent = "Selected clue: " + getBracketDisplayText(node);
+              statusEl.textContent = "";
+              statusEl.className = "";
+              inputEl.focus();
+            });
 
             span.appendChild(document.createTextNode("["));
             renderNodes(node.children, span);
             span.appendChild(document.createTextNode("]"));
 
             parentEl.appendChild(span);
+          } else {
+            // Non-innermost unsolved: plain text with brackets, no highlight
+            parentEl.appendChild(document.createTextNode("["));
+            renderNodes(node.children, parentEl);
+            parentEl.appendChild(document.createTextNode("]"));
           }
         }
       }
@@ -479,51 +481,63 @@
       return allBrackets.every(b => b.solved);
     }
 
+    function getInnermostUnsolvedBrackets() {
+      return allBrackets.filter(b => b.innermost && !b.solved);
+    }
+
     // ===== answering =====
 
     function submitAnswer() {
-      if (!selectedId) {
-        statusEl.textContent = "Click an innermost bracket first.";
-        statusEl.className = "error";
-        return;
-      }
-      const node = bracketById[selectedId];
-      if (!node || node.solved) {
-        statusEl.textContent = "Pick an unsolved innermost bracket.";
-        statusEl.className = "error";
-        return;
-      }
-
-      const guess = (inputEl.value || "").trim().toUpperCase();
-      if (!guess) {
+      const guessRaw = (inputEl.value || "").trim();
+      if (!guessRaw) {
         statusEl.textContent = "Type an answer.";
         statusEl.className = "error";
         return;
       }
 
-      if (guess === node.answer.toUpperCase()) {
-        node.solved = true;
-        statusEl.textContent = "Correct!";
-        statusEl.className = "success";
-        selectedId = null;
-        clueEl.textContent = "";
-        inputEl.value = "";
+      const guess = guessRaw.toUpperCase();
 
-        if (allSolved()) {
-          showFinalSentence();
-        } else {
-          renderPuzzle();
+      // 1. If a bracket is selected, try that one first.
+      if (selectedId) {
+        const node = bracketById[selectedId];
+        if (node && !node.solved) {
+          if (guess === node.answer.toUpperCase()) {
+            solveBracket(node);
+            return;
+          }
         }
+      }
+
+      // 2. Otherwise (or if wrong), try any innermost unsolved bracket.
+      const candidates = getInnermostUnsolvedBrackets();
+      const match = candidates.find(b => guess === b.answer.toUpperCase());
+
+      if (match) {
+        solveBracket(match);
       } else {
-        statusEl.textContent = "Not quite. Try again.";
+        statusEl.textContent = "No innermost bracket matches that answer. Check spelling?";
         statusEl.className = "error";
+      }
+    }
+
+    function solveBracket(node) {
+      node.solved = true;
+      statusEl.textContent = "Correct!";
+      statusEl.className = "success";
+      selectedId = null;
+      clueEl.textContent = "";
+      inputEl.value = "";
+
+      if (allSolved()) {
+        showFinalSentence();
+      } else {
+        renderPuzzle();
       }
     }
 
     // ===== final phase =====
 
     function showFinalSentence() {
-      // Render final sentence as clickable words instead of bracket structure
       puzzleEl.innerHTML = "";
       statusEl.textContent = "";
       statusEl.className = "";
@@ -549,7 +563,6 @@
     }
 
     function onFinalWordClick(index, span) {
-      // If letter already collected, just show modal.
       if (localStorage.getItem(DAY_KEY)) {
         openModal("letterModal");
         return;
@@ -562,7 +575,6 @@
         alreadyBanner.style.display = "block";
         openModal("letterModal");
 
-        // Disable all words
         document.querySelectorAll(".final-word").forEach(w => {
           w.classList.add("disabled");
         });
