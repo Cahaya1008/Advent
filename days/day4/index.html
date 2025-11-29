@@ -104,50 +104,80 @@
 
     .puzzle-area {
       position: relative;
-      background: radial-gradient(circle at top, #020617, #020617 65%, #000 100%);
+      background: radial-gradient(circle at top, #020617, #020617 70%, #000 100%);
       border-radius: 18px;
       padding: 0.8rem;
       border: 1px solid rgba(148, 163, 184, 0.35);
-      min-height: 360px;
+      min-height: 520px;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+
+    .board-wrapper {
+      display: flex;
+      justify-content: center;
     }
 
     .board {
       position: relative;
-      margin: 0 auto;
       background: #020617;
       border-radius: 14px;
       box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.9);
       overflow: hidden;
+      width: 400px;   /* 10 * 40 */
+      height: 400px;  /* 10 * 40 */
     }
 
-    /* Adjust this if you change rows/cols in JS */
-    .board {
-      width: 360px;   /* 4 * 90px */
-      height: 360px;  /* 4 * 90px */
+    .piece-tray {
+      margin-top: 0.2rem;
+      background: rgba(15, 23, 42, 0.95);
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      padding: 0.35rem 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+      scrollbar-color: #4b5563 #020617;
+      min-height: 56px;
     }
 
-    .board-background {
-      position: absolute;
-      inset: 0;
-      background-image: url("../../img/day4.jpg");
-      background-size: cover;
-      opacity: 0.1; /* ghost image as guide */
-      pointer-events: none;
+    .piece-tray::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .piece-tray::-webkit-scrollbar-track {
+      background: #020617;
+    }
+
+    .piece-tray::-webkit-scrollbar-thumb {
+      background: #4b5563;
+      border-radius: 999px;
     }
 
     .piece {
-      position: absolute;
-      width: 90px;
-      height: 90px;
-      border-radius: 10px;
+      position: absolute; /* for when it’s in the play area */
+      width: 40px;
+      height: 40px;
+      border-radius: 7px;
       background-image: url("../../img/day4.jpg");
-      background-size: 360px 360px; /* cols * piece, rows * piece */
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.7);
+      background-size: 400px 400px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.7);
       cursor: grab;
       touch-action: none;
       transition: box-shadow 0.12s ease, transform 0.12s ease;
       z-index: 2;
+    }
+
+    .piece.in-tray {
+      position: static; /* while it's still in the tray row */
+      flex: 0 0 auto;
+      box-shadow: 0 0 0 1px rgba(75, 85, 99, 0.8);
+      cursor: grab;
     }
 
     .piece.dragging {
@@ -220,6 +250,13 @@
       background: #fca5a5;
     }
 
+    .btn[disabled] {
+      opacity: 0.5;
+      cursor: default;
+      box-shadow: none;
+      transform: none;
+    }
+
     .status {
       margin-top: 0.4rem;
       min-height: 1.1rem;
@@ -239,6 +276,58 @@
       flex-wrap: wrap;
       font-size: 0.78rem;
       color: var(--muted);
+    }
+
+    /* Back-of-puzzle overlay */
+    .puzzle-back-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, #020617, #020617 55%, #000 100%);
+      border-radius: 18px;
+      pointer-events: none;
+      opacity: 0;
+      transform: scale(0.9);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+      z-index: 8;
+    }
+
+    .puzzle-back-overlay.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .puzzle-back-card {
+      width: 400px;
+      height: 400px;
+      border-radius: 18px;
+      border: 1px solid rgba(248, 250, 252, 0.15);
+      background: radial-gradient(circle at top, #1f2937, #020617 70%);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .puzzle-back-card::before {
+      content: "Back of the puzzle";
+      position: absolute;
+      top: 0.75rem;
+      left: 1rem;
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: rgba(209, 213, 219, 0.8);
+    }
+
+    .puzzle-back-letter {
+      font-size: 9rem;
+      font-weight: 700;
+      color: #f97373;
+      text-shadow: 0 0 45px rgba(248, 113, 113, 0.7);
     }
 
     /* Modal */
@@ -315,50 +404,65 @@
         </div>
         <h1>Piece it together</h1>
         <p>
-          Drag the puzzle pieces into place. The bottom-left corner is already set;
-          everything else has to click into place around it.
+          All the puzzle pieces are tucked into a tray at the bottom. Drag them up
+          onto the board and snap them into place. When everything fits, flip the
+          puzzle over to see what’s on the back.
         </p>
       </div>
     </header>
 
     <main>
       <section class="puzzle-area" id="puzzleArea">
-        <div class="board" id="board">
-          <div class="board-background"></div>
+        <div class="board-wrapper">
+          <div class="board" id="board"></div>
+        </div>
+
+        <div class="piece-tray" id="piecesTray"></div>
+
+        <!-- Back-of-puzzle overlay -->
+        <div class="puzzle-back-overlay" id="puzzleBackOverlay">
+          <div class="puzzle-back-card">
+            <div class="puzzle-back-letter">V</div>
+          </div>
         </div>
       </section>
 
       <section class="info-panel">
         <h2>How to play</h2>
         <p>
-          Drag a piece and move it over the board. If you drop it close to its correct
-          spot, it will snap into place and “lock”. If it’s not quite there yet,
-          it’ll stay where you left it so you can nudge it again.
+          Scroll through the tray at the bottom to find pieces. Drag a piece onto
+          the board; if you drop it close enough to its true spot, it will snap and
+          lock in. The bottom-left corner piece is already fixed as your anchor.
         </p>
         <p>
-          The bottom-left corner piece is already in the right place to give you a
-          reference point. Everything else builds out from that corner.
+          There’s no preview here — you’re building the picture from memory and vibes.
+          Once every piece is locked in, you’ll be able to inspect the back and reveal
+          the hidden letter.
         </p>
-        <button class="btn" id="shuffleBtn">↻ Shuffle pieces</button>
+        <button class="btn" id="shuffleBtn">↻ Return loose pieces to the tray</button>
+        <button class="btn" id="inspectBtn" disabled>👀 Inspect back of puzzle</button>
         <button class="btn btn-primary" id="backBtn">← Back to calendar</button>
-        <div class="status" id="statusLine">Start anywhere you like. Edges are usually kind.</div>
+        <div class="status" id="statusLine">
+          Start with corner and edge pieces. The tray scrolls if you need more.
+        </div>
       </section>
     </main>
 
     <footer>
-      <span>Tip: Getting a piece close enough will make it click into its perfect spot.</span>
+      <span>Tip: Pieces snap when you’re close enough to the correct grid cell.</span>
       <span>Each day hides at most one letter.</span>
     </footer>
   </div>
 
-  <!-- Win / letter modal -->
+  <!-- Letter modal -->
   <div class="modal" id="letterModal" aria-hidden="true">
     <div class="modal-content">
       <button class="modal-close" data-close="letterModal">&times;</button>
-      <h2>Puzzle complete 🎉</h2>
+      <h2>The back of the puzzle 🧩</h2>
       <p>
-        Every piece is exactly where it belongs. Today’s hidden letter is
-        <strong>K</strong> (you can change this in the code if you want a different letter).
+        On the reverse side of the finished puzzle, one bold letter stands alone:
+        <strong>V</strong>. It’s now been added to your letter collection on the main
+        calendar page.
       </p>
       <div class="modal-footer">
         <button class="btn" data-close="letterModal">Stay on this page</button>
@@ -369,12 +473,12 @@
 
   <script>
     // ===== CONFIG =====
-    const ROWS = 4;
-    const COLS = 4;
-    const PIECE_SIZE = 90; // must match CSS .piece size and board size
-    const SNAP_DISTANCE = PIECE_SIZE * 0.28; // how close to snap
+    const ROWS = 10;
+    const COLS = 10;
+    const PIECE_SIZE = 40; // must match CSS .piece size and board size
+    const SNAP_DISTANCE = PIECE_SIZE * 0.4; // how close to snap
     const DAY_LETTER_KEY = "advent_day_4_letter";
-    const HIDDEN_LETTER = "K"; // change to the letter you want for Day 4
+    const HIDDEN_LETTER = "V";
 
     // bottom-left fixed piece index (row = ROWS-1, col = 0)
     const FIXED_ROW = ROWS - 1;
@@ -382,13 +486,17 @@
 
     const boardEl = document.getElementById("board");
     const puzzleAreaEl = document.getElementById("puzzleArea");
+    const trayEl = document.getElementById("piecesTray");
     const statusLineEl = document.getElementById("statusLine");
     const alreadyBanner = document.getElementById("alreadyBanner");
+    const inspectBtn = document.getElementById("inspectBtn");
+    const backOverlay = document.getElementById("puzzleBackOverlay");
 
     let pieces = []; // {row, col, el, placed, locked}
     let draggingPiece = null;
     let dragOffsetX = 0;
     let dragOffsetY = 0;
+    let backRevealed = false;
 
     function setStatus(msg, tone = "") {
       statusLineEl.textContent = msg;
@@ -454,27 +562,30 @@
 
       for (let row = 0; row < ROWS; row++) {
         for (let col = 0; col < COLS; col++) {
-          const piece = document.createElement("div");
-          piece.className = "piece";
-          piece.style.backgroundPosition = `-${col * PIECE_SIZE}px -${row * PIECE_SIZE}px`;
-
-          puzzleAreaEl.appendChild(piece);
+          const pieceEl = document.createElement("div");
+          pieceEl.className = "piece";
+          pieceEl.style.backgroundPosition = `-${col * PIECE_SIZE}px -${row * PIECE_SIZE}px`;
 
           const info = {
             row,
             col,
-            el: piece,
+            el: pieceEl,
             placed: false,
             locked: row === FIXED_ROW && col === FIXED_COL
           };
 
           if (info.locked) {
-            // fixed bottom-left piece: place at correct spot and lock
+            // fixed bottom-left piece: place at correct spot on board
+            puzzleAreaEl.appendChild(pieceEl);
             const pos = targetPositionForPiece(row, col);
-            piece.style.left = `${pos.x}px`;
-            piece.style.top = `${pos.y}px`;
-            piece.classList.add("locked", "placed");
+            pieceEl.style.left = `${pos.x}px`;
+            pieceEl.style.top = `${pos.y}px`;
+            pieceEl.classList.add("locked", "placed");
             info.placed = true;
+          } else {
+            // all other pieces start in the tray, inline
+            pieceEl.classList.add("in-tray");
+            trayEl.appendChild(pieceEl);
           }
 
           pieces.push(info);
@@ -482,48 +593,45 @@
       }
     }
 
-    function shufflePieces() {
-      const areaRect = getAreaRect();
-      const boardRect = getBoardRect();
-      const margin = 10;
-
+    function resetLoosePiecesToTray() {
       pieces.forEach((p) => {
-        if (p.locked) return; // don't move locked piece
-        p.placed = false;
-        p.el.classList.remove("placed");
-
-        // random position somewhere in the puzzle area, not overlapping the board box too much
-        let x, y;
-        let tries = 0;
-        do {
-          x = margin + Math.random() * (areaRect.width - PIECE_SIZE - margin * 2);
-          y = margin + Math.random() * (areaRect.height - PIECE_SIZE - margin * 2);
-          tries++;
-          // avoid fully covering the board to keep it visible-ish
-        } while (
-          tries < 20 &&
-          x + PIECE_SIZE > (boardRect.left - areaRect.left) - 10 &&
-          x < (boardRect.left - areaRect.left) + boardRect.width + 10 &&
-          y + PIECE_SIZE > (boardRect.top - areaRect.top) - 10 &&
-          y < (boardRect.top - areaRect.top) + boardRect.height + 10
-        );
-
-        p.el.style.left = `${x}px`;
-        p.el.style.top = `${y}px`;
+        if (p.locked || p.placed) return;
+        // move back to tray row
+        p.el.classList.add("in-tray");
+        p.el.style.position = "static";
+        p.el.style.left = "";
+        p.el.style.top = "";
+        trayEl.appendChild(p.el);
       });
+
+      backOverlay.classList.remove("show");
+      backRevealed = false;
+      inspectBtn.disabled = !allPlaced();
+      setStatus("Loose pieces returned to the tray. The corner stays put.", "");
     }
 
     // ===== DRAGGING =====
     function onPointerDown(e, pieceInfo) {
-      if (pieceInfo.locked || pieceInfo.placed) return;
-
-      draggingPiece = pieceInfo;
-      const rect = pieceInfo.el.getBoundingClientRect();
-      const areaRect = getAreaRect();
+      if (pieceInfo.locked || pieceInfo.placed || backRevealed) return;
 
       const pointerX = e.clientX ?? e.touches?.[0]?.clientX;
       const pointerY = e.clientY ?? e.touches?.[0]?.clientY;
 
+      // If currently in the tray, move it into the puzzle area and preserve its on-screen position
+      if (pieceInfo.el.parentElement === trayEl) {
+        const rectBefore = pieceInfo.el.getBoundingClientRect();
+        const areaRect = getAreaRect();
+
+        puzzleAreaEl.appendChild(pieceInfo.el);
+        pieceInfo.el.classList.remove("in-tray");
+        pieceInfo.el.style.position = "absolute";
+        pieceInfo.el.style.left = `${rectBefore.left - areaRect.left}px`;
+        pieceInfo.el.style.top = `${rectBefore.top - areaRect.top}px`;
+      }
+
+      draggingPiece = pieceInfo;
+
+      const rect = pieceInfo.el.getBoundingClientRect();
       dragOffsetX = pointerX - rect.left;
       dragOffsetY = pointerY - rect.top;
 
@@ -544,7 +652,6 @@
       let x = pointerX - areaRect.left - dragOffsetX;
       let y = pointerY - areaRect.top - dragOffsetY;
 
-      // optional: keep within puzzle area
       const maxX = areaRect.width - PIECE_SIZE;
       const maxY = areaRect.height - PIECE_SIZE;
       x = Math.max(0, Math.min(maxX, x));
@@ -554,14 +661,13 @@
       draggingPiece.el.style.top = `${y}px`;
     }
 
-    function onPointerUp(e) {
+    function onPointerUp() {
       if (!draggingPiece) return;
 
       const pieceInfo = draggingPiece;
-      draggingPiece.el.classList.remove("dragging");
+      pieceInfo.el.classList.remove("dragging");
       draggingPiece = null;
 
-      // check snap
       const center = pieceCenter(pieceInfo);
       const targetPos = targetPositionForPiece(pieceInfo.row, pieceInfo.col);
       const targetCenter = {
@@ -570,7 +676,7 @@
       };
 
       if (distance(center, targetCenter) <= SNAP_DISTANCE) {
-        // snap into exact place
+        // snap into place
         pieceInfo.el.style.left = `${targetPos.x}px`;
         pieceInfo.el.style.top = `${targetPos.y}px`;
         pieceInfo.placed = true;
@@ -589,18 +695,41 @@
       window.addEventListener("pointercancel", onPointerUp);
     }
 
-    // ===== WIN CONDITION =====
-    function checkCompletion() {
-      if (pieces.every((p) => p.placed)) {
-        setStatus("Everything fits. That looks perfect.", "good");
+    // ===== WIN CONDITION / INSPECT =====
+    function allPlaced() {
+      return pieces.every((p) => p.placed);
+    }
 
+    function checkCompletion() {
+      if (allPlaced()) {
+        setStatus("Every piece fits. Time to flip it over.", "good");
+        inspectBtn.disabled = false;
+      } else {
+        setStatus("Nice snap! Keep going.", "good");
+      }
+    }
+
+    function revealBack() {
+      if (!allPlaced()) return;
+
+      if (!backRevealed) {
+        backRevealed = true;
+        backOverlay.classList.add("show");
+
+        setTimeout(() => {
+          if (!localStorage.getItem(DAY_LETTER_KEY)) {
+            localStorage.setItem(DAY_LETTER_KEY, HIDDEN_LETTER);
+          }
+          alreadyBanner.style.display = "block";
+          openModal("letterModal");
+        }, 650);
+      } else {
+        // already revealed once – just ensure letter is stored and show modal
         if (!localStorage.getItem(DAY_LETTER_KEY)) {
           localStorage.setItem(DAY_LETTER_KEY, HIDDEN_LETTER);
         }
         alreadyBanner.style.display = "block";
         openModal("letterModal");
-      } else {
-        setStatus("Nice snap! Keep going.", "good");
       }
     }
 
@@ -611,13 +740,13 @@
       }
 
       createPieces();
-      shufflePieces();
       attachDragHandlers();
 
       document.getElementById("shuffleBtn").addEventListener("click", () => {
-        shufflePieces();
-        setStatus("Shuffled! The corner stays put.", "");
+        resetLoosePiecesToTray();
       });
+
+      inspectBtn.addEventListener("click", revealBack);
 
       document.getElementById("backBtn").addEventListener("click", () => {
         window.location.href = "../../index.html";
