@@ -749,6 +749,8 @@
           }
         }
       }
+      // tiles on the main shortest path from start to goal
+      const pathSet = new Set(path.map((p) => `${p.row},${p.col}`));
 
       function pickMany(array, count) {
         const copy = array.slice();
@@ -768,11 +770,15 @@
       });
 
       pickMany(
-        floors.filter((p) => grid[p.row][p.col] === "floor"),
-        NUM_TRAPS
-      ).forEach(({ row, col }) => {
-        grid[row][col] = "trap";
-      });
+    floors.filter(
+      (p) =>
+        grid[p.row][p.col] === "floor" &&
+        !pathSet.has(`${p.row},${p.col}`)
+    ),
+    NUM_TRAPS
+  ).forEach(({ row, col }) => {
+    grid[row][col] = "trap";
+  });
 
       const usablePath = path.slice(3, path.length - 3);
       const lockPositions = pickMany(usablePath, NUM_KEY_LOCK_PAIRS);
