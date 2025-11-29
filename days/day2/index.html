@@ -13,12 +13,12 @@
       --bg: #020617;
       --panel: #020617;
       --maze-wall: #020617;
-      --maze-floor: #030712;
+      --maze-floor: #111827; /* lighter so paths pop */
       --maze-trap: #4b5563;
-      --maze-traproom: #111827;
+      --maze-traproom: #030712;
       --maze-fog: #4c1d95;
       --maze-speed: #16a34a;
-      --player: #f97373; /* runner is red, so we don’t use red as a tile */
+      --player: #f97373; /* runner is red */
       --goal: #facc15;
       --text-main: #f9fafb;
       --muted: #9ca3af;
@@ -35,7 +35,7 @@
     body {
       font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
         "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top, #111827 0, #020617 55%, #000 100%);
+      background: radial-gradient(circle at top, #020617 0, #020617 55%, #000 100%);
       min-height: 100vh;
       display: flex;
       justify-content: center;
@@ -47,7 +47,7 @@
     .page {
       max-width: 980px;
       width: 100%;
-      background: linear-gradient(135deg, #020617, #020617 40%, #020617 100%);
+      background: radial-gradient(circle at top, #020617, #020617 70%, #020617);
       border-radius: 22px;
       box-shadow: 0 18px 45px rgba(0, 0, 0, 0.7);
       padding: 1.7rem 1.6rem 1.3rem;
@@ -111,7 +111,7 @@
     }
 
     .maze-panel {
-      background: radial-gradient(circle at top, #020617, #020617 70%, #000 100%);
+      background: radial-gradient(circle at top, #020617, #020617 70%, #000);
       border-radius: 18px;
       padding: 0.8rem;
       border: 1px solid rgba(148, 163, 184, 0.35);
@@ -130,7 +130,7 @@
       background: #020617;
       box-shadow:
         0 0 0 2px rgba(148, 163, 184, 0.7),
-        0 0 40px rgba(15, 23, 42, 1);
+        0 0 40px rgba(15, 23, 42, 0.9);
     }
 
     .maze-grid {
@@ -159,6 +159,7 @@
 
     .cell.floor {
       background: var(--maze-floor);
+      box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
     }
 
     .cell.trap {
@@ -459,9 +460,9 @@
       <section class="info-panel">
         <h2>How it works</h2>
         <p>
-          Move with the <strong>arrow keys</strong>. You can only walk on the dark
-          floor tiles, not the solid walls. Reach the glowing present to open it and
-          reveal today’s letter.
+          Move with the <strong>arrow keys</strong>. You can only walk on the lighter
+          slate floor tiles, not the solid walls. Reach the glowing present to open it
+          and reveal today’s letter.
         </p>
 
         <div class="legend">
@@ -547,30 +548,33 @@
     // X = trap room floor
     // F = purple fog tile
     // U = green speed boost
-    //
-    // NOTE: some rows are shorter; missing cells are treated as walls.
+
     const MAZE_ROWS = [
-      "#####################",
-      "#S....#....######...#",
-      "#####.#.##.#....#.###",
-      "#..F..#.#..#.##.#..G#",
-      "#.###.#.#.##.#.####.#",
-      "#.#...#.#.U.#....#.#",
-      "#.#.###.######.##.#.#",
-      "#.#.....#....#.#..#.#",
-      "#.#####.#.##.#.##.#.#",
-      "#.....#.#.#..#.#..#.#",
-      "###.#.#.#.##.#.#.##.#",
-      "#...#.#.#....#.#....#",
-      "#.###.#.######.####.#",
-      "#.#...#......#..F.#.#",
-      "#.#.######.####.#.#.#",
-      "#.#......#......#.#.#",
-      "#.####.#.########.#.#",
-      "#....#.#......T..#.#.#",
-      "####.#.###########.#X",
-      "#....#....U.......#X#",
-      "#####################"
+      "#########################",
+      "#S....#.......#.#..F....#",
+      "#####.#.#.###.#.#.#####.#",
+      "#...#.#.#.#.#.#.#.#...#.#",
+      "#.###.#U#.#.#.#.#.#.#.#.#",
+      "#...#.#.#.#...#...#.#.#.#",
+      "#.#.#.###.#.#######.#.#.#",
+      "#.#...#...#...#.....#...#",
+      "#.#####.#####.#.#######.#",
+      "#.#.....#...#...#...#...#",
+      "#.###.#.#.#.#######T#.###",
+      "#.#...#.#.#.#..F....#U#.#",
+      "#.#.#####.#.#.#####.#.#.#",
+      "#.#.......#.#T#.....#...#",
+      "#.###.#####.#.#####.###.#",
+      "#...#...#...#.....#.#F#.#",
+      "###.#####.#######.#.#.#.#",
+      "#.#.....#.#.......#...#.#",
+      "#.#####.#.#.#########.#.#",
+      "#...#...#.#####.#...#.#.#",
+      "#.#.#.###.#XXX#.#.#.###.#",
+      "#.#.#F#...#XXX#...#...#.#",
+      "#.###.#.###XXX#######U#.#",
+      "#.......#.#####.....#..G#",
+      "#########################"
     ];
 
     const mazeGridEl = document.getElementById("mazeGrid");
@@ -682,6 +686,32 @@
       return grid[row][col] || "wall";
     }
 
+    function clearFogHighlights() {
+      const cells = mazeGridEl.querySelectorAll(".cell");
+      cells.forEach((cell) => cell.classList.remove("visible"));
+    }
+
+    function updateFogVisibility() {
+      if (fogMovesRemaining <= 0) {
+        mazeGridEl.classList.remove("fog-mode");
+        clearFogHighlights();
+        return;
+      }
+      const cells = mazeGridEl.querySelectorAll(".cell");
+      cells.forEach((cell) => {
+        const r = Number(cell.dataset.row);
+        const c = Number(cell.dataset.col);
+        const dist =
+          Math.abs(r - playerPos.row) + Math.abs(c - playerPos.col);
+        if (dist <= 2) {
+          cell.classList.add("visible");
+        } else {
+          cell.classList.remove("visible");
+        }
+      });
+      mazeGridEl.classList.add("fog-mode");
+    }
+
     function updatePlayerPosition(animated = true) {
       const cellSize = 22;
       const offset = (cellSize - 18) / 2;
@@ -719,42 +749,10 @@
     }
 
     function activateFog() {
-      fogMovesRemaining = 10; // ~10 moves
+      fogMovesRemaining = 10;
       mazeGridEl.classList.add("fog-mode");
       updateFogVisibility();
       setStatus("A purple mist rolls in… your vision shrinks for a few moves.", "");
-    }
-
-    function clearFog() {
-      fogMovesRemaining = 0;
-      mazeGridEl.classList.remove("fog-mode");
-      clearFogHighlights();
-      setStatus("", "");
-    }
-
-    function clearFogHighlights() {
-      const cells = mazeGridEl.querySelectorAll(".cell");
-      cells.forEach((cell) => cell.classList.remove("visible"));
-    }
-
-    function updateFogVisibility() {
-      if (fogMovesRemaining <= 0) {
-        clearFog();
-        return;
-      }
-      const cells = mazeGridEl.querySelectorAll(".cell");
-      cells.forEach((cell) => {
-        const r = Number(cell.dataset.row);
-        const c = Number(cell.dataset.col);
-        const dist =
-          Math.abs(r - playerPos.row) + Math.abs(c - playerPos.col);
-        if (dist <= 2) {
-          cell.classList.add("visible");
-        } else {
-          cell.classList.remove("visible");
-        }
-      });
-      mazeGridEl.classList.add("fog-mode");
     }
 
     function activateSpeed() {
@@ -790,7 +788,6 @@
       } else if (inTrapRoom) {
         setStatus("This room has no exits. You’ll need to restart.", "");
       } else {
-        // normal floor-ish move
         if (fogMovesRemaining <= 0) {
           setStatus("", "");
         }
@@ -816,7 +813,6 @@
         const type = cellType(newRow, newCol);
         if (type === "wall") break;
 
-        // move
         playerPos = { row: newRow, col: newCol };
         updatePlayerPosition(true);
 
@@ -824,11 +820,12 @@
         if (stop) break;
       }
 
-      // decrement fog duration per keypress
       if (fogMovesRemaining > 0) {
         fogMovesRemaining--;
         if (fogMovesRemaining <= 0) {
-          clearFog();
+          mazeGridEl.classList.remove("fog-mode");
+          clearFogHighlights();
+          setStatus("", "");
         } else {
           updateFogVisibility();
         }
