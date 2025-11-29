@@ -2,21 +2,25 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Day 4 – Puzzle</title>
+  <title>Our Advent Calendar</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link
     href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
     rel="stylesheet"
   />
   <style>
-    :root {
+  :root {
       --bg: #020617;
-      --panel: #0b1220;
-      --accent: #f97373;
-      --accent-soft: #fee2e2;
-      --text-main: #f9fafb;
-      --muted: #9ca3af;
-      --good: #22c55e;
+      --card-frame: #f5f5f5;
+      /* deep burgundy + darker burgundy */
+      --card-main: #7b2333;
+      --card-main2: #5a1423;
+      --gold: #b68a2a;
+      --locked: rgba(0, 0, 0, 0.45);
+      --completed: #2f9f5b;
+      --accent: #f9f0d9;
+      --text-main: #fff;
+      --text-dark: #333;
     }
 
     * {
@@ -28,319 +32,496 @@
     body {
       font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
         "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top, #111827 0, #020617 55%, #000 100%);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 1.5rem 0.75rem;
+      background: radial-gradient(circle at top, #1f2937 0, #020617 55%, #000 100%);
       color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
     }
 
     .page {
-      max-width: 960px;
-      width: 100%;
-      background: linear-gradient(135deg, #020617, #020617 40%, #020617 100%);
-      border-radius: 22px;
-      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.7);
-      padding: 1.7rem 1.6rem 1.3rem;
       position: relative;
-      border: 1px solid rgba(148, 163, 184, 0.25);
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      z-index: 4;
     }
 
     header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 1rem;
-      margin-bottom: 1.1rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
     }
 
-    .header-left {
-      flex: 1;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      font-size: 0.8rem;
-      background: rgba(248, 250, 252, 0.06);
-      padding: 0.24rem 0.6rem;
-      border-radius: 999px;
-      margin-bottom: 0.35rem;
-      border: 1px solid rgba(248, 250, 252, 0.15);
-    }
-
-    h1 {
-      font-size: 1.9rem;
-      margin-bottom: 0.15rem;
+    header h1 {
+      font-size: 2.4rem;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.4rem;
     }
 
     header p {
-      font-size: 0.9rem;
-      color: var(--muted);
-    }
-
-    .already-banner {
-      position: absolute;
-      top: 0.7rem;
-      right: 0.9rem;
-      font-size: 0.75rem;
-      background: rgba(22, 163, 74, 0.12);
-      border-radius: 999px;
-      padding: 0.18rem 0.6rem;
-      border: 1px solid rgba(74, 222, 128, 0.7);
-      color: #bbf7d0;
-      display: none;
+      font-size: 0.95rem;
+      opacity: 0.9;
     }
 
     main {
-      margin-top: 0.3rem;
       display: grid;
-      grid-template-columns: minmax(0, 3fr) minmax(220px, 1fr);
-      gap: 1rem;
+      grid-template-columns: minmax(0, 2fr);
+      gap: 2rem;
     }
 
-    .puzzle-area {
-      position: relative;
-      background: radial-gradient(circle at top, #020617, #020617 70%, #000 100%);
-      border-radius: 18px;
-      padding: 0.8rem;
-      border: 1px solid rgba(148, 163, 184, 0.35);
-      min-height: 520px;
+    @media (min-width: 900px) {
+      main {
+        grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+        align-items: flex-start;
+      }
+    }
+
+    /* Background layers */
+
+    #starContainer {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      gap: 0.7rem;
+      z-index: 1;
     }
 
-    .board-wrapper {
-      display: flex;
-      justify-content: center;
-    }
-
-    .board {
-      position: relative;
-      background: #020617;
-      border-radius: 14px;
-      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.9);
+    #snowContainer {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
       overflow: hidden;
-      width: 400px;   /* 10 * 40 */
-      height: 400px;  /* 10 * 40 */
-    }
-
-    .piece-tray {
-      margin-top: 0.2rem;
-      background: rgba(15, 23, 42, 0.95);
-      border-radius: 12px;
-      border: 1px solid rgba(148, 163, 184, 0.55);
-      padding: 0.35rem 0.5rem;
-      display: flex;
-      align-items: center;
-      gap: 0.35rem;
-      overflow-x: auto;
-      overflow-y: hidden;
-      scrollbar-width: thin;
-      scrollbar-color: #4b5563 #020617;
-      min-height: 56px;
-    }
-
-    .piece-tray::-webkit-scrollbar {
-      height: 6px;
-    }
-
-    .piece-tray::-webkit-scrollbar-track {
-      background: #020617;
-    }
-
-    .piece-tray::-webkit-scrollbar-thumb {
-      background: #4b5563;
-      border-radius: 999px;
-    }
-
-    .piece {
-      position: absolute; /* for when it’s in the play area */
-      width: 40px;
-      height: 40px;
-      border-radius: 7px;
-      background-image: url("../../img/day4.jpg");
-      background-size: 400px 400px;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.7);
-      cursor: grab;
-      touch-action: none;
-      transition: box-shadow 0.12s ease, transform 0.12s ease;
       z-index: 2;
     }
 
-    .piece.in-tray {
-      position: static; /* while it's still in the tray row */
-      flex: 0 0 auto;
-      box-shadow: 0 0 0 1px rgba(75, 85, 99, 0.8);
-      cursor: grab;
-    }
-
-    .piece.dragging {
-      cursor: grabbing;
-      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.9);
-      transform: scale(1.03);
-      z-index: 5;
-    }
-
-    .piece.locked {
-      cursor: default;
-      box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.8);
+    #fireContainer {
+      pointer-events: none;
+      position: fixed;
+      inset: auto 0 0 0;
+      height: 40vh;
+      overflow: visible;
       z-index: 3;
     }
 
-    .piece.placed {
-      box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.7);
-      transition: box-shadow 0.2s ease, transform 0.1s ease;
-    }
+    /* Snow */
 
-    .info-panel {
-      background: rgba(15, 23, 42, 0.9);
-      border-radius: 18px;
-      padding: 0.8rem 0.9rem 0.9rem;
-      border: 1px solid rgba(148, 163, 184, 0.35);
-      font-size: 0.85rem;
-    }
-
-    .info-panel h2 {
-      font-size: 1rem;
-      margin-bottom: 0.4rem;
-    }
-
-    .info-panel p {
-      color: var(--muted);
-      margin-bottom: 0.4rem;
-      line-height: 1.5;
-    }
-
-    .btn {
-      border-radius: 999px;
-      border: none;
-      padding: 0.45rem 0.9rem;
-      font-size: 0.83rem;
-      font-weight: 500;
-      cursor: pointer;
-      background: var(--accent-soft);
-      color: #991b1b;
-      border: 1px solid rgba(248, 113, 113, 0.5);
-      display: inline-flex;
-      align-items: center;
-      gap: 0.25rem;
-      transition: background 0.12s ease, transform 0.08s ease,
-        box-shadow 0.12s ease;
-    }
-
-    .btn:hover {
-      background: #fecaca;
-      transform: translateY(-1px);
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
-    }
-
-    .btn-primary {
-      background: #f97373;
-      color: #111827;
-      border-color: #fecaca;
-    }
-
-    .btn-primary:hover {
-      background: #fca5a5;
-    }
-
-    .btn[disabled] {
-      opacity: 0.5;
-      cursor: default;
-      box-shadow: none;
-      transform: none;
-    }
-
-    .status {
-      margin-top: 0.4rem;
-      min-height: 1.1rem;
-      color: var(--muted);
-    }
-
-    .status-good {
-      color: var(--good);
-    }
-
-    footer {
-      margin-top: 1rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 0.6rem;
-      flex-wrap: wrap;
-      font-size: 0.78rem;
-      color: var(--muted);
-    }
-
-    /* Back-of-puzzle overlay */
-    .puzzle-back-overlay {
+    .snowflake {
       position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: radial-gradient(circle at top, #020617, #020617 55%, #000 100%);
-      border-radius: 18px;
-      pointer-events: none;
-      opacity: 0;
-      transform: scale(0.9);
-      transition: opacity 0.6s ease, transform 0.6s ease;
-      z-index: 8;
+      top: -10px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: white;
+      opacity: 0.8;
+      filter: blur(0.5px);
+      animation-name: fall;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
     }
 
-    .puzzle-back-overlay.show {
-      opacity: 1;
-      transform: scale(1);
+    @keyframes fall {
+      to {
+        transform: translate3d(0, 110vh, 0);
+      }
     }
 
-    .puzzle-back-card {
-      width: 400px;
-      height: 400px;
-      border-radius: 18px;
-      border: 1px solid rgba(248, 250, 252, 0.15);
-      background: radial-gradient(circle at top, #1f2937, #020617 70%);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+    /* Fire glow and embers */
+
+    .fire-glow {
+      position: absolute;
+      bottom: -45%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80vw;
+      max-width: 1100px;
+      height: 130%;
+      background:
+        radial-gradient(circle at 50% 100%, rgba(252, 211, 77, 0.6), transparent 55%),
+        radial-gradient(circle at 40% 100%, rgba(248, 113, 113, 0.55), transparent 60%),
+        radial-gradient(circle at 60% 100%, rgba(251, 146, 60, 0.7), transparent 60%);
+      opacity: 0.7;
+      filter: blur(14px);
+      animation: firePulse 3.2s ease-in-out infinite;
+    }
+
+    @keyframes firePulse {
+      0% {
+        opacity: 0.4;
+        transform: translateX(-50%) scale(0.95);
+      }
+      50% {
+        opacity: 0.95;
+        transform: translateX(-50%) scale(1.06);
+      }
+      100% {
+        opacity: 0.45;
+        transform: translateX(-50%) scale(0.97);
+      }
+    }
+
+    .ember {
+      position: absolute;
+      bottom: 0;
+      width: 4px;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(252, 211, 77, 0.95);
+      box-shadow: 0 0 8px rgba(252, 211, 77, 0.9);
+      opacity: 0.95;
+      animation: emberRise 1.8s ease-out forwards;
+    }
+
+    @keyframes emberRise {
+      0% {
+        transform: translate3d(0, 0, 0) scale(1);
+        opacity: 1;
+      }
+      60% {
+        transform: translate3d(0, -40vh, 0) scale(0.9);
+        opacity: 0.7;
+      }
+      100% {
+        transform: translate3d(0, -60vh, 0) scale(0.4);
+        opacity: 0;
+      }
+    }
+
+    /* Stars */
+
+    .star {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 0 6px rgba(255, 255, 255, 0.9);
+      animation: twinkle 2.5s ease-in-out infinite alternate;
+    }
+
+    .star.secret-star {
+      width: 12px;
+      height: 12px;
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      background: rgba(252, 211, 77, 0.95);
+      box-shadow: 0 0 10px rgba(252, 211, 77, 0.9);
+      border-radius: 999px;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+
+    @keyframes twinkle {
+      0% {
+        opacity: 0.3;
+        transform: scale(0.7);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1.2);
+      }
+    }
+
+    /* Calendar */
+
+    #calendarSection {
+      z-index: 2;
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+
+    #calendarSection h2 {
+      font-size: 1.15rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    @media (max-width: 600px) {
+      .calendar-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+
+    .day-tile {
+      position: relative;
+      border: none;
+      background: transparent;
+      padding: 0;
+      cursor: pointer;
+      outline: none;
+      border-radius: 14px;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    }
+
+    .day-tile:focus-visible {
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.85);
+    }
+
+    .day-tile-inner {
+      position: relative;
+      background: var(--card-frame);
+      border-radius: 14px;
+      padding: 5px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+      overflow: hidden;
+      height: 90px;           /* <-- fixed height for chunky cards */
+    }
+
+    @media (min-width: 900px) {
+      .day-tile-inner {
+        height: 110px;
+      }
+    }
+
+    /* solid card */
+    .present-top {
+      width: 100%;
+      height: 100%;
+      border-radius: 10px;
+      background: linear-gradient(to bottom, var(--card-main), var(--card-main2));
       display: flex;
       align-items: center;
       justify-content: center;
       position: relative;
     }
 
-    .puzzle-back-card::before {
-      content: "Back of the puzzle";
+    /* subtle inner border in gold */
+    .present-top::before {
+      content: "";
       position: absolute;
-      top: 0.75rem;
-      left: 1rem;
-      font-size: 0.8rem;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: rgba(209, 213, 219, 0.8);
+      inset: 4px;
+      border-radius: 8px;
+      border: 1px solid rgba(182, 138, 42, 0.6);
+      pointer-events: none;
     }
 
-    .puzzle-back-letter {
-      font-size: 9rem;
+    .present-number {
+      position: relative;
       font-weight: 700;
-      color: #f97373;
-      text-shadow: 0 0 45px rgba(248, 113, 113, 0.7);
+      font-size: 1.35rem;
+      color: var(--accent);
+      text-shadow: 0 0 6px rgba(0, 0, 0, 0.7);
     }
 
-    /* Modal */
+    /* hide old present parts */
+    .present-body,
+    .ribbon-vertical,
+    .ribbon-horizontal,
+    .bow {
+      display: none !important;
+    }
+
+    /* --- Locked / completed states --- */
+
+/* Locked: no dark overlay, just a small lock badge */
+.day-tile.locked .day-tile-inner::after {
+  content: none;
+}
+
+/* Completed: soft green tint, but keep the number fully readable */
+.day-tile.completed .day-tile-inner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(18, 95, 54, 0.35);
+}
+
+/* Icons sit in the top-right corner, over the number (but not covering it) */
+.day-tile.locked .lock-icon,
+.day-tile.completed .check-icon {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  font-size: 0.95rem;
+}
+
+/* Different backgrounds for lock vs check */
+.day-tile.locked .lock-icon {
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.day-tile.completed .check-icon {
+  background: #2f9f5b;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.lock-icon span,
+.check-icon span {
+  color: #fff;
+}
+
+    .day-tile.available:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+      filter: brightness(1.03);
+    }
+
+    .calendar-note {
+      margin-top: 0.6rem;
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    /* Letters / secret code */
+
+    #lettersSection {
+      position: relative;
+      z-index: 2;
+      padding: 1rem 1.1rem;
+      margin-top: 0.5rem;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(4px);
+    }
+
+    #lettersSection h2 {
+      font-size: 1.15rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .letters-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    #lettersList {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-bottom: 0.35rem;
+      min-height: 1.5rem;
+    }
+
+    .letter-badge {
+      padding: 0.25rem 0.55rem;
+      border-radius: 999px;
+      background: var(--accent);
+      color: var(--text-dark);
+      font-weight: 600;
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    #lettersProgress {
+      font-size: 0.85rem;
+      margin-bottom: 0.7rem;
+      opacity: 0.95;
+    }
+
+    .small-btn {
+      border-radius: 999px;
+      border: none;
+      padding: 0.35rem 0.9rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: var(--accent);
+      color: var(--text-dark);
+      transition: transform 0.1s ease, box-shadow 0.1s ease,
+        filter 0.1s ease;
+    }
+
+    .small-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
+      filter: brightness(1.03);
+    }
+
+    .final-wrapper {
+      margin-top: 0.5rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .final-wrapper h3 {
+      font-size: 0.95rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .final-locked-text {
+      font-size: 0.85rem;
+      opacity: 0.9;
+    }
+
+    .final-message {
+      margin-top: 0.4rem;
+      padding: 0.7rem 0.8rem;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .final-message strong {
+      display: block;
+      font-size: 0.95rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Reset */
+
+    #resetSection {
+      margin-top: 1.5rem;
+      z-index: 2;
+      position: relative;
+    }
+
+    #resetButton {
+      border-radius: 999px;
+      border: none;
+      padding: 0.6rem 1.4rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: #f8f1e1;
+      color: #6b3c3c;
+      transition: transform 0.1s.ease, box-shadow 0.12s ease,
+        filter 0.1s ease;
+    }
+
+    #resetButton:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      filter: brightness(1.02);
+    }
+
+    .reset-note {
+      font-size: 0.8rem;
+      margin-top: 0.4rem;
+      opacity: 0.85;
+    }
+
+    /* Modals */
 
     .modal {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(0, 0, 0, 0.55);
       display: none;
       align-items: center;
       justify-content: center;
       padding: 1rem;
-      z-index: 40;
+      z-index: 20;
     }
 
     .modal.open {
@@ -350,24 +531,22 @@
     .modal-content {
       max-width: 420px;
       width: 100%;
-      padding: 1.2rem 1.3rem 1.05rem;
-      background: #0b1220;
+      padding: 1.2rem 1.25rem 1.1rem;
+      background: #faf5f0;
       border-radius: 18px;
-      color: #e5e7eb;
+      color: var(--text-dark);
       position: relative;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8);
-      border: 1px solid rgba(148, 163, 184, 0.6);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     }
 
     .modal h2 {
-      font-size: 1.1rem;
-      margin-bottom: 0.35rem;
+      font-size: 1.05rem;
+      margin-bottom: 0.4rem;
     }
 
     .modal p {
       font-size: 0.9rem;
-      line-height: 1.5;
-      color: #cbd5f5;
+      line-height: 1.45;
     }
 
     .modal-close {
@@ -378,7 +557,7 @@
       background: transparent;
       font-size: 1.2rem;
       cursor: pointer;
-      color: #9ca3af;
+      color: #555;
     }
 
     .modal-footer {
@@ -386,122 +565,283 @@
       display: flex;
       justify-content: flex-end;
       gap: 0.5rem;
-      flex-wrap: wrap;
+    }
+
+    .btn-secondary {
+      border-radius: 999px;
+      border: none;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      background: #e7ded3;
+      color: #333;
+    }
+
+    .btn-primary {
+      border-radius: 999px;
+      border: none;
+      padding: 0.45rem 0.95rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      background: #2f855a;
+      color: white;
+    }
+
+    /* Star lock form */
+
+    .code-form {
+      margin-top: 0.6rem;
+    }
+
+    .code-form label {
+      font-size: 0.85rem;
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    .code-input {
+      width: 100%;
+      padding: 0.45rem 0.6rem;
+      border-radius: 9px;
+      border: 1px solid #d0c5b8;
+      font-size: 0.9rem;
+    }
+
+    .code-input:focus-visible {
+      outline: 2px solid #2f855a;
+      outline-offset: 1px;
+    }
+
+    .code-message {
+      font-size: 0.8rem;
+      margin-top: 0.25rem;
+      min-height: 16px;
     }
   </style>
 </head>
 <body>
-  <div class="page">
-    <div class="already-banner" id="alreadyBanner">
-      Letter already collected ✅
-    </div>
+  <div id="starContainer"></div>
+  <div id="snowContainer"></div>
+  <div id="fireContainer"></div>
 
+  <div class="page">
     <header>
-      <div class="header-left">
-        <div class="badge">
-          <span>Day 4</span>
-          <span>Jigsaw Puzzle</span>
-        </div>
-        <h1>Piece it together</h1>
-        <p>
-          All the puzzle pieces are tucked into a tray at the bottom. Drag them up
-          onto the board and snap them into place. When everything fits, flip the
-          puzzle over to see what’s on the back.
-        </p>
-      </div>
+      <h1>Our Advent Calendar</h1>
+      <p>
+        One tiny puzzle each day. Collect the hidden letters and unlock the
+        final message on Christmas. 🎄
+      </p>
     </header>
 
     <main>
-      <section class="puzzle-area" id="puzzleArea">
-        <div class="board-wrapper">
-          <div class="board" id="board"></div>
-        </div>
-
-        <div class="piece-tray" id="piecesTray"></div>
-
-        <!-- Back-of-puzzle overlay -->
-        <div class="puzzle-back-overlay" id="puzzleBackOverlay">
-          <div class="puzzle-back-card">
-            <div class="puzzle-back-letter">V</div>
-          </div>
-        </div>
+      <section>
+        <section id="calendarSection">
+          <h2>December Presents</h2>
+          <div class="calendar-grid" id="calendarGrid"></div>
+          <p class="calendar-note" id="calendarNote"></p>
+        </section>
       </section>
 
-      <section class="info-panel">
-        <h2>How to play</h2>
-        <p>
-          Scroll through the tray at the bottom to find pieces. Drag a piece onto
-          the board; if you drop it close enough to its true spot, it will snap and
-          lock in. The bottom-left corner piece is already fixed as your anchor.
-        </p>
-        <p>
-          There’s no preview here — you’re building the picture from memory and vibes.
-          Once every piece is locked in, you’ll be able to inspect the back and reveal
-          the hidden letter.
-        </p>
-        <button class="btn" id="shuffleBtn">↻ Return loose pieces to the tray</button>
-        <button class="btn" id="inspectBtn" disabled>👀 Inspect back of puzzle</button>
-        <button class="btn btn-primary" id="backBtn">← Back to calendar</button>
-        <div class="status" id="statusLine">
-          Start with corner and edge pieces. The tray scrolls if you need more.
-        </div>
+      <section>
+        <section id="lettersSection">
+          <div class="letters-toolbar">
+            <h2>Letters Found</h2>
+            <button class="small-btn" id="openLettersModal">
+              View all letters
+            </button>
+          </div>
+          <div id="lettersList"></div>
+          <p id="lettersProgress"></p>
+
+          <div class="final-wrapper">
+            <h3>Secret final message</h3>
+            <p class="final-locked-text" id="finalLockedText">
+              Collect all the special letters and unlock the star code.
+              On Christmas Day, the hidden sentence will reveal itself.
+            </p>
+            <div id="finalMessage" class="final-message hidden">
+              <strong>Final message:</strong>
+              LOVE KNOWS NOT ITS DEPTH TILL THE HOUR OF SEPARATION
+            </div>
+          </div>
+        </section>
+
+        <section id="resetSection">
+          <button id="resetButton">Reset progress</button>
+          <p class="reset-note">
+            This resets everything on this device (calendar, stars, letters,
+            and final message). Use if you want to replay or if something breaks.
+          </p>
+        </section>
       </section>
     </main>
-
-    <footer>
-      <span>Tip: Pieces snap when you’re close enough to the correct grid cell.</span>
-      <span>Each day hides at most one letter.</span>
-    </footer>
   </div>
 
-  <!-- Letter modal -->
-  <div class="modal" id="letterModal" aria-hidden="true">
+  <!-- Modals -->
+
+  <!-- Letters modal -->
+  <div class="modal" id="lettersModal" aria-hidden="true">
     <div class="modal-content">
-      <button class="modal-close" data-close="letterModal">&times;</button>
-      <h2>The back of the puzzle 🧩</h2>
+      <button class="modal-close" data-close="lettersModal">&times;</button>
+      <h2>Your letter collection</h2>
+      <p style="margin-bottom: 0.6rem;">
+        These are the unique letters you’ve uncovered so far. Each day (and the
+        secret star) will add at most one new letter.
+      </p>
+      <div id="lettersModalList" style="margin-bottom:0.6rem;"></div>
+      <p id="lettersModalProgress"></p>
+      <div class="modal-footer">
+        <button class="btn-primary" data-close="lettersModal">Back to calendar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Locked day modal -->
+  <div class="modal" id="lockedDayModal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="modal-close" data-close="lockedDayModal">&times;</button>
+      <h2>Too early!</h2>
+      <p id="lockedDayText"></p>
+      <div class="modal-footer">
+        <button class="btn-primary" data-close="lockedDayModal">
+          Got it
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Already found modal -->
+  <div class="modal" id="alreadyFoundModal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="modal-close" data-close="alreadyFoundModal">&times;</button>
+      <h2>Letter already collected ✉️</h2>
       <p>
-        On the reverse side of the finished puzzle, one bold letter stands alone:
-        <strong>V</strong>. It’s now been added to your letter collection on the main
-        calendar page.
+        You’ve already grabbed the secret from that day. Check your “Letters
+        Found” section below — it’s safely stored there.
       </p>
       <div class="modal-footer">
-        <button class="btn" data-close="letterModal">Stay on this page</button>
-        <button class="btn btn-primary" id="goHomeFromModal">Back to calendar</button>
+        <button class="btn-secondary" data-close="alreadyFoundModal">
+          Close
+        </button>
+        <button class="btn-primary" data-open="lettersModal">
+          View letters
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Star / code modal -->
+  <div class="modal" id="starModal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="modal-close" data-close="starModal">&times;</button>
+      <h2>The secret star lock</h2>
+      <p>
+        Somewhere in the daily puzzles you’ll discover a 7-digit code.
+        When you think you know it, enter it here. If you’re right, you’ll
+        earn a very special letter.
+      </p>
+      <form class="code-form" id="codeForm">
+        <label for="codeInput">Enter the 7-digit code</label>
+        <input
+          id="codeInput"
+          class="code-input"
+          inputmode="numeric"
+          autocomplete="off"
+          maxlength="7"
+          minlength="7"
+          placeholder="XXXXXXX"
+        />
+        <div class="code-message" id="codeMessage"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" data-close="starModal">
+            Cancel
+          </button>
+          <button type="submit" class="btn-primary">Unlock</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Star already solved modal -->
+  <div class="modal" id="starSolvedModal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="modal-close" data-close="starSolvedModal">&times;</button>
+      <h2>The stars remember ⭐</h2>
+      <p>
+        You’ve already solved the secret star lock and claimed its letter.
+        The stars are just here to sparkle now.
+      </p>
+      <div class="modal-footer">
+        <button class="btn-primary" data-close="starSolvedModal">
+          Back to calendar
+        </button>
       </div>
     </div>
   </div>
 
   <script>
     // ===== CONFIG =====
-    const ROWS = 10;
-    const COLS = 10;
-    const PIECE_SIZE = 40; // must match CSS .piece size and board size
-    const SNAP_DISTANCE = PIECE_SIZE * 0.4; // how close to snap
-    const DAY_LETTER_KEY = "advent_day_4_letter";
-    const HIDDEN_LETTER = "V";
+    const TOTAL_DAYS = 24;
 
-    // bottom-left fixed piece index (row = ROWS-1, col = 0)
-    const FIXED_ROW = ROWS - 1;
-    const FIXED_COL = 0;
+    const UNIQUE_LETTERS = [
+      "L",
+      "O",
+      "V",
+      "E",
+      "K",
+      "N",
+      "W",
+      "S",
+      "T",
+      "I",
+      "D",
+      "P",
+      "H",
+      "U",
+      "R",
+      "F",
+      "A"
+    ];
 
-    const boardEl = document.getElementById("board");
-    const puzzleAreaEl = document.getElementById("puzzleArea");
-    const trayEl = document.getElementById("piecesTray");
-    const statusLineEl = document.getElementById("statusLine");
-    const alreadyBanner = document.getElementById("alreadyBanner");
-    const inspectBtn = document.getElementById("inspectBtn");
-    const backOverlay = document.getElementById("puzzleBackOverlay");
+    const STAR_LETTER = "O";
+    const STAR_CODE = "5201314";
 
-    let pieces = []; // {row, col, el, placed, locked}
-    let draggingPiece = null;
-    let dragOffsetX = 0;
-    let dragOffsetY = 0;
-    let backRevealed = false;
+    const IGNORE_DATE_LOCKS = false;
 
-    function setStatus(msg, tone = "") {
-      statusLineEl.textContent = msg;
-      if (tone === "good") statusLineEl.className = "status status-good";
-      else statusLineEl.className = "status";
+    // Simulated date from ?test=decNN query
+    let SIMULATED_DATE = null;
+    (function initSimulatedDateFromQuery() {
+      const params = new URLSearchParams(window.location.search);
+      const test = params.get("test");
+      if (!test) return;
+      const match = /^dec(\d{1,2})$/i.exec(test.trim());
+      if (!match) return;
+      const dayNum = parseInt(match[1], 10);
+      if (Number.isNaN(dayNum) || dayNum < 1 || dayNum > 31) return;
+      const realNow = new Date();
+      SIMULATED_DATE = new Date(realNow.getFullYear(), 11, dayNum);
+    })();
+
+    // ===== UTILS =====
+
+    function getToday() {
+      if (SIMULATED_DATE && !IGNORE_DATE_LOCKS) {
+        return new Date(SIMULATED_DATE.getTime());
+      }
+      return new Date();
+    }
+
+    function isChristmasOrLater() {
+      const now = getToday();
+      const christmas = new Date(now.getFullYear(), 11, 25);
+      return now >= christmas;
+    }
+
+    function isDayUnlocked(dayNumber) {
+      if (IGNORE_DATE_LOCKS) return true;
+      const now = getToday();
+      const decDay = new Date(now.getFullYear(), 11, dayNumber);
+      return now >= decDay;
     }
 
     function openModal(id) {
@@ -518,251 +858,387 @@
       modal.setAttribute("aria-hidden", "true");
     }
 
-    // ===== LAYOUT HELPERS =====
-    function getBoardRect() {
-      return boardEl.getBoundingClientRect();
-    }
+    function getCollectedLetters() {
+      const stored = localStorage.getItem("advent_letters");
+      let letters = [];
 
-    function getAreaRect() {
-      return puzzleAreaEl.getBoundingClientRect();
-    }
-
-    function targetPositionForPiece(row, col) {
-      const boardRect = getBoardRect();
-      const areaRect = getAreaRect();
-      const offsetX = boardRect.left - areaRect.left;
-      const offsetY = boardRect.top - areaRect.top;
-
-      return {
-        x: offsetX + col * PIECE_SIZE,
-        y: offsetY + row * PIECE_SIZE
-      };
-    }
-
-    function pieceCenter(piece) {
-      const rect = piece.el.getBoundingClientRect();
-      const areaRect = getAreaRect();
-      return {
-        x: rect.left - areaRect.left + rect.width / 2,
-        y: rect.top - areaRect.top + rect.height / 2
-      };
-    }
-
-    function distance(a, b) {
-      const dx = a.x - b.x;
-      const dy = a.y - b.y;
-      return Math.sqrt(dx * dx + dy * dy);
-    }
-
-    // ===== CREATE PIECES =====
-    function createPieces() {
-      pieces = [];
-      boardEl.style.width = `${COLS * PIECE_SIZE}px`;
-      boardEl.style.height = `${ROWS * PIECE_SIZE}px`;
-
-      for (let row = 0; row < ROWS; row++) {
-        for (let col = 0; col < COLS; col++) {
-          const pieceEl = document.createElement("div");
-          pieceEl.className = "piece";
-          pieceEl.style.backgroundPosition = `-${col * PIECE_SIZE}px -${row * PIECE_SIZE}px`;
-
-          const info = {
-            row,
-            col,
-            el: pieceEl,
-            placed: false,
-            locked: row === FIXED_ROW && col === FIXED_COL
-          };
-
-          if (info.locked) {
-            // fixed bottom-left piece: place at correct spot on board
-            puzzleAreaEl.appendChild(pieceEl);
-            const pos = targetPositionForPiece(row, col);
-            pieceEl.style.left = `${pos.x}px`;
-            pieceEl.style.top = `${pos.y}px`;
-            pieceEl.classList.add("locked", "placed");
-            info.placed = true;
-          } else {
-            // all other pieces start in the tray, inline
-            pieceEl.classList.add("in-tray");
-            trayEl.appendChild(pieceEl);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            letters = parsed;
           }
-
-          pieces.push(info);
+        } catch (e) {
+          // ignore
         }
       }
-    }
 
-    function resetLoosePiecesToTray() {
-      pieces.forEach((p) => {
-        if (p.locked || p.placed) return;
-        // move back to tray row
-        p.el.classList.add("in-tray");
-        p.el.style.position = "static";
-        p.el.style.left = "";
-        p.el.style.top = "";
-        trayEl.appendChild(p.el);
-      });
+      const set = new Set(letters.map((c) => String(c).toUpperCase()));
 
-      backOverlay.classList.remove("show");
-      backRevealed = false;
-      inspectBtn.disabled = !allPlaced();
-      setStatus("Loose pieces returned to the tray. The corner stays put.", "");
-    }
-
-    // ===== DRAGGING =====
-    function onPointerDown(e, pieceInfo) {
-      if (pieceInfo.locked || pieceInfo.placed || backRevealed) return;
-
-      const pointerX = e.clientX ?? e.touches?.[0]?.clientX;
-      const pointerY = e.clientY ?? e.touches?.[0]?.clientY;
-
-      // If currently in the tray, move it into the puzzle area and preserve its on-screen position
-      if (pieceInfo.el.parentElement === trayEl) {
-        const rectBefore = pieceInfo.el.getBoundingClientRect();
-        const areaRect = getAreaRect();
-
-        puzzleAreaEl.appendChild(pieceInfo.el);
-        pieceInfo.el.classList.remove("in-tray");
-        pieceInfo.el.style.position = "absolute";
-        pieceInfo.el.style.left = `${rectBefore.left - areaRect.left}px`;
-        pieceInfo.el.style.top = `${rectBefore.top - areaRect.top}px`;
+      for (let day = 1; day <= TOTAL_DAYS; day++) {
+        const key = "advent_day_" + day + "_letter";
+        const letter = localStorage.getItem(key);
+        if (letter) set.add(letter.toUpperCase());
       }
 
-      draggingPiece = pieceInfo;
+      const starLetter = localStorage.getItem("advent_star_letter");
+      if (starLetter) set.add(starLetter.toUpperCase());
 
-      const rect = pieceInfo.el.getBoundingClientRect();
-      dragOffsetX = pointerX - rect.left;
-      dragOffsetY = pointerY - rect.top;
-
-      pieceInfo.el.classList.add("dragging");
-      pieceInfo.el.setPointerCapture?.(e.pointerId);
-
-      e.preventDefault();
+      const finalArr = Array.from(set);
+      localStorage.setItem("advent_letters", JSON.stringify(finalArr));
+      return finalArr;
     }
 
-    function onPointerMove(e) {
-      if (!draggingPiece) return;
-
-      const pointerX = e.clientX ?? e.touches?.[0]?.clientX;
-      const pointerY = e.clientY ?? e.touches?.[0]?.clientY;
-
-      const areaRect = getAreaRect();
-
-      let x = pointerX - areaRect.left - dragOffsetX;
-      let y = pointerY - areaRect.top - dragOffsetY;
-
-      const maxX = areaRect.width - PIECE_SIZE;
-      const maxY = areaRect.height - PIECE_SIZE;
-      x = Math.max(0, Math.min(maxX, x));
-      y = Math.max(0, Math.min(maxY, y));
-
-      draggingPiece.el.style.left = `${x}px`;
-      draggingPiece.el.style.top = `${y}px`;
-    }
-
-    function onPointerUp() {
-      if (!draggingPiece) return;
-
-      const pieceInfo = draggingPiece;
-      pieceInfo.el.classList.remove("dragging");
-      draggingPiece = null;
-
-      const center = pieceCenter(pieceInfo);
-      const targetPos = targetPositionForPiece(pieceInfo.row, pieceInfo.col);
-      const targetCenter = {
-        x: targetPos.x + PIECE_SIZE / 2,
-        y: targetPos.y + PIECE_SIZE / 2
-      };
-
-      if (distance(center, targetCenter) <= SNAP_DISTANCE) {
-        // snap into place
-        pieceInfo.el.style.left = `${targetPos.x}px`;
-        pieceInfo.el.style.top = `${targetPos.y}px`;
-        pieceInfo.placed = true;
-        pieceInfo.el.classList.add("placed");
-        checkCompletion();
+    function renderLetterBadges(container, letters) {
+      container.innerHTML = "";
+      if (!letters.length) {
+        const p = document.createElement("p");
+        p.textContent = "No letters yet. Open a present to find your first one!";
+        p.style.fontSize = "0.85rem";
+        p.style.opacity = "0.9";
+        container.appendChild(p);
+        return;
       }
+      letters
+        .sort()
+        .forEach((letter) => {
+          const span = document.createElement("span");
+          span.className = "letter-badge";
+          span.textContent = letter;
+          container.appendChild(span);
+        });
     }
 
-    function attachDragHandlers() {
-      pieces.forEach((p) => {
-        p.el.addEventListener("pointerdown", (e) => onPointerDown(e, p));
-      });
+    function updateLettersUI() {
+      const letters = getCollectedLetters();
+      const list = document.getElementById("lettersList");
+      const progress = document.getElementById("lettersProgress");
+      const modalList = document.getElementById("lettersModalList");
+      const modalProgress = document.getElementById("lettersModalProgress");
 
-      window.addEventListener("pointermove", onPointerMove);
-      window.addEventListener("pointerup", onPointerUp);
-      window.addEventListener("pointercancel", onPointerUp);
+      const haveCount = UNIQUE_LETTERS.filter((L) =>
+        letters.includes(L)
+      ).length;
+      const totalCount = UNIQUE_LETTERS.length;
+
+      renderLetterBadges(list, letters);
+      renderLetterBadges(modalList, letters);
+
+      const msgBase = `You have discovered ${haveCount} / ${totalCount} special letters.`;
+      const extra =
+        haveCount === totalCount
+          ? " All the letters for the final sentence are now in your collection!"
+          : "";
+      progress.textContent = msgBase + extra;
+      modalProgress.textContent = msgBase + extra;
+
+      checkFinalUnlockConditions();
     }
 
-    // ===== WIN CONDITION / INSPECT =====
-    function allPlaced() {
-      return pieces.every((p) => p.placed);
-    }
+    function checkFinalUnlockConditions() {
+      const letters = getCollectedLetters();
+      const haveAll = UNIQUE_LETTERS.every((L) => letters.includes(L));
+      const starSolved = localStorage.getItem("advent_star_solved") === "true";
+      const finalUnlockedStored =
+        localStorage.getItem("advent_final_unlocked") === "true";
 
-    function checkCompletion() {
-      if (allPlaced()) {
-        setStatus("Every piece fits. Time to flip it over.", "good");
-        inspectBtn.disabled = false;
+      const finalMessage = document.getElementById("finalMessage");
+      const lockedText = document.getElementById("finalLockedText");
+
+      if (finalUnlockedStored || (haveAll && starSolved && isChristmasOrLater())) {
+        finalMessage.classList.remove("hidden");
+        lockedText.textContent =
+          "You did it! You’ve collected all the letters and solved the star lock. Here is the final message:";
+        localStorage.setItem("advent_final_unlocked", "true");
       } else {
-        setStatus("Nice snap! Keep going.", "good");
+        finalMessage.classList.add("hidden");
+        lockedText.textContent =
+          "Collect all the special letters and unlock the star code. On Christmas Day, the hidden sentence will reveal itself.";
       }
     }
 
-    function revealBack() {
-      if (!allPlaced()) return;
+    // ===== Calendar =====
 
-      if (!backRevealed) {
-        backRevealed = true;
-        backOverlay.classList.add("show");
+    function buildCalendar() {
+      const grid = document.getElementById("calendarGrid");
+      grid.innerHTML = "";
 
-        setTimeout(() => {
-          if (!localStorage.getItem(DAY_LETTER_KEY)) {
-            localStorage.setItem(DAY_LETTER_KEY, HIDDEN_LETTER);
-          }
-          alreadyBanner.style.display = "block";
-          openModal("letterModal");
-        }, 650);
-      } else {
-        // already revealed once – just ensure letter is stored and show modal
-        if (!localStorage.getItem(DAY_LETTER_KEY)) {
-          localStorage.setItem(DAY_LETTER_KEY, HIDDEN_LETTER);
+      for (let day = 1; day <= TOTAL_DAYS; day++) {
+        const tileBtn = document.createElement("button");
+        tileBtn.className = "day-tile";
+        tileBtn.setAttribute("type", "button");
+        tileBtn.dataset.day = String(day);
+
+        const inner = document.createElement("div");
+        inner.className = "day-tile-inner";
+
+        const top = document.createElement("div");
+        top.className = "present-top";
+
+        const number = document.createElement("div");
+        number.className = "present-number";
+        number.textContent = day;
+        top.appendChild(number);
+
+        const body = document.createElement("div");
+        body.className = "present-body";
+
+        const ribbonV = document.createElement("div");
+        ribbonV.className = "ribbon-vertical";
+        const ribbonH = document.createElement("div");
+        ribbonH.className = "ribbon-horizontal";
+        const bow = document.createElement("div");
+        bow.className = "bow";
+
+        body.appendChild(ribbonV);
+        body.appendChild(ribbonH);
+        body.appendChild(bow);
+
+        inner.appendChild(top);
+        inner.appendChild(body);
+
+        tileBtn.appendChild(inner);
+
+        const hasLetter =
+          localStorage.getItem("advent_day_" + day + "_letter") !== null;
+        const unlocked = isDayUnlocked(day);
+
+        let state = "locked";
+        if (hasLetter) state = "completed";
+        else if (unlocked) state = "available";
+
+        tileBtn.dataset.state = state;
+        tileBtn.classList.add(state);
+
+        if (state === "locked") {
+          const lock = document.createElement("div");
+          lock.className = "lock-icon";
+          lock.innerHTML = "<span>🔒</span>";
+          tileBtn.appendChild(lock);
+        } else if (state === "completed") {
+          const check = document.createElement("div");
+          check.className = "check-icon";
+          check.innerHTML = "<span>✓</span>";
+          tileBtn.appendChild(check);
         }
-        alreadyBanner.style.display = "block";
-        openModal("letterModal");
-      }
-    }
 
-    // ===== INIT =====
-    function init() {
-      if (localStorage.getItem(DAY_LETTER_KEY)) {
-        alreadyBanner.style.display = "block";
-      }
-
-      createPieces();
-      attachDragHandlers();
-
-      document.getElementById("shuffleBtn").addEventListener("click", () => {
-        resetLoosePiecesToTray();
-      });
-
-      inspectBtn.addEventListener("click", revealBack);
-
-      document.getElementById("backBtn").addEventListener("click", () => {
-        window.location.href = "../../index.html";
-      });
-
-      document.getElementById("goHomeFromModal").addEventListener("click", () => {
-        window.location.href = "../../index.html";
-      });
-
-      document
-        .querySelectorAll("[data-close]")
-        .forEach((btn) =>
-          btn.addEventListener("click", () =>
-            closeModal(btn.getAttribute("data-close"))
-          )
+        tileBtn.addEventListener("click", () =>
+          onDayTileClick(day, tileBtn)
         );
+
+        grid.appendChild(tileBtn);
+      }
+
+      const note = document.getElementById("calendarNote");
+      if (IGNORE_DATE_LOCKS) {
+        note.textContent =
+          "Test mode: date locks are disabled. All presents are available.";
+      } else {
+        const today = getToday();
+        const baseText = today.toLocaleDateString(undefined, {
+          month: "long",
+          day: "numeric",
+        });
+
+        if (SIMULATED_DATE) {
+          note.textContent =
+            `Test mode: pretending today is ${baseText}. Presents unlock on their matching December date.`;
+        } else {
+          note.textContent =
+            `Today is ${baseText}. Presents unlock on their matching December date.`;
+        }
+      }
+    }
+
+    function onDayTileClick(day, tileEl) {
+      const state = tileEl.dataset.state;
+
+      if (state === "locked") {
+        const text = document.getElementById("lockedDayText");
+        text.textContent = `That present unlocks on December ${day}. Come back then!`;
+        openModal("lockedDayModal");
+        return;
+      }
+
+      if (state === "completed") {
+        openModal("alreadyFoundModal");
+        return;
+      }
+
+      window.location.href = `days/day${day}/index.html`;
+    }
+
+    // ===== Stars / code =====
+
+    function initStars() {
+      const container = document.getElementById("starContainer");
+      if (!container) return;
+
+      const count = 60;
+      for (let i = 0; i < count; i++) {
+        const star = document.createElement("div");
+        star.className = "star";
+        const size = 2 + Math.random() * 3;
+        star.style.width = size + "px";
+        star.style.height = size + "px";
+        star.style.left = Math.random() * 100 + "vw";
+        star.style.top = Math.random() * 100 + "vh";
+        star.style.animationDuration = 2.5 + Math.random() * 2 + "s";
+        star.style.animationDelay = Math.random() * 3 + "s";
+        container.appendChild(star);
+      }
+
+      const secret = document.createElement("button");
+      secret.id = "secretStar";
+      secret.className = "star secret-star";
+      secret.type = "button";
+      secret.setAttribute("aria-label", "Secret star");
+      secret.style.top = "18%";
+      secret.style.right = "12%";
+      secret.style.animationDuration = "3s";
+      secret.style.animationDelay = "0.4s";
+      container.appendChild(secret);
+
+      const starSolved =
+        localStorage.getItem("advent_star_solved") === "true";
+
+      if (starSolved) {
+        secret.addEventListener("click", () => openModal("starSolvedModal"));
+      } else {
+        secret.addEventListener("click", () => openModal("starModal"));
+      }
+
+      const codeForm = document.getElementById("codeForm");
+      const codeInput = document.getElementById("codeInput");
+      const codeMsg = document.getElementById("codeMessage");
+
+      codeForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const raw = (codeInput.value || "").trim();
+        if (raw.length !== 7) {
+          codeMsg.textContent = "The code should be exactly 7 digits.";
+          return;
+        }
+        if (raw === STAR_CODE) {
+          localStorage.setItem("advent_star_solved", "true");
+          localStorage.setItem("advent_star_letter", STAR_LETTER);
+          codeMsg.textContent =
+            "Unlocked! A secret letter has been added to your collection.";
+          codeMsg.style.color = "#2f855a";
+          secret.onclick = () => openModal("starSolvedModal");
+          updateLettersUI();
+          setTimeout(() => {
+            closeModal("starModal");
+            openModal("lettersModal");
+          }, 900);
+        } else {
+          codeMsg.textContent = "Not quite. Keep collecting clues from the days!";
+          codeMsg.style.color = "#b83232";
+        }
+      });
+    }
+
+    // ===== Snow =====
+
+    function initSnow() {
+      const container = document.getElementById("snowContainer");
+      const flakeCount = 70;
+      for (let i = 0; i < flakeCount; i++) {
+        const flake = document.createElement("div");
+        flake.className = "snowflake";
+        const size = 2 + Math.random() * 4;
+        flake.style.width = size + "px";
+        flake.style.height = size + "px";
+        flake.style.left = Math.random() * 100 + "vw";
+        flake.style.animationDuration = 8 + Math.random() * 8 + "s";
+        flake.style.animationDelay = Math.random() * 8 + "s";
+        container.appendChild(flake);
+      }
+    }
+
+    // ===== Fire & embers =====
+
+    function initFire() {
+      const container = document.getElementById("fireContainer");
+      if (!container) return;
+
+      const glow = document.createElement("div");
+      glow.className = "fire-glow";
+      container.appendChild(glow);
+
+      function spawnEmber() {
+        const ember = document.createElement("div");
+        ember.className = "ember";
+
+        const spread = 0.35;
+        const rand = (Math.random() - 0.5) * 2 * spread;
+        const offsetPercent = 50 + rand * 100;
+
+        ember.style.left = offsetPercent + "%";
+
+        const size = 3 + Math.random() * 4;
+        ember.style.width = size + "px";
+        ember.style.height = size + "px";
+
+        const duration = 1.5 + Math.random() * 1.4;
+        ember.style.animationDuration = duration + "s";
+
+        container.appendChild(ember);
+
+        ember.addEventListener("animationend", () => {
+          ember.remove();
+        });
+      }
+
+      setInterval(() => {
+        if (Math.random() < 0.45) {
+          const count = Math.random() < 0.25 ? 2 : 1;
+          for (let i = 0; i < count; i++) {
+            setTimeout(spawnEmber, i * 180);
+          }
+        }
+      }, 550);
+    }
+
+    // ===== Reset =====
+
+    function initReset() {
+      const btn = document.getElementById("resetButton");
+      btn.addEventListener("click", () => {
+        const ok = confirm(
+          "Reset all progress? (Days, letters, stars, and final message will all be cleared.)"
+        );
+        if (!ok) return;
+
+        for (let day = 1; day <= TOTAL_DAYS; day++) {
+          localStorage.removeItem("advent_day_" + day + "_letter");
+        }
+
+        localStorage.removeItem("advent_letters");
+        localStorage.removeItem("advent_star_letter");
+        localStorage.removeItem("advent_star_solved");
+        localStorage.removeItem("advent_final_unlocked");
+
+        location.reload();
+      });
+    }
+
+    // ===== Modals generic close handlers =====
+
+    function initModals() {
+      document.querySelectorAll("[data-close]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-close");
+          if (id) closeModal(id);
+        });
+      });
+
+      document.querySelectorAll("[data-open]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-open");
+          if (id) openModal(id);
+        });
+      });
 
       document.querySelectorAll(".modal").forEach((modal) => {
         modal.addEventListener("click", (e) => {
@@ -780,9 +1256,27 @@
             .forEach((m) => m.classList.remove("open"));
         }
       });
+
+      const openLettersButton = document.getElementById("openLettersModal");
+      openLettersButton.addEventListener("click", () =>
+        openModal("lettersModal")
+      );
     }
 
-    window.addEventListener("load", init);
+    // ===== Boot =====
+
+    document.addEventListener("DOMContentLoaded", () => {
+      initStars();
+      initSnow();
+      initFire();
+      buildCalendar();
+      initModals();
+      initReset();
+      updateLettersUI();
+    });
+
+    // NOTE: On each day page, award a letter with:
+    // localStorage.setItem("advent_day_X_letter", "L");
   </script>
 </body>
 </html>
