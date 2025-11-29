@@ -18,6 +18,8 @@
       --correct: #2f9f5b;
       --present: #f3c25b;
       --absent: #737373;
+      --key-bg: #e5e7eb;
+      --key-text: #111827;
     }
 
     * {
@@ -83,7 +85,7 @@
       display: grid;
       grid-template-rows: repeat(6, 1fr);
       gap: 0.4rem;
-      margin-bottom: 1rem;
+      margin-bottom: 0.7rem;
     }
 
     .row {
@@ -228,6 +230,67 @@
       margin-bottom: 0.15rem;
     }
 
+    /* On-screen keyboard */
+
+    .keyboard {
+      margin-top: 0.3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      user-select: none;
+    }
+
+    .kb-row {
+      display: flex;
+      justify-content: center;
+      gap: 0.25rem;
+    }
+
+    .kb-key {
+      border: none;
+      border-radius: 6px;
+      min-width: 30px;
+      padding: 0.4rem 0.45rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      background: var(--key-bg);
+      color: var(--key-text);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+      transition: background 0.12s ease, transform 0.07s ease,
+        box-shadow 0.12s ease;
+    }
+
+    .kb-key:active {
+      transform: translateY(1px);
+      box-shadow: 0 0 0 rgba(0, 0, 0, 0.2);
+    }
+
+    .kb-key-large {
+      min-width: 52px;
+      padding-inline: 0.6rem;
+      font-size: 0.75rem;
+    }
+
+    .kb-correct {
+      background: var(--correct);
+      color: #fff;
+    }
+
+    .kb-present {
+      background: var(--present);
+      color: #422000;
+    }
+
+    .kb-absent {
+      background: #6b7280;
+      color: #e5e7eb;
+    }
+
     footer {
       margin-top: 1rem;
       display: flex;
@@ -253,6 +316,7 @@
       padding: 0.2rem 0.6rem;
       border: 1px solid #c3e6d4;
       color: #285943;
+      display: none;
     }
 
     /* Modal */
@@ -329,6 +393,9 @@
     <main>
       <section class="board" id="board" aria-label="Wordle board"></section>
 
+      <!-- On-screen keyboard -->
+      <section class="keyboard" id="keyboard" aria-label="On screen keyboard"></section>
+
       <section class="controls">
         <label for="guessInput">Enter a 5-letter English word</label>
         <div class="input-row">
@@ -385,13 +452,14 @@
     // ===== CONFIG =====
     const ANSWER = "THORN";
     const MAX_GUESSES = 6;
-    const DAY_LETTER_KEY = "advent_day_1_letter"; // stored letter key
+    const DAY_LETTER_KEY = "advent_day_1_letter"; // will store "R"
     const HIDDEN_LETTER = "R";
 
     // ===== STATE =====
     let currentRow = 0;
     let gameOver = false;
-    let dictionary = new Set([ANSWER]); // always include the answer
+    let dictionary = new Set([ANSWER]); // fallback
+    const keyStates = {}; // letter -> "correct"/"present"/"absent"
 
     const boardEl = document.getElementById("board");
     const guessInput = document.getElementById("guessInput");
@@ -400,6 +468,7 @@
     const guessesLeftEl = document.getElementById("guessesLeft");
     const hintContainer = document.getElementById("hintContainer");
     const alreadyBanner = document.getElementById("alreadyBanner");
+    const keyboardEl = document.getElementById("keyboard");
 
     // ===== INIT BOARD =====
     function createBoard() {
@@ -420,8 +489,7 @@
     }
 
     // ===== DICTIONARY LOAD =====
-    // `wordlist-5-letter.txt` should be in the same folder as this file:
-    // days/day1/wordlist-5-letter.txt
+    // Uses days/day1/wordlist-5-letter.txt in this folder
     fetch("wordlist-5-letter.txt")
       .then((resp) => resp.text())
       .then((text) => {
@@ -430,10 +498,9 @@
           .map((w) => w.trim().toUpperCase())
           .filter((w) => w.length === 5)
           .forEach((w) => dictionary.add(w));
-        console.log("Dictionary loaded:", dictionary.size, "words");
       })
-      .catch((err) => {
-        console.warn("Dictionary load failed, using fallback.", err);
+      .catch(() => {
+        // If it fails, fallback to just ANSWER + a few extras for testing
         ["APPLE", "BRAIN", "SMILE", "WORDS"].forEach((w) =>
           dictionary.add(w)
         );
@@ -504,7 +571,31 @@
       }
     }
 
-    function handleWin() {
+    function updateKeyboard(guess, evaluation) {
+      const priority = { absent: 1, present: 2, correct: 3 };
+
+      for (let i = 0; i < guess.length; i++) {
+        const letter = guess[i];
+        const result = evaluation[i];
+
+        const prev = keyStates[letter];
+        if (!prev || priority[result] > priority[prev]) {
+          keyStates[letter] = result;
+
+          const keyEl = keyboardEl.querySelector(
+            `.kb-key[data-key="${letter}"]`
+          );
+          if (keyEl) {
+            keyEl.classList.remove("kb-correct", "kb-present", "kb-absent");
+            if (result === "correct") keyEl.classList.add("kb-correct");
+            else if (result === "present") keyEl.classList.add("kb-present");
+            else if (result === "absent") keyEl.classList.add("kb-absent");
+          }
+        }
+      }
+    }
+
+    function handleWin(guess) {
       gameOver = true;
       setStatus("Nice! You found the word.", "success");
       hintContainer.style.display = "block";
@@ -515,7 +606,7 @@
       gameOver = true;
       setStatus(`Out of guesses. The word was ${answer}.`, "error");
       hintContainer.style.display = "block";
-      // No letter if the puzzle wasn't solved.
+      // Only collectible if she actually solves it.
     }
 
     function onSubmitGuess() {
@@ -541,9 +632,10 @@
 
       const evaluation = evaluateGuess(guess, ANSWER);
       revealGuess(guess, evaluation);
+      updateKeyboard(guess, evaluation);
 
       if (guess === ANSWER) {
-        handleWin();
+        handleWin(guess);
       } else {
         currentRow++;
         if (currentRow >= MAX_GUESSES) {
@@ -577,7 +669,7 @@
         return;
       }
 
-      // Must pick the correct letter based on the hint.
+      // She has to pick the right letter based on the hint.
       if (letter === HIDDEN_LETTER) {
         localStorage.setItem(DAY_LETTER_KEY, HIDDEN_LETTER);
         alreadyBanner.style.display = "block";
@@ -585,6 +677,62 @@
       } else {
         setStatus("Not that one. Think about the hint again. ❤️➖🔥", "error");
       }
+    }
+
+    // ===== ON-SCREEN KEYBOARD =====
+    const keyboardLayout = [
+      ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+      ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
+      ["ENTER", "Z", "X", "C", "V", "B", "N", "M", "BACK"]
+    ];
+
+    function createKeyboard() {
+      keyboardEl.innerHTML = "";
+      keyboardLayout.forEach((rowArr) => {
+        const row = document.createElement("div");
+        row.className = "kb-row";
+
+        rowArr.forEach((keyLabel) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "kb-key";
+          let display = keyLabel;
+          if (keyLabel === "ENTER" || keyLabel === "BACK") {
+            btn.classList.add("kb-key-large");
+          }
+          if (keyLabel === "BACK") {
+            display = "⌫";
+          }
+          btn.textContent = display;
+          btn.dataset.key = keyLabel === "BACK" ? "BACK" : keyLabel;
+          btn.addEventListener("click", () =>
+            handleKeyboardInput(btn.dataset.key)
+          );
+          row.appendChild(btn);
+        });
+
+        keyboardEl.appendChild(row);
+      });
+    }
+
+    function handleKeyboardInput(key) {
+      if (gameOver) return;
+
+      if (key === "ENTER") {
+        onSubmitGuess();
+        return;
+      }
+
+      if (key === "BACK") {
+        guessInput.value = guessInput.value.slice(0, -1);
+        guessInput.focus();
+        return;
+      }
+
+      // letter keys
+      if (guessInput.value.length >= 5) return;
+      guessInput.value = (guessInput.value + key).toUpperCase();
+      guessInput.focus();
     }
 
     // ===== PAGE + MODAL BEHAVIOUR =====
@@ -629,6 +777,7 @@
 
     // ===== INITIALISE =====
     createBoard();
+    createKeyboard();
     updateGuessesLeft();
     setStatus("", "");
 
