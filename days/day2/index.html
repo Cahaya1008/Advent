@@ -18,7 +18,7 @@
       --maze-fog: #4c1d95;
       --maze-speed: #16a34a;
       --maze-goal: #facc15;
-      --maze-cell: 10px; /* will be overridden by JS for scaling */
+      --maze-cell: 16px; /* bigger cells; scrolling is allowed */
       --text-main: #f9fafb;
       --muted: #9ca3af;
       --accent: #fb7185;
@@ -130,14 +130,14 @@
         0 0 0 1px rgba(148, 163, 184, 0.6),
         0 0 40px rgba(15, 23, 42, 0.9);
       max-width: 100%;
-      max-height: calc(100vh - 260px);
-      overflow: hidden;
+      max-height: 650px;
+      overflow: auto; /* allow scrolling to view the whole huge maze */
     }
 
     .maze-grid {
       display: grid;
       gap: 0;
-      position: relative;
+      position: relative; /* player & enemies are now positioned relative to the grid */
       transition: opacity 0.15s ease;
     }
 
@@ -232,10 +232,6 @@
       align-items: center;
       justify-content: center;
       font-size: calc(var(--maze-cell) * 0.8);
-    }
-
-    .cell.enemy {
-      /* enemy base cell is floor; enemy glyph is separate */
     }
 
     .player {
@@ -475,8 +471,7 @@
       <section class="maze-panel">
         <div class="maze-container">
           <div class="maze-grid" id="mazeGrid"></div>
-          <div class="player" id="player">→</div>
-          <!-- enemies are created in JS -->
+          <!-- player + enemies are appended into the grid in JS so they align perfectly -->
         </div>
       </section>
 
@@ -559,11 +554,9 @@
   </div>
 
   <script>
-    // ===== CONFIG =====
     const DAY_LETTER_KEY = "advent_day_2_letter";
     const HIDDEN_LETTER = "P";
 
-    // Maze dimensions (odd numbers for generation)
     const MAZE_ROWS = 101;
     const MAZE_COLS = 101;
 
@@ -576,14 +569,15 @@
     const FOG_MOVES = 12;
     const SPEED_DURATION_MS = 6000;
     const CLEAR_FOG_DURATION_MS = 7000;
-    const ENEMY_STEP_MS = 400; // "normal" speed
+    const ENEMY_STEP_MS = 400;
 
     const mazeGridEl = document.getElementById("mazeGrid");
-    const playerEl = document.getElementById("player");
     const statusLineEl = document.getElementById("statusLine");
     const alreadyBanner = document.getElementById("alreadyBanner");
 
-    let grid = [];          // "wall", "floor", "goal", "trap", "fog", "buff", "keyX", "lockX"
+    let playerEl; // created in JS now
+
+    let grid = [];
     let rows = MAZE_ROWS;
     let cols = MAZE_COLS;
 
@@ -591,13 +585,12 @@
     let goalPos = { row: rows - 2, col: cols - 2 };
 
     let playerPos = { row: 1, col: 1 };
-    let playerDir = { dx: 1, dy: 0 }; // default right
 
     let fogMovesRemaining = 0;
     let fogDisabledUntil = 0;
     let speedBoostUntil = 0;
 
-    let enemies = []; // {row,col,dx,dy,el}
+    let enemies = [];
     let enemyTimer = null;
 
     let inventoryKeys = new Set();
@@ -638,9 +631,8 @@
       modal.setAttribute("aria-hidden", "true");
     }
 
-    // ===== MAZE GENERATION (recursive backtracker) =====
+    // ===== MAZE GENERATION =====
     function generateMazeGrid() {
-      // Start with all walls
       const maze = Array.from({ length: rows }, () =>
         Array.from({ length: cols }, () => "#")
       );
@@ -669,7 +661,6 @@
 
       carve(startPos.row, startPos.col);
 
-      // Convert to type grid
       grid = [];
       for (let r = 0; r < rows; r++) {
         const rowArr = [];
@@ -684,7 +675,6 @@
       grid[goalPos.row][goalPos.col] = "goal";
     }
 
-    // BFS to get one shortest path from start to goal
     function computePath() {
       const queue = [];
       const visited = Array.from({ length: rows }, () =>
@@ -728,9 +718,7 @@
 
       const path = [];
       let cur = { ...goalPos };
-      if (!prev[cur.row][cur.col]) {
-        return path; // fail-safe
-      }
+      if (!prev[cur.row][cur.col]) return path;
 
       while (cur) {
         path.push(cur);
@@ -740,16 +728,13 @@
       return path;
     }
 
-    // ===== DECORATION (fog, buffs, traps, keys, locks, enemies) =====
     function decorateMaze() {
       const path = computePath();
       if (path.length === 0) {
-        // If somehow unsolvable, just regenerate once.
         generateMazeGrid();
         return decorateMaze();
       }
 
-      // Collect floor cells not start/goal
       const floors = [];
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
@@ -765,19 +750,16 @@
         }
       }
 
-      // Helper for random unique picks
       function pickMany(array, count) {
         const copy = array.slice();
         shuffle(copy);
         return copy.slice(0, Math.min(count, copy.length));
       }
 
-      // FOG tiles
       pickMany(floors, NUM_FOG_TILES).forEach(({ row, col }) => {
         if (grid[row][col] === "floor") grid[row][col] = "fog";
       });
 
-      // BUFF tiles
       pickMany(
         floors.filter((p) => grid[p.row][p.col] === "floor"),
         NUM_BUFF_TILES
@@ -785,7 +767,6 @@
         grid[row][col] = "buff";
       });
 
-      // TRAPS (teleport to start)
       pickMany(
         floors.filter((p) => grid[p.row][p.col] === "floor"),
         NUM_TRAPS
@@ -793,9 +774,7 @@
         grid[row][col] = "trap";
       });
 
-      // KEYS + LOCKS along main path:
-      // choose several path indices; for each, lock later on path, key earlier.
-      const usablePath = path.slice(3, path.length - 3); // avoid right at start/end
+      const usablePath = path.slice(3, path.length - 3);
       const lockPositions = pickMany(usablePath, NUM_KEY_LOCK_PAIRS);
       const usedIndices = new Set();
 
@@ -805,7 +784,6 @@
         );
         if (lockIndex < 5) return;
 
-        // choose a key index earlier in the path
         const possibleKeyIndices = [];
         for (let i = 2; i < lockIndex - 2; i++) {
           if (!usedIndices.has(i)) possibleKeyIndices.push(i);
@@ -819,9 +797,8 @@
         usedIndices.add(keyIndex);
 
         const keyCell = path[keyIndex];
-        const lockId = index; // 0..N-1
+        const lockId = index;
 
-        // mark in grid
         if (grid[lockCell.row][lockCell.col] === "floor") {
           grid[lockCell.row][lockCell.col] = "lock-" + lockId;
         }
@@ -833,10 +810,7 @@
         }
       });
 
-      // ENEMIES: pick some floor tiles off the main path so it's chaotic but not spawn-kill
-      const pathSet = new Set(
-        path.map((p) => `${p.row},${p.col}`)
-      );
+      const pathSet = new Set(path.map((p) => `${p.row},${p.col}`));
       const enemyCandidates = floors.filter(
         (p) => !pathSet.has(`${p.row},${p.col}`)
       );
@@ -851,7 +825,6 @@
       });
     }
 
-    // ===== RENDER =====
     function buildDOMGrid() {
       mazeGridEl.innerHTML = "";
       mazeGridEl.style.gridTemplateColumns = `repeat(${cols}, var(--maze-cell))`;
@@ -880,7 +853,13 @@
         }
       }
 
-      // Create enemy elements
+      // create player now and append into the grid so position is relative to it
+      playerEl = document.createElement("div");
+      playerEl.className = "player";
+      playerEl.textContent = "→";
+      mazeGridEl.appendChild(playerEl);
+
+      // enemies
       enemies.forEach((enemy) => {
         const el = document.createElement("div");
         el.classList.add("enemy-icon");
@@ -906,7 +885,6 @@
       return true;
     }
 
-    // ===== FOG =====
     function clearFogHighlights() {
       mazeGridEl
         .querySelectorAll(".cell")
@@ -942,7 +920,6 @@
       mazeGridEl.classList.add("fog-mode");
     }
 
-    // ===== PLAYER =====
     function updatePlayerArrow(dx, dy) {
       if (dx === 1 && dy === 0) playerEl.textContent = "→";
       else if (dx === -1 && dy === 0) playerEl.textContent = "←";
@@ -978,7 +955,7 @@
       fogDisabledUntil = 0;
       speedBoostUntil = 0;
       inventoryKeys.clear();
-      playerEl.classList.remove("boost");
+      if (playerEl) playerEl.classList.remove("boost");
       mazeGridEl.classList.remove("fog-mode");
       clearFogHighlights();
       hasWon = false;
@@ -1010,7 +987,6 @@
       }
 
       if (type === "buff") {
-        // random buff: speed or clear vision
         const buff =
           Math.random() < 0.5 ? "speed" : "clearFog";
         if (buff === "speed") {
@@ -1055,7 +1031,7 @@
 
       const now = performance.now();
       const boosted = speedBoostUntil > now;
-      if (!boosted) {
+      if (!boosted && playerEl) {
         playerEl.classList.remove("boost");
       }
       const steps = boosted ? 2 : 1;
@@ -1087,7 +1063,6 @@
       }
     }
 
-    // ===== ENEMIES =====
     function positionEnemyElement(enemy, animated = true) {
       if (!enemy.el) return;
       const cellSize = parseFloat(
@@ -1107,23 +1082,19 @@
 
     function enemiesStep() {
       if (hasWon) return;
-      const now = performance.now();
-      const enemiesFrozen = false; // room for future chaos if you want
 
       enemies.forEach((enemy) => {
-        if (enemiesFrozen) return;
         let { row, col, dx, dy } = enemy;
 
-        // Try move; if blocked, flip direction.
         let nr = row + dy;
         let nc = col + dx;
         if (!isWalkable(nr, nc) || grid[nr][nc] === "goal") {
           dx = -dx;
           dy = -dy;
-          nr = row + dy;
-          nc = col + dx;
           enemy.dx = dx;
           enemy.dy = dy;
+          nr = row + dy;
+          nc = col + dx;
         }
 
         if (isWalkable(nr, nc)) {
@@ -1133,14 +1104,12 @@
 
         positionEnemyElement(enemy, true);
 
-        // Collision check
         if (enemy.row === playerPos.row && enemy.col === playerPos.col) {
           restartMazeFromStart("You ran into a red enemy. Back to the start!");
         }
       });
     }
 
-    // ===== WIN =====
     function handleWin() {
       hasWon = true;
       setStatus("You found the present! It creaks open…", "good");
@@ -1154,27 +1123,11 @@
       }, 250);
     }
 
-    // ===== INITIALISE =====
-    function scaleCellsToFit() {
-      const container = document.querySelector(".maze-container");
-      const maxWidth = container.clientWidth - 16;
-      const maxHeight = container.clientHeight - 16;
-      const size = Math.floor(
-        Math.min(maxWidth / cols, maxHeight / rows)
-      );
-      const cellSize = Math.max(5, Math.min(14, size)); // keep reasonable
-      document.documentElement.style.setProperty(
-        "--maze-cell",
-        cellSize + "px"
-      );
-    }
-
     function init() {
       if (localStorage.getItem(DAY_LETTER_KEY)) {
         alreadyBanner.style.display = "block";
       }
 
-      scaleCellsToFit();
       generateMazeGrid();
       decorateMaze();
       buildDOMGrid();
@@ -1183,10 +1136,8 @@
       updatePlayerArrow(1, 0);
       updatePlayerPosition(false);
 
-      // Fog initially off
       clearFogHighlights();
 
-      // Enemies timer
       if (enemyTimer) clearInterval(enemyTimer);
       enemyTimer = setInterval(enemiesStep, ENEMY_STEP_MS);
 
@@ -1237,12 +1188,6 @@
             .querySelectorAll(".modal.open")
             .forEach((m) => m.classList.remove("open"));
         }
-      });
-
-      window.addEventListener("resize", () => {
-        scaleCellsToFit();
-        updatePlayerPosition(false);
-        enemies.forEach((enemy) => positionEnemyElement(enemy, false));
       });
     }
 
