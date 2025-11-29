@@ -1,150 +1,659 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Day 4 — Jigsaw</title>
-<style>
-  body{margin:0;font-family:Inter,Arial;background:linear-gradient(180deg,#041226,#072238);color:#fff;padding:12px}
-  .wrap{max-width:1100px;margin:0 auto}
-  h2{margin:0}
-  #board{display:grid;gap:6px;margin-top:12px}
-  .tile{background:#ddd;border-radius:6px;cursor:grab;overflow:hidden;display:flex;align-items:center;justify-content:center;border:2px solid rgba(0,0,0,0.06)}
-  .controls{margin-top:12px;display:flex;gap:8px}
-  button{background:#ffd98a;border:0;padding:8px 12px;border-radius:8px;color:#072;font-weight:800}
-  .muted{color:#b9cfe6}
-  .found{margin-top:12px;background:#fff;color:#072;padding:10px;border-radius:8px;display:flex;justify-content:space-between;align-items:center}
-</style>
+<head>
+  <meta charset="UTF-8" />
+  <title>Day 4 – Puzzle</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    :root {
+      --bg: #020617;
+      --panel: #0b1220;
+      --accent: #f97373;
+      --accent-soft: #fee2e2;
+      --text-main: #f9fafb;
+      --muted: #9ca3af;
+      --good: #22c55e;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #111827 0, #020617 55%, #000 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1.5rem 0.75rem;
+      color: var(--text-main);
+    }
+
+    .page {
+      max-width: 960px;
+      width: 100%;
+      background: linear-gradient(135deg, #020617, #020617 40%, #020617 100%);
+      border-radius: 22px;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.7);
+      padding: 1.7rem 1.6rem 1.3rem;
+      position: relative;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1.1rem;
+    }
+
+    .header-left {
+      flex: 1;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      background: rgba(248, 250, 252, 0.06);
+      padding: 0.24rem 0.6rem;
+      border-radius: 999px;
+      margin-bottom: 0.35rem;
+      border: 1px solid rgba(248, 250, 252, 0.15);
+    }
+
+    h1 {
+      font-size: 1.9rem;
+      margin-bottom: 0.15rem;
+    }
+
+    header p {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .already-banner {
+      position: absolute;
+      top: 0.7rem;
+      right: 0.9rem;
+      font-size: 0.75rem;
+      background: rgba(22, 163, 74, 0.12);
+      border-radius: 999px;
+      padding: 0.18rem 0.6rem;
+      border: 1px solid rgba(74, 222, 128, 0.7);
+      color: #bbf7d0;
+      display: none;
+    }
+
+    main {
+      margin-top: 0.3rem;
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(220px, 1fr);
+      gap: 1rem;
+    }
+
+    .puzzle-area {
+      position: relative;
+      background: radial-gradient(circle at top, #020617, #020617 65%, #000 100%);
+      border-radius: 18px;
+      padding: 0.8rem;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      min-height: 360px;
+      overflow: hidden;
+    }
+
+    .board {
+      position: relative;
+      margin: 0 auto;
+      background: #020617;
+      border-radius: 14px;
+      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.9);
+      overflow: hidden;
+    }
+
+    /* Adjust this if you change rows/cols in JS */
+    .board {
+      width: 360px;   /* 4 * 90px */
+      height: 360px;  /* 4 * 90px */
+    }
+
+    .board-background {
+      position: absolute;
+      inset: 0;
+      background-image: url("../../img/day4.jpg");
+      background-size: cover;
+      opacity: 0.1; /* ghost image as guide */
+      pointer-events: none;
+    }
+
+    .piece {
+      position: absolute;
+      width: 90px;
+      height: 90px;
+      border-radius: 10px;
+      background-image: url("../../img/day4.jpg");
+      background-size: 360px 360px; /* cols * piece, rows * piece */
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.7);
+      cursor: grab;
+      touch-action: none;
+      transition: box-shadow 0.12s ease, transform 0.12s ease;
+      z-index: 2;
+    }
+
+    .piece.dragging {
+      cursor: grabbing;
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.9);
+      transform: scale(1.03);
+      z-index: 5;
+    }
+
+    .piece.locked {
+      cursor: default;
+      box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.8);
+      z-index: 3;
+    }
+
+    .piece.placed {
+      box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.7);
+      transition: box-shadow 0.2s ease, transform 0.1s ease;
+    }
+
+    .info-panel {
+      background: rgba(15, 23, 42, 0.9);
+      border-radius: 18px;
+      padding: 0.8rem 0.9rem 0.9rem;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      font-size: 0.85rem;
+    }
+
+    .info-panel h2 {
+      font-size: 1rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .info-panel p {
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+      line-height: 1.5;
+    }
+
+    .btn {
+      border-radius: 999px;
+      border: none;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.83rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: var(--accent-soft);
+      color: #991b1b;
+      border: 1px solid rgba(248, 113, 113, 0.5);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      transition: background 0.12s ease, transform 0.08s ease,
+        box-shadow 0.12s ease;
+    }
+
+    .btn:hover {
+      background: #fecaca;
+      transform: translateY(-1px);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+    }
+
+    .btn-primary {
+      background: #f97373;
+      color: #111827;
+      border-color: #fecaca;
+    }
+
+    .btn-primary:hover {
+      background: #fca5a5;
+    }
+
+    .status {
+      margin-top: 0.4rem;
+      min-height: 1.1rem;
+      color: var(--muted);
+    }
+
+    .status-good {
+      color: var(--good);
+    }
+
+    footer {
+      margin-top: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    /* Modal */
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 40;
+    }
+
+    .modal.open {
+      display: flex;
+    }
+
+    .modal-content {
+      max-width: 420px;
+      width: 100%;
+      padding: 1.2rem 1.3rem 1.05rem;
+      background: #0b1220;
+      border-radius: 18px;
+      color: #e5e7eb;
+      position: relative;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+    }
+
+    .modal h2 {
+      font-size: 1.1rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .modal p {
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: #cbd5f5;
+    }
+
+    .modal-close {
+      position: absolute;
+      right: 0.7rem;
+      top: 0.6rem;
+      border: none;
+      background: transparent;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: #9ca3af;
+    }
+
+    .modal-footer {
+      margin-top: 0.9rem;
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <h2>Day 4 — Jigsaw (10×10)</h2>
-  <p class="muted">Drag tiles to assemble the image. Bottom-left tile is fixed and in place to give you a start.</p>
+  <div class="page">
+    <div class="already-banner" id="alreadyBanner">
+      Letter already collected ✅
+    </div>
 
-  <div id="boardWrap" style="overflow:auto">
-    <div id="board"></div>
+    <header>
+      <div class="header-left">
+        <div class="badge">
+          <span>Day 4</span>
+          <span>Jigsaw Puzzle</span>
+        </div>
+        <h1>Piece it together</h1>
+        <p>
+          Drag the puzzle pieces into place. The bottom-left corner is already set;
+          everything else has to click into place around it.
+        </p>
+      </div>
+    </header>
+
+    <main>
+      <section class="puzzle-area" id="puzzleArea">
+        <div class="board" id="board">
+          <div class="board-background"></div>
+        </div>
+      </section>
+
+      <section class="info-panel">
+        <h2>How to play</h2>
+        <p>
+          Drag a piece and move it over the board. If you drop it close to its correct
+          spot, it will snap into place and “lock”. If it’s not quite there yet,
+          it’ll stay where you left it so you can nudge it again.
+        </p>
+        <p>
+          The bottom-left corner piece is already in the right place to give you a
+          reference point. Everything else builds out from that corner.
+        </p>
+        <button class="btn" id="shuffleBtn">↻ Shuffle pieces</button>
+        <button class="btn btn-primary" id="backBtn">← Back to calendar</button>
+        <div class="status" id="statusLine">Start anywhere you like. Edges are usually kind.</div>
+      </section>
+    </main>
+
+    <footer>
+      <span>Tip: Getting a piece close enough will make it click into its perfect spot.</span>
+      <span>Each day hides at most one letter.</span>
+    </footer>
   </div>
 
-  <div class="controls">
-    <button id="shuffle">Shuffle</button>
-    <button id="inspect" disabled>Inspect (flip)</button>
-    <button id="closeBtn">Close</button>
+  <!-- Win / letter modal -->
+  <div class="modal" id="letterModal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="modal-close" data-close="letterModal">&times;</button>
+      <h2>Puzzle complete 🎉</h2>
+      <p>
+        Every piece is exactly where it belongs. Today’s hidden letter is
+        <strong>K</strong> (you can change this in the code if you want a different letter).
+      </p>
+      <div class="modal-footer">
+        <button class="btn" data-close="letterModal">Stay on this page</button>
+        <button class="btn btn-primary" id="goHomeFromModal">Back to calendar</button>
+      </div>
+    </div>
   </div>
 
-  <div id="foundPanel" style="display:none" class="found"><div>Letter found: <strong id="foundLetter">E</strong></div><div><button id="closeFound">Close</button></div></div>
-</div>
+  <script>
+    // ===== CONFIG =====
+    const ROWS = 4;
+    const COLS = 4;
+    const PIECE_SIZE = 90; // must match CSS .piece size and board size
+    const SNAP_DISTANCE = PIECE_SIZE * 0.28; // how close to snap
+    const DAY_LETTER_KEY = "advent_day_4_letter";
+    const HIDDEN_LETTER = "K"; // change to the letter you want for Day 4
 
-<script>
-/* Day 4 Jigsaw 10x10 */
-const DAY = 4;
-const COLLECT_LETTER = 'E';
-const tilesPerRow = 10;
-const total = tilesPerRow * tilesPerRow;
-const board = document.getElementById('board');
-const shuffleBtn = document.getElementById('shuffle');
-const inspectBtn = document.getElementById('inspect');
-const closeBtn = document.getElementById('closeBtn');
-const foundPanel = document.getElementById('foundPanel');
+    // bottom-left fixed piece index (row = ROWS-1, col = 0)
+    const FIXED_ROW = ROWS - 1;
+    const FIXED_COL = 0;
 
-let imageURL = '../../img/day4.jpg';
-const fallback = '/img/day4.jpg';
-checkImagePath(imageURL, ok=>{
-  if(!ok) imageURL = fallback;
-  start();
-});
+    const boardEl = document.getElementById("board");
+    const puzzleAreaEl = document.getElementById("puzzleArea");
+    const statusLineEl = document.getElementById("statusLine");
+    const alreadyBanner = document.getElementById("alreadyBanner");
 
-function checkImagePath(p, cb){
-  const img = new Image();
-  img.onload = ()=>cb(true);
-  img.onerror = ()=>cb(false);
-  img.src = p;
-}
+    let pieces = []; // {row, col, el, placed, locked}
+    let draggingPiece = null;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
 
-function start(){
-  board.style.gridTemplateColumns = `repeat(${tilesPerRow}, 120px)`;
-  board.style.width = `${tilesPerRow*122}px`;
-  // create tile array 1..total
-  let tiles = Array.from({length: total}, (_,i)=>i+1);
-  // fix bottom-left tile: which index is bottom-left? For a grid top-left index 0, bottom-left index = (tilesPerRow-1)*tilesPerRow
-  const bottomLeftIndex = (tilesPerRow-1)*tilesPerRow; // position index where we want the correct tile
-  // ensure tile at that position is its natural tile
-  // we'll shuffle everything except that position and ensure that tile value equals position+1
-  function render(){
-    board.innerHTML = '';
-    for(let i=0;i<tiles.length;i++){
-      const t = document.createElement('div');
-      t.className='tile';
-      t.style.width = '120px'; t.style.height = '120px';
-      t.draggable = true;
-      t.dataset.pos = i; t.dataset.tile = tiles[i];
-      // compute background-position
-      const idx = tiles[i]-1;
-      const col = idx % tilesPerRow;
-      const row = Math.floor(idx / tilesPerRow);
-      const step = tilesPerRow === 1 ? 0 : (100 / (tilesPerRow - 1));
-      const posX = (col * step); const posY = (row * step);
-      t.style.backgroundImage = `url("${imageURL}")`;
-      t.style.backgroundSize = `${tilesPerRow * 100}% ${tilesPerRow * 100}%`;
-      t.style.backgroundPosition = `${posX}% ${posY}%`;
-      // bottom-left fixed visual cue
-      if(i === bottomLeftIndex){
-        t.style.outline = '3px solid rgba(255,200,80,0.9)';
-        t.dataset.fixed = 'true';
-        t.draggable = false;
+    function setStatus(msg, tone = "") {
+      statusLineEl.textContent = msg;
+      if (tone === "good") statusLineEl.className = "status status-good";
+      else statusLineEl.className = "status";
+    }
+
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      if (!modal) return;
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      if (!modal) return;
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    // ===== LAYOUT HELPERS =====
+    function getBoardRect() {
+      return boardEl.getBoundingClientRect();
+    }
+
+    function getAreaRect() {
+      return puzzleAreaEl.getBoundingClientRect();
+    }
+
+    function targetPositionForPiece(row, col) {
+      const boardRect = getBoardRect();
+      const areaRect = getAreaRect();
+      const offsetX = boardRect.left - areaRect.left;
+      const offsetY = boardRect.top - areaRect.top;
+
+      return {
+        x: offsetX + col * PIECE_SIZE,
+        y: offsetY + row * PIECE_SIZE
+      };
+    }
+
+    function pieceCenter(piece) {
+      const rect = piece.el.getBoundingClientRect();
+      const areaRect = getAreaRect();
+      return {
+        x: rect.left - areaRect.left + rect.width / 2,
+        y: rect.top - areaRect.top + rect.height / 2
+      };
+    }
+
+    function distance(a, b) {
+      const dx = a.x - b.x;
+      const dy = a.y - b.y;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    // ===== CREATE PIECES =====
+    function createPieces() {
+      pieces = [];
+      boardEl.style.width = `${COLS * PIECE_SIZE}px`;
+      boardEl.style.height = `${ROWS * PIECE_SIZE}px`;
+
+      for (let row = 0; row < ROWS; row++) {
+        for (let col = 0; col < COLS; col++) {
+          const piece = document.createElement("div");
+          piece.className = "piece";
+          piece.style.backgroundPosition = `-${col * PIECE_SIZE}px -${row * PIECE_SIZE}px`;
+
+          puzzleAreaEl.appendChild(piece);
+
+          const info = {
+            row,
+            col,
+            el: piece,
+            placed: false,
+            locked: row === FIXED_ROW && col === FIXED_COL
+          };
+
+          if (info.locked) {
+            // fixed bottom-left piece: place at correct spot and lock
+            const pos = targetPositionForPiece(row, col);
+            piece.style.left = `${pos.x}px`;
+            piece.style.top = `${pos.y}px`;
+            piece.classList.add("locked", "placed");
+            info.placed = true;
+          }
+
+          pieces.push(info);
+        }
       }
-      // drag handlers
-      t.addEventListener('dragstart', (e)=>{ e.dataTransfer.setData('text/plain', t.dataset.pos); t.style.opacity = '0.6'; });
-      t.addEventListener('dragend', ()=>{ t.style.opacity = '1'; });
-      t.addEventListener('dragover', (e)=>e.preventDefault());
-      t.addEventListener('drop', (e)=>{ e.preventDefault(); const from = parseInt(e.dataTransfer.getData('text/plain')); const to = parseInt(t.dataset.pos); swap(from,to); });
-      board.appendChild(t);
     }
-    checkSolved();
-  }
 
-  function swap(a,b){
-    // if either is fixed, don't swap
-    if(a === bottomLeftIndex || b === bottomLeftIndex) return;
-    const tmp = tiles[a]; tiles[a] = tiles[b]; tiles[b] = tmp;
-    render();
-  }
+    function shufflePieces() {
+      const areaRect = getAreaRect();
+      const boardRect = getBoardRect();
+      const margin = 10;
 
-  function shuffle(){
-    // Fisher-Yates shuffle except keep bottomLeftIndex as correct tile
-    // ensure tile at bottomLeftIndex has value bottomLeftIndex+1
-    // start with natural array then shuffle allowed positions
-    tiles = Array.from({length: total}, (_,i)=>i+1);
-    // produce list of indices except bottomLeftIndex and shuffle them
-    const indices = [];
-    for(let i=0;i<total;i++) if(i !== bottomLeftIndex) indices.push(i);
-    for(let i=indices.length-1;i>0;i--){
-      const j = Math.floor(Math.random()*(i+1));
-      const a = indices[i], b = indices[j];
-      const tmp = tiles[a]; tiles[a] = tiles[b]; tiles[b] = tmp;
+      pieces.forEach((p) => {
+        if (p.locked) return; // don't move locked piece
+        p.placed = false;
+        p.el.classList.remove("placed");
+
+        // random position somewhere in the puzzle area, not overlapping the board box too much
+        let x, y;
+        let tries = 0;
+        do {
+          x = margin + Math.random() * (areaRect.width - PIECE_SIZE - margin * 2);
+          y = margin + Math.random() * (areaRect.height - PIECE_SIZE - margin * 2);
+          tries++;
+          // avoid fully covering the board to keep it visible-ish
+        } while (
+          tries < 20 &&
+          x + PIECE_SIZE > (boardRect.left - areaRect.left) - 10 &&
+          x < (boardRect.left - areaRect.left) + boardRect.width + 10 &&
+          y + PIECE_SIZE > (boardRect.top - areaRect.top) - 10 &&
+          y < (boardRect.top - areaRect.top) + boardRect.height + 10
+        );
+
+        p.el.style.left = `${x}px`;
+        p.el.style.top = `${y}px`;
+      });
     }
-    // ensure bottom-left piece lands in bottomLeftIndex (it already does since we started natural)
-    render();
-    inspectBtn.disabled = true;
-  }
 
-  function checkSolved(){
-    for(let i=0;i<tiles.length;i++){
-      if(tiles[i] !== i+1) return false;
+    // ===== DRAGGING =====
+    function onPointerDown(e, pieceInfo) {
+      if (pieceInfo.locked || pieceInfo.placed) return;
+
+      draggingPiece = pieceInfo;
+      const rect = pieceInfo.el.getBoundingClientRect();
+      const areaRect = getAreaRect();
+
+      const pointerX = e.clientX ?? e.touches?.[0]?.clientX;
+      const pointerY = e.clientY ?? e.touches?.[0]?.clientY;
+
+      dragOffsetX = pointerX - rect.left;
+      dragOffsetY = pointerY - rect.top;
+
+      pieceInfo.el.classList.add("dragging");
+      pieceInfo.el.setPointerCapture?.(e.pointerId);
+
+      e.preventDefault();
     }
-    inspectBtn.disabled = false;
-    alert('Puzzle assembled! Click Inspect to flip and reveal the letter.');
-    return true;
-  }
 
-  shuffleBtn.addEventListener('click', shuffle);
-  inspectBtn.addEventListener('click', ()=> {
-    // reveal letter and collect
-    try{ if(window.parent && window.parent.collectLetterFromDay) window.parent.collectLetterFromDay(DAY, COLLECT_LETTER); else window.parent.postMessage({type:'collected', day:DAY, value:COLLECT_LETTER}, '*'); }catch(e){ window.parent.postMessage({type:'collected', day:DAY, value:COLLECT_LETTER}, '*'); }
-    document.getElementById('foundLetter').textContent = COLLECT_LETTER;
-    foundPanel.style.display = 'flex';
-  });
-  closeBtn.addEventListener('click', ()=>{ try{ window.parent.hideModal(); }catch(e){ window.parent.postMessage({type:'requestClose'}, '*'); } });
-  document.getElementById('closeFound').addEventListener('click', ()=>{ try{ window.parent.hideModal(); }catch(e){ window.parent.postMessage({type:'requestClose'}, '*'); } });
+    function onPointerMove(e) {
+      if (!draggingPiece) return;
 
-  render();
-}
-</script>
+      const pointerX = e.clientX ?? e.touches?.[0]?.clientX;
+      const pointerY = e.clientY ?? e.touches?.[0]?.clientY;
+
+      const areaRect = getAreaRect();
+
+      let x = pointerX - areaRect.left - dragOffsetX;
+      let y = pointerY - areaRect.top - dragOffsetY;
+
+      // optional: keep within puzzle area
+      const maxX = areaRect.width - PIECE_SIZE;
+      const maxY = areaRect.height - PIECE_SIZE;
+      x = Math.max(0, Math.min(maxX, x));
+      y = Math.max(0, Math.min(maxY, y));
+
+      draggingPiece.el.style.left = `${x}px`;
+      draggingPiece.el.style.top = `${y}px`;
+    }
+
+    function onPointerUp(e) {
+      if (!draggingPiece) return;
+
+      const pieceInfo = draggingPiece;
+      draggingPiece.el.classList.remove("dragging");
+      draggingPiece = null;
+
+      // check snap
+      const center = pieceCenter(pieceInfo);
+      const targetPos = targetPositionForPiece(pieceInfo.row, pieceInfo.col);
+      const targetCenter = {
+        x: targetPos.x + PIECE_SIZE / 2,
+        y: targetPos.y + PIECE_SIZE / 2
+      };
+
+      if (distance(center, targetCenter) <= SNAP_DISTANCE) {
+        // snap into exact place
+        pieceInfo.el.style.left = `${targetPos.x}px`;
+        pieceInfo.el.style.top = `${targetPos.y}px`;
+        pieceInfo.placed = true;
+        pieceInfo.el.classList.add("placed");
+        checkCompletion();
+      }
+    }
+
+    function attachDragHandlers() {
+      pieces.forEach((p) => {
+        p.el.addEventListener("pointerdown", (e) => onPointerDown(e, p));
+      });
+
+      window.addEventListener("pointermove", onPointerMove);
+      window.addEventListener("pointerup", onPointerUp);
+      window.addEventListener("pointercancel", onPointerUp);
+    }
+
+    // ===== WIN CONDITION =====
+    function checkCompletion() {
+      if (pieces.every((p) => p.placed)) {
+        setStatus("Everything fits. That looks perfect.", "good");
+
+        if (!localStorage.getItem(DAY_LETTER_KEY)) {
+          localStorage.setItem(DAY_LETTER_KEY, HIDDEN_LETTER);
+        }
+        alreadyBanner.style.display = "block";
+        openModal("letterModal");
+      } else {
+        setStatus("Nice snap! Keep going.", "good");
+      }
+    }
+
+    // ===== INIT =====
+    function init() {
+      if (localStorage.getItem(DAY_LETTER_KEY)) {
+        alreadyBanner.style.display = "block";
+      }
+
+      createPieces();
+      shufflePieces();
+      attachDragHandlers();
+
+      document.getElementById("shuffleBtn").addEventListener("click", () => {
+        shufflePieces();
+        setStatus("Shuffled! The corner stays put.", "");
+      });
+
+      document.getElementById("backBtn").addEventListener("click", () => {
+        window.location.href = "../../index.html";
+      });
+
+      document.getElementById("goHomeFromModal").addEventListener("click", () => {
+        window.location.href = "../../index.html";
+      });
+
+      document
+        .querySelectorAll("[data-close]")
+        .forEach((btn) =>
+          btn.addEventListener("click", () =>
+            closeModal(btn.getAttribute("data-close"))
+          )
+        );
+
+      document.querySelectorAll(".modal").forEach((modal) => {
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal) {
+            modal.classList.remove("open");
+            modal.setAttribute("aria-hidden", "true");
+          }
+        });
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          document
+            .querySelectorAll(".modal.open")
+            .forEach((m) => m.classList.remove("open"));
+        }
+      });
+    }
+
+    window.addEventListener("load", init);
+  </script>
 </body>
 </html>
