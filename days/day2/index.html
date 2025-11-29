@@ -301,7 +301,7 @@
         <span>Day 2</span> <span>Bracket City</span>
       </div>
       <h1>Day 2 – Bracket City</h1>
-      <p>Type the answer to any blue bracket and hit Enter. You can solve them in any order.</p>
+      <p>Type the answer to any blue bracket and hit Enter. You can solve them in any order, but only the innermost ones count.</p>
     </header>
 
     <main>
@@ -310,7 +310,7 @@
       </section>
 
       <section class="controls">
-        <label for="answerInput" id="inputLabel">Type an answer for any blue bracket…</label>
+        <label for="answerInput" id="inputLabel">Type an answer for any innermost blue bracket…</label>
         <div class="input-row">
           <input id="answerInput" autocomplete="off" />
           <button class="btn" id="submitAnswer">Submit</button>
@@ -730,12 +730,20 @@
       const guess = normalizeAnswer(raw);
       if (!guess) return;
 
+      const innermost = getInnermostUnsolvedIds();
+
       const target = allBracketNodes.find(
-        (n) => !n.solved && n.answerNormalized === guess
+        (n) =>
+          !n.solved &&
+          innermost.has(n.id) &&
+          n.answerNormalized === guess
       );
 
       if (!target) {
-        setStatus("No unsolved bracket is expecting that answer.", "bad");
+        setStatus(
+          "No innermost bracket is expecting that answer. Solve the deeper ones first.",
+          "bad"
+        );
         return;
       }
 
