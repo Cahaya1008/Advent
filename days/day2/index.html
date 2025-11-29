@@ -18,7 +18,7 @@
       --maze-fog: #4c1d95;
       --maze-speed: #16a34a;
       --maze-goal: #facc15;
-      --maze-cell: 16px; /* bigger cells; scrolling is allowed */
+      --maze-cell: 16px;
       --text-main: #f9fafb;
       --muted: #9ca3af;
       --accent: #fb7185;
@@ -131,13 +131,13 @@
         0 0 40px rgba(15, 23, 42, 0.9);
       max-width: 100%;
       max-height: 650px;
-      overflow: auto; /* allow scrolling to view the whole huge maze */
+      overflow: auto;
     }
 
     .maze-grid {
       display: grid;
       gap: 0;
-      position: relative; /* player & enemies are now positioned relative to the grid */
+      position: relative;
       transition: opacity 0.15s ease;
     }
 
@@ -471,7 +471,6 @@
       <section class="maze-panel">
         <div class="maze-container">
           <div class="maze-grid" id="mazeGrid"></div>
-          <!-- player + enemies are appended into the grid in JS so they align perfectly -->
         </div>
       </section>
 
@@ -499,11 +498,11 @@
           </div>
           <div class="legend-item">
             <span class="legend-swatch fog"></span>
-            <span>Purple – fog of war for a few moves</span>
+            <span>Purple – fog of war (one-time)</span>
           </div>
           <div class="legend-item">
             <span class="legend-swatch buff"></span>
-            <span>Green – random buff (speed or clear vision)</span>
+            <span>Green – one-time buff tile</span>
           </div>
           <div class="legend-item">
             <span class="legend-swatch goal"></span>
@@ -515,7 +514,8 @@
           Red enemies patrol the corridors. If one bumps into you, you’re sent
           back to the start. Buff tiles randomly give you either a <strong>speed
           boost</strong> or <strong>clear vision</strong> that cancels fog for
-          a short time. Keys unlock matching locks on the main route.
+          a short time. Each green or purple tile only triggers once and then
+          fades into a normal floor.
         </p>
 
         <div class="btn-row">
@@ -557,13 +557,14 @@
     const DAY_LETTER_KEY = "advent_day_2_letter";
     const HIDDEN_LETTER = "P";
 
-    const MAZE_ROWS = 101;
-    const MAZE_COLS = 101;
+    // Smaller but still nasty
+    const MAZE_ROWS = 61;
+    const MAZE_COLS = 61;
 
-    const NUM_FOG_TILES = 80;
-    const NUM_BUFF_TILES = 60;
-    const NUM_TRAPS = 40;
-    const NUM_ENEMIES = 10;
+    const NUM_FOG_TILES = 40;
+    const NUM_BUFF_TILES = 35;
+    const NUM_TRAPS = 25;
+    const NUM_ENEMIES = 8;
     const NUM_KEY_LOCK_PAIRS = 6;
 
     const FOG_MOVES = 12;
@@ -575,8 +576,7 @@
     const statusLineEl = document.getElementById("statusLine");
     const alreadyBanner = document.getElementById("alreadyBanner");
 
-    let playerEl; // created in JS now
-
+    let playerEl;
     let grid = [];
     let rows = MAZE_ROWS;
     let cols = MAZE_COLS;
@@ -749,7 +749,8 @@
           }
         }
       }
-      // tiles on the main shortest path from start to goal
+
+      // tiles on the main route start->goal
       const pathSet = new Set(path.map((p) => `${p.row},${p.col}`));
 
       function pickMany(array, count) {
@@ -758,10 +759,12 @@
         return copy.slice(0, Math.min(count, copy.length));
       }
 
+      // fog tiles (one-time)
       pickMany(floors, NUM_FOG_TILES).forEach(({ row, col }) => {
         if (grid[row][col] === "floor") grid[row][col] = "fog";
       });
 
+      // buff tiles (one-time)
       pickMany(
         floors.filter((p) => grid[p.row][p.col] === "floor"),
         NUM_BUFF_TILES
@@ -769,17 +772,19 @@
         grid[row][col] = "buff";
       });
 
+      // traps, but never on the main path
       pickMany(
-    floors.filter(
-      (p) =>
-        grid[p.row][p.col] === "floor" &&
-        !pathSet.has(`${p.row},${p.col}`)
-    ),
-    NUM_TRAPS
-  ).forEach(({ row, col }) => {
-    grid[row][col] = "trap";
-  });
+        floors.filter(
+          (p) =>
+            grid[p.row][p.col] === "floor" &&
+            !pathSet.has(`${p.row},${p.col}`)
+        ),
+        NUM_TRAPS
+      ).forEach(({ row, col }) => {
+        grid[row][col] = "trap";
+      });
 
+      // keys + locks along the main path
       const usablePath = path.slice(3, path.length - 3);
       const lockPositions = pickMany(usablePath, NUM_KEY_LOCK_PAIRS);
       const usedIndices = new Set();
@@ -816,7 +821,7 @@
         }
       });
 
-      const pathSet = new Set(path.map((p) => `${p.row},${p.col}`));
+      // enemies mostly off-path
       const enemyCandidates = floors.filter(
         (p) => !pathSet.has(`${p.row},${p.col}`)
       );
@@ -859,7 +864,7 @@
         }
       }
 
-      // create player now and append into the grid so position is relative to it
+      // create player inside the grid
       playerEl = document.createElement("div");
       playerEl.className = "player";
       playerEl.textContent = "→";
@@ -972,6 +977,11 @@
 
     function handleTileEffects(type) {
       const now = performance.now();
+      const r = playerPos.row;
+      const c = playerPos.col;
+      const cellEl = mazeGridEl.querySelector(
+        `.cell[data-row="${r}"][data-col="${c}"]`
+      );
 
       if (type === "goal") {
         handleWin();
@@ -989,17 +999,19 @@
           "A purple fog closes in… your vision shrinks for a few moves.",
           ""
         );
+        // one-time: turn tile into floor
+        grid[r][c] = "floor";
+        if (cellEl) cellEl.classList.remove("fog");
         updateFogVisibility();
       }
 
       if (type === "buff") {
-        const buff =
-          Math.random() < 0.5 ? "speed" : "clearFog";
+        const buff = Math.random() < 0.5 ? "speed" : "clearFog";
         if (buff === "speed") {
           speedBoostUntil = now + SPEED_DURATION_MS;
           playerEl.classList.add("boost");
           setStatus(
-            "Speed boost! Each arrow key carries you two tiles for a moment.",
+            "Speed buff! For a moment each arrow key moves you two tiles.",
             "good"
           );
         } else {
@@ -1007,8 +1019,14 @@
           fogMovesRemaining = 0;
           mazeGridEl.classList.remove("fog-mode");
           clearFogHighlights();
-          setStatus("The fog lifts — full vision for a little while.", "good");
+          setStatus(
+            "Vision buff! The fog lifts and you can see the full maze.",
+            "good"
+          );
         }
+        // one-time: consume buff tile
+        grid[r][c] = "floor";
+        if (cellEl) cellEl.classList.remove("buff");
       }
 
       if (type && type.startsWith("key-")) {
@@ -1022,10 +1040,7 @@
             "good"
           );
         }
-        grid[playerPos.row][playerPos.col] = "floor";
-        const cellEl = mazeGridEl.querySelector(
-          `.cell[data-row="${playerPos.row}"][data-col="${playerPos.col}"]`
-        );
+        grid[r][c] = "floor";
         if (cellEl) cellEl.classList.remove("key");
       }
 
@@ -1133,6 +1148,8 @@
       if (localStorage.getItem(DAY_LETTER_KEY)) {
         alreadyBanner.style.display = "block";
       }
+
+      enemies = [];
 
       generateMazeGrid();
       decorateMaze();
