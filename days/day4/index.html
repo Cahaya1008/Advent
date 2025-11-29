@@ -160,7 +160,7 @@
     }
 
     .piece {
-      position: absolute; /* for when it’s in the play area */
+      position: absolute; /* when in board area */
       width: 40px;
       height: 40px;
       border-radius: 7px;
@@ -432,14 +432,15 @@
         <p>
           Scroll through the tray at the bottom to find pieces. Drag a piece onto
           the board; if you drop it close enough to its true spot, it will snap and
-          lock in. The bottom-left corner piece is already fixed as your anchor.
+          lock in. The very bottom-left corner piece of the whole image is already fixed
+          as your anchor.
         </p>
         <p>
           There’s no preview here — you’re building the picture from memory and vibes.
           Once every piece is locked in, you’ll be able to inspect the back and reveal
           the hidden letter.
         </p>
-        <button class="btn" id="shuffleBtn">↻ Return loose pieces to the tray</button>
+        <button class="btn" id="shuffleBtn">↻ Return loose pieces to the tray (scrambled)</button>
         <button class="btn" id="inspectBtn" disabled>👀 Inspect back of puzzle</button>
         <button class="btn btn-primary" id="backBtn">← Back to calendar</button>
         <div class="status" id="statusLine">
@@ -480,7 +481,7 @@
     const DAY_LETTER_KEY = "advent_day_4_letter";
     const HIDDEN_LETTER = "V";
 
-    // bottom-left fixed piece index (row = ROWS-1, col = 0)
+    // TRUE bottom-left tile of the full image (row 9, col 0)
     const FIXED_ROW = ROWS - 1;
     const FIXED_COL = 0;
 
@@ -498,6 +499,7 @@
     let dragOffsetY = 0;
     let backRevealed = false;
 
+    // ===== UTIL =====
     function setStatus(msg, tone = "") {
       statusLineEl.textContent = msg;
       if (tone === "good") statusLineEl.className = "status status-good";
@@ -516,6 +518,14 @@
       if (!modal) return;
       modal.classList.remove("open");
       modal.setAttribute("aria-hidden", "true");
+    }
+
+    function shuffleArray(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
     }
 
     // ===== LAYOUT HELPERS =====
@@ -574,40 +584,53 @@
             locked: row === FIXED_ROW && col === FIXED_COL
           };
 
-          if (info.locked) {
-            // fixed bottom-left piece: place at correct spot on board
-            puzzleAreaEl.appendChild(pieceEl);
-            const pos = targetPositionForPiece(row, col);
-            pieceEl.style.left = `${pos.x}px`;
-            pieceEl.style.top = `${pos.y}px`;
-            pieceEl.classList.add("locked", "placed");
-            info.placed = true;
-          } else {
-            // all other pieces start in the tray, inline
-            pieceEl.classList.add("in-tray");
-            trayEl.appendChild(pieceEl);
-          }
-
           pieces.push(info);
         }
       }
+
+      // Place locked bottom-left piece onto the board in its exact corner position
+      pieces.forEach((info) => {
+        if (info.locked) {
+          const pieceEl = info.el;
+          puzzleAreaEl.appendChild(pieceEl);
+          const pos = targetPositionForPiece(info.row, info.col);
+          pieceEl.style.left = `${pos.x}px`;
+          pieceEl.style.top = `${pos.y}px`;
+          pieceEl.classList.add("locked", "placed");
+          info.placed = true;
+        }
+      });
+
+      // All other pieces go into the tray, but SCRAMBLED
+      const trayPieces = shuffleArray(pieces.filter((p) => !p.locked));
+      trayPieces.forEach((info) => {
+        info.el.classList.add("in-tray");
+        info.el.style.position = "static";
+        info.el.style.left = "";
+        info.el.style.top = "";
+        trayEl.appendChild(info.el);
+      });
     }
 
     function resetLoosePiecesToTray() {
-      pieces.forEach((p) => {
-        if (p.locked || p.placed) return;
-        // move back to tray row
-        p.el.classList.add("in-tray");
-        p.el.style.position = "static";
-        p.el.style.left = "";
-        p.el.style.top = "";
-        trayEl.appendChild(p.el);
+      // Send all non-locked, non-placed pieces back to tray in a new random order
+      const loose = pieces.filter((p) => !p.locked && !p.placed);
+      const shuffled = shuffleArray(loose.slice());
+
+      trayEl.innerHTML = "";
+      shuffled.forEach((info) => {
+        info.el.classList.add("in-tray");
+        info.el.style.position = "static";
+        info.el.style.left = "";
+        info.el.style.top = "";
+        trayEl.appendChild(info.el);
       });
 
+      // Also leave already-placed pieces where they are
       backOverlay.classList.remove("show");
       backRevealed = false;
       inspectBtn.disabled = !allPlaced();
-      setStatus("Loose pieces returned to the tray. The corner stays put.", "");
+      setStatus("Loose pieces returned to the tray in a new order.", "");
     }
 
     // ===== DRAGGING =====
@@ -724,7 +747,6 @@
           openModal("letterModal");
         }, 650);
       } else {
-        // already revealed once – just ensure letter is stored and show modal
         if (!localStorage.getItem(DAY_LETTER_KEY)) {
           localStorage.setItem(DAY_LETTER_KEY, HIDDEN_LETTER);
         }
