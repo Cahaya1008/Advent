@@ -4,18 +4,23 @@
   <meta charset="UTF-8" />
   <title>Day 3 – Matching Game</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+    rel="stylesheet"
+  />
   <style>
     :root {
-      --bg: radial-gradient(circle at top, #111827, #020617 70%);
-      --panel-bg: #faf5ef;
-      --accent: #7b2333;
-      --accent-soft: #f4e4d8;
-      --text-muted: #6b7280;
-      --good: #16a34a;
-      --bad: #b91c1c;
-      --card-border: #e5e7eb;
-      --card-border-outer: #111827;
+      --bg: #020617;
+      --panel: #0b1220;
+      --card-bg: #111827;
+      --card-face: #f9fafb;
+      --card-border: #1f2937;
+      --accent: #f97373;
+      --accent-soft: #fef2f2;
+      --text-main: #f9fafb;
+      --muted: #9ca3af;
+      --good: #22c55e;
+      --bad: #f97373;
     }
 
     * {
@@ -25,202 +30,290 @@
     }
 
     body {
-      font-family: "Poppins", sans-serif;
-      background: var(--bg);
+      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #111827 0, #020617 55%, #000 100%);
       min-height: 100vh;
-      padding: 1.5rem;
       display: flex;
-      align-items: center;
       justify-content: center;
+      align-items: center;
+      padding: 1.5rem 0.75rem;
+      color: var(--text-main);
     }
 
     .page {
-      background: var(--panel-bg);
+      max-width: 920px;
       width: 100%;
-      max-width: 960px;
-      padding: 1.6rem 1.6rem 1.3rem;
-      border-radius: 20px;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.55);
+      background: linear-gradient(135deg, #020617, #020617 40%, #020617 100%);
+      border-radius: 22px;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.7);
+      padding: 1.7rem 1.5rem 1.3rem;
       position: relative;
+      border: 1px solid rgba(148, 163, 184, 0.25);
     }
 
     header {
-      text-align: center;
-      margin-bottom: 1.2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1rem;
     }
 
-    header h1 {
+    header-left {
+      flex: 1;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      background: rgba(248, 250, 252, 0.06);
+      padding: 0.24rem 0.6rem;
+      border-radius: 999px;
+      margin-bottom: 0.35rem;
+      border: 1px solid rgba(248, 250, 252, 0.15);
+    }
+
+    h1 {
       font-size: 1.9rem;
-      color: var(--accent);
-      margin-bottom: 0.2rem;
+      margin-bottom: 0.15rem;
     }
 
     header p {
       font-size: 0.9rem;
-      color: var(--text-muted);
+      color: var(--muted);
     }
 
-    .already-banner {
-      position: absolute;
-      right: 1rem;
-      top: 1rem;
-      font-size: 0.8rem;
-      padding: 0.3rem 0.8rem;
-      border-radius: 999px;
-      background: #ecfdf5;
-      border: 1px solid #c6f2df;
-      color: #065f46;
-      display: none;
+    .scoreboard {
+      min-width: 190px;
+      background: rgba(15, 23, 42, 0.9);
+      border-radius: 16px;
+      padding: 0.7rem 0.8rem;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      font-size: 0.85rem;
     }
 
-    .info-bar {
+    .score-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 0.8rem;
-      font-size: 0.9rem;
-      flex-wrap: wrap;
-      gap: 0.5rem;
+      margin-bottom: 0.25rem;
     }
 
-    .scores span {
-      margin-right: 0.75rem;
+    .score-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
     }
 
-    .turn-label {
+    .score-label span.dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #38bdf8;
+    }
+
+    .score-label span.dot.computer {
+      background: #f97316;
+    }
+
+    .score-value {
       font-weight: 600;
     }
 
-    .turn-you {
-      color: #16a34a;
+    .turn-indicator {
+      margin-top: 0.3rem;
+      font-size: 0.8rem;
+      color: var(--muted);
     }
 
-    .turn-cpu {
-      color: #b91c1c;
-    }
-
-    .grid-wrapper {
-      background: var(--card-border-outer);
-      padding: 0.6rem;
-      border-radius: 16px;
-      box-shadow: inset 0 0 0 1px #020617;
-    }
-
-    .grid {
+    main {
+      margin-top: 0.4rem;
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      grid-auto-rows: 90px;
-      gap: 0.5rem;
+      grid-template-columns: minmax(0, 2fr) minmax(230px, 1fr);
+      gap: 1rem;
     }
 
-    @media (max-width: 768px) {
-      .grid {
-        grid-template-columns: repeat(3, 1fr);
-        grid-auto-rows: 70px;
-      }
+    .board-wrapper {
+      background: radial-gradient(circle at top, #020617, #020617 65%, #000 100%);
+      border-radius: 18px;
+      padding: 0.9rem;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      grid-auto-rows: 64px;
+      gap: 0.45rem;
+      background: #020617;
+      padding: 0.45rem;
+      border-radius: 14px;
+      box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.9);
+    }
+
+    .card-slot {
+      border-radius: 10px;
+      background: #020617;
+      box-shadow: 0 0 0 1px rgba(51, 65, 85, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px;
     }
 
     .card {
+      width: 100%;
+      height: 100%;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+      background: radial-gradient(circle at 25% 0, #1f2937, #020617 70%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      cursor: pointer;
+      color: transparent;
+      transition: transform 0.18s ease, box-shadow 0.18s ease,
+        background 0.18s ease, color 0.18s ease;
       position: relative;
-      border-radius: 10px;
-      background: #020617;
-      box-shadow:
-        0 0 0 2px var(--card-border),
-        0 0 0 6px #020617;
       overflow: hidden;
     }
 
     .card-inner {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      user-select: none;
-      transition: background 0.15s, transform 0.08s, box-shadow 0.15s, color 0.15s;
-      font-size: 2rem;
-      color: transparent;
-      background: radial-gradient(circle at top, #1f2937, #020617 70%);
+      pointer-events: none;
     }
 
-    .card-inner:hover {
-      box-shadow: 0 0 0 2px #fef9c3;
+    .card.front {
+      background: var(--card-face);
+      color: #111827;
+      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.65);
       transform: translateY(-1px);
     }
 
-    .card-inner.disabled {
+    .card.matched {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #052e16;
+      border-color: #4ade80;
+      box-shadow: 0 0 0 1px rgba(74, 222, 128, 0.7);
       cursor: default;
-      box-shadow: 0 0 0 2px var(--card-border);
       transform: none;
     }
 
-    .card-inner.revealed,
-    .card-inner.matched {
-      color: #f9fafb;
-      background: radial-gradient(circle at top, #f97316, #7c2d12 70%);
-      font-weight: 600;
+    .card.disabled {
+      pointer-events: none;
     }
 
-    .card-inner.matched {
-      background: radial-gradient(circle at top, #22c55e, #14532d 70%);
+    .info-panel {
+      background: rgba(15, 23, 42, 0.9);
+      border-radius: 18px;
+      padding: 0.8rem 0.9rem 0.9rem;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      font-size: 0.85rem;
     }
 
-    .status-line {
-      margin-top: 0.6rem;
-      font-size: 0.9rem;
-      min-height: 1.2rem;
+    .info-panel h2 {
+      font-size: 1rem;
+      margin-bottom: 0.4rem;
     }
 
-    .status-line.good { color: var(--good); }
-    .status-line.bad { color: var(--bad); }
-    .status-line.muted { color: var(--text-muted); }
+    .info-panel p {
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+      line-height: 1.5;
+    }
+
+    .btn {
+      border-radius: 999px;
+      border: none;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.83rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: var(--accent-soft);
+      color: #991b1b;
+      border: 1px solid rgba(248, 113, 113, 0.5);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      transition: background 0.12s ease, transform 0.08s ease,
+        box-shadow 0.12s ease;
+    }
+
+    .btn:hover {
+      background: #fecaca;
+      transform: translateY(-1px);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+    }
+
+    .btn-primary {
+      background: #f97373;
+      color: #111827;
+      border-color: #fecaca;
+    }
+
+    .btn-primary:hover {
+      background: #fca5a5;
+    }
+
+    .status {
+      margin-top: 0.4rem;
+      min-height: 1.1rem;
+    }
+
+    .status span {
+      display: inline-block;
+    }
+
+    .status-good {
+      color: var(--good);
+    }
+
+    .status-bad {
+      color: var(--bad);
+    }
+
+    .status-muted {
+      color: var(--muted);
+    }
 
     footer {
       margin-top: 1rem;
       display: flex;
       justify-content: space-between;
+      align-items: center;
       gap: 0.6rem;
       flex-wrap: wrap;
+      font-size: 0.78rem;
+      color: var(--muted);
     }
 
-    .btn {
-      border: none;
-      border-radius: 10px;
-      padding: 0.55rem 1.1rem;
-      font-size: 0.9rem;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.25rem;
+    .already-banner {
+      position: absolute;
+      top: 0.7rem;
+      right: 0.9rem;
+      font-size: 0.75rem;
+      background: rgba(22, 163, 74, 0.12);
+      border-radius: 999px;
+      padding: 0.18rem 0.6rem;
+      border: 1px solid rgba(74, 222, 128, 0.7);
+      color: #bbf7d0;
+      display: none;
     }
 
-    .btn-primary {
-      background: var(--accent);
-      color: #fff;
-    }
-
-    .btn-secondary {
-      background: var(--accent-soft);
-      color: #5a4032;
-      border: 1px solid #d6c0b4;
-    }
-
-    .btn:disabled {
-      opacity: 0.6;
-      cursor: default;
-    }
+    /* Modal */
 
     .modal {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.55);
+      background: rgba(0, 0, 0, 0.6);
       display: none;
       align-items: center;
       justify-content: center;
       padding: 1rem;
-      z-index: 30;
+      z-index: 40;
     }
 
     .modal.open {
@@ -228,455 +321,523 @@
     }
 
     .modal-content {
-      background: #fff8f0;
-      padding: 1.3rem;
-      border-radius: 18px;
-      max-width: 380px;
+      max-width: 420px;
       width: 100%;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.55);
+      padding: 1.2rem 1.3rem 1.05rem;
+      background: #0b1220;
+      border-radius: 18px;
+      color: #e5e7eb;
       position: relative;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.6);
     }
 
-    .modal-content h3 {
-      margin-bottom: 0.4rem;
-      color: var(--accent);
+    .modal h2 {
+      font-size: 1.1rem;
+      margin-bottom: 0.35rem;
     }
 
-    .modal-content p {
+    .modal p {
       font-size: 0.9rem;
-      margin-bottom: 0.3rem;
+      line-height: 1.5;
+      color: #cbd5f5;
     }
 
     .modal-close {
       position: absolute;
       right: 0.7rem;
-      top: 0.7rem;
-      background: none;
+      top: 0.6rem;
       border: none;
+      background: transparent;
       font-size: 1.2rem;
       cursor: pointer;
-      color: #555;
+      color: #9ca3af;
     }
 
-    .letter-pill {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 999px;
-      padding: 0.1rem 0.6rem;
-      background: #ecfdf5;
-      border: 1px solid #bbf7d0;
-      font-weight: 600;
-      color: #166534;
+    .modal-footer {
+      margin-top: 0.9rem;
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      flex-wrap: wrap;
     }
   </style>
 </head>
 <body>
   <div class="page">
-    <div class="already-banner" id="alreadyBanner">Letter already collected</div>
+    <div class="already-banner" id="alreadyBanner">
+      Letter already collected ✅
+    </div>
 
     <header>
-      <h1>Day 3 – Matching Game</h1>
-      <p>Match cozy little Christmas emojis against a computer with a very suspicious memory.</p>
+      <div class="header-left">
+        <div class="badge">
+          <span>Day 3</span>
+          <span>Matching Game</span>
+        </div>
+        <h1>Memory vs. the Computer</h1>
+        <p>
+          Flip cards and find pairs before the computer does. You go first.
+          If you find more pairs than it does, you win today’s secret letter.
+        </p>
+      </div>
+      <div class="scoreboard">
+        <div class="score-row">
+          <div class="score-label">
+            <span class="dot"></span><span>You</span>
+          </div>
+          <div class="score-value" id="playerScore">0</div>
+        </div>
+        <div class="score-row">
+          <div class="score-label">
+            <span class="dot computer"></span><span>Computer</span>
+          </div>
+          <div class="score-value" id="computerScore">0</div>
+        </div>
+        <div class="turn-indicator" id="turnIndicator">Your turn</div>
+      </div>
     </header>
 
-    <div class="info-bar">
-      <div class="scores">
-        <span><strong>You:</strong> <span id="scorePlayer">0</span></span>
-        <span><strong>Computer:</strong> <span id="scoreCPU">0</span></span>
-      </div>
-      <div class="turn-label">
-        Turn: <span id="turnLabel" class="turn-you">You</span>
-      </div>
-    </div>
+    <main>
+      <section class="board-wrapper">
+        <div class="board" id="board"></div>
+      </section>
 
-    <div class="grid-wrapper">
-      <div class="grid" id="cardGrid"></div>
-    </div>
+      <section class="info-panel">
+        <h2>How this works</h2>
+        <p>
+          You and the computer take turns flipping two cards. If the emojis match,
+          that pair disappears and whoever found it scores a point and goes again.
+          If they don’t match, they flip back over and the turn passes.
+        </p>
+        <p>
+          The computer remembers emojis it has seen, but it isn’t perfect:
+          sometimes it will ignore a known pair and guess anyway. That’s your
+          chance to outplay it.
+        </p>
+        <p>
+          There are 30 cards (15 pairs). When all pairs are gone, whoever has
+          more pairs <em>wins</em> — even if the other player took the last pair.
+        </p>
 
-    <div id="statusLine" class="status-line muted"></div>
+        <button class="btn" id="restartBtn">↻ Restart this game</button>
+        <button class="btn btn-primary" id="backBtn">← Back to calendar</button>
+
+        <div class="status" id="statusLine"><span class="status-muted">Find a first pair to get ahead.</span></div>
+      </section>
+    </main>
 
     <footer>
-      <button class="btn btn-secondary" id="backBtn">← Back to calendar</button>
-      <div>
-        <button class="btn btn-secondary" id="restartBtn">Restart game</button>
-      </div>
+      <span>Tip: Try to remember the computer’s mistakes too. Its memory isn’t perfect.</span>
+      <span>Each day hides at most one letter.</span>
     </footer>
   </div>
 
-  <div class="modal" id="resultModal">
+  <!-- Win / letter modal -->
+  <div class="modal" id="letterModal" aria-hidden="true">
     <div class="modal-content">
-      <button class="modal-close" data-close="resultModal">&times;</button>
-      <h3 id="resultTitle"></h3>
-      <p id="resultText"></p>
-      <p id="letterText" style="display:none;">
-        Today’s secret letter is
-        <span class="letter-pill">W</span>.
+      <button class="modal-close" data-close="letterModal">&times;</button>
+      <h2>You beat the computer 🎉</h2>
+      <p>
+        Your memory wins this round. Today’s hidden letter is
+        <strong>W</strong>. It’s been added to your collection on the
+        main calendar page.
       </p>
-      <div style="margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
-        <button class="btn btn-secondary" data-close="resultModal">Keep playing</button>
-        <button class="btn btn-primary" id="goHomeBtn">Back to calendar</button>
+      <div class="modal-footer">
+        <button class="btn" data-close="letterModal">Stay on this page</button>
+        <button class="btn btn-primary" id="goHomeFromModal">Back to calendar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lose modal -->
+  <div class="modal" id="loseModal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="modal-close" data-close="loseModal">&times;</button>
+      <h2>The computer won this time 🤖</h2>
+      <p>
+        It found more pairs than you did. The letter stays hidden for now,
+        but you can hit “Restart this game” and try again as many times as you like.
+      </p>
+      <div class="modal-footer">
+        <button class="btn" data-close="loseModal">Close</button>
       </div>
     </div>
   </div>
 
   <script>
-    const DAY_KEY = "advent_day_3_letter";
+    // ===== CONFIG =====
+    const DAY_LETTER_KEY = "advent_day_3_letter";
     const HIDDEN_LETTER = "W";
 
-    const gridEl = document.getElementById("cardGrid");
-    const scorePlayerEl = document.getElementById("scorePlayer");
-    const scoreCPUEl = document.getElementById("scoreCPU");
-    const turnLabelEl = document.getElementById("turnLabel");
+    const EMOJIS = [
+      "🎄","🎁","⭐","⛄","🕯️",
+      "🍪","🥛","🧣","🧤","🎅",
+      "🦌","🛷","❄️","🔔","🍬"
+    ]; // 15 pairs
+
+    const COMPUTER_SMARTNESS = 0.7; // 70% of the time, it uses a known pair
+
+    // ===== STATE =====
+    let cards = [];             // {id, emoji, matched, element}
+    let revealed = [];          // indices of currently flipped but unresolved cards
+    let isPlayerTurn = true;
+    let playerPairs = 0;
+    let computerPairs = 0;
+    let gameOver = false;
+    let lockInput = false;      // to prevent spam clicking
+    const computerMemory = new Map(); // index -> emoji seen
+
+    const boardEl = document.getElementById("board");
     const statusLineEl = document.getElementById("statusLine");
-    const restartBtn = document.getElementById("restartBtn");
-    const backBtn = document.getElementById("backBtn");
+    const playerScoreEl = document.getElementById("playerScore");
+    const computerScoreEl = document.getElementById("computerScore");
+    const turnIndicatorEl = document.getElementById("turnIndicator");
     const alreadyBanner = document.getElementById("alreadyBanner");
 
-    const modal = document.getElementById("resultModal");
-    const resultTitleEl = document.getElementById("resultTitle");
-    const resultTextEl = document.getElementById("resultText");
-    const letterTextEl = document.getElementById("letterText");
-    const goHomeBtn = document.getElementById("goHomeBtn");
-
-    // Game constants
-    const ROWS = 6;
-    const COLS = 5;
-    const TOTAL_CARDS = ROWS * COLS; // 30
-    const PAIRS = TOTAL_CARDS / 2;   // 15
-
-    // State
-    let cards = []; // {symbol, matched, element}
-    let currentPlayer = "player"; // "player" | "cpu"
-    let playerPairs = 0;
-    let cpuPairs = 0;
-    let flippedIndices = [];
-    let busy = false;
-    let gameOver = false;
-
-    // CPU memory: symbol -> set of indices it has seen (unmatched)
-    const cpuMemory = new Map();
-
-    function init() {
-      if (localStorage.getItem(DAY_KEY)) {
-        alreadyBanner.style.display = "block";
-      }
-      setupGame();
-      restartBtn.addEventListener("click", setupGame);
-      backBtn.addEventListener("click", () => {
-        window.location.href = "../../index.html";
-      });
-      goHomeBtn.addEventListener("click", () => {
-        window.location.href = "../../index.html";
-      });
-      document.querySelectorAll("[data-close]").forEach(btn => {
-        btn.addEventListener("click", () => closeModal(btn.dataset.close));
-      });
-    }
-
-    function setupGame() {
-      // Reset state
-      cards = [];
-      flippedIndices = [];
-      playerPairs = 0;
-      cpuPairs = 0;
-      currentPlayer = "player";
-      busy = false;
-      gameOver = false;
-      cpuMemory.clear();
-      scorePlayerEl.textContent = "0";
-      scoreCPUEl.textContent = "0";
-      turnLabelEl.textContent = "You";
-      turnLabelEl.className = "turn-label turn-you";
-      statusLineEl.textContent = "Your turn. Flip two cards.";
-      statusLineEl.className = "status-line muted";
-      gridEl.innerHTML = "";
-
-      // 15 Christmas-y emoji pairs
-      const symbols = [
-        "🎄","🎁","❄️","⛄️","🦌",
-        "🧣","🧤","🔔","⭐️","🕯️",
-        "🍪","🧦","🎅","🤶","🧸"
-      ];
-
-      const deckSymbols = shuffle([...symbols, ...symbols]); // 30 entries
-
-      for (let i = 0; i < TOTAL_CARDS; i++) {
-        const card = {
-          symbol: deckSymbols[i],
-          matched: false,
-          element: null
-        };
-        const cardDiv = document.createElement("div");
-        cardDiv.className = "card";
-
-        const inner = document.createElement("div");
-        inner.className = "card-inner";
-        inner.dataset.index = i.toString();
-        inner.textContent = "✺"; // back of card icon
-        inner.addEventListener("click", onPlayerCardClick);
-
-        cardDiv.appendChild(inner);
-        gridEl.appendChild(cardDiv);
-
-        card.element = inner;
-        cards.push(card);
-      }
-    }
-
-    function shuffle(arr) {
-      for (let i = arr.length - 1; i > 0; i--) {
+    // ===== UTIL =====
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
+        [array[i], array[j]] = [array[j], array[i]];
       }
-      return arr;
+      return array;
     }
 
-    function onPlayerCardClick(e) {
-      if (currentPlayer !== "player" || busy || gameOver) return;
-      const index = parseInt(e.currentTarget.dataset.index, 10);
-      flipCard("player", index);
+    function setStatus(msg, tone = "status-muted") {
+      statusLineEl.innerHTML = `<span class="${tone}">${msg}</span>`;
     }
 
-    function flipCard(who, index) {
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      if (!modal) return;
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      if (!modal) return;
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    // ===== GAME SETUP =====
+    function buildDeck() {
+      const pairEmojis = [...EMOJIS, ...EMOJIS]; // 30 cards
+      shuffle(pairEmojis);
+      cards = pairEmojis.map((emoji, index) => ({
+        id: index,
+        emoji,
+        matched: false,
+        element: null
+      }));
+    }
+
+    function renderBoard() {
+      boardEl.innerHTML = "";
+      cards.forEach((card) => {
+        const slot = document.createElement("div");
+        slot.className = "card-slot";
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "card";
+        btn.dataset.index = String(card.id);
+
+        const inner = document.createElement("span");
+        inner.className = "card-inner";
+        inner.textContent = card.emoji;
+
+        btn.appendChild(inner);
+        slot.appendChild(btn);
+        boardEl.appendChild(slot);
+
+        card.element = btn;
+
+        btn.addEventListener("click", () => handlePlayerClick(card.id));
+      });
+    }
+
+    function resetGame() {
+      buildDeck();
+      renderBoard();
+
+      revealed = [];
+      isPlayerTurn = true;
+      playerPairs = 0;
+      computerPairs = 0;
+      gameOver = false;
+      lockInput = false;
+      computerMemory.clear();
+
+      playerScoreEl.textContent = "0";
+      computerScoreEl.textContent = "0";
+      turnIndicatorEl.textContent = "Your turn";
+      setStatus("Find a first pair to get ahead.", "status-muted");
+    }
+
+    // ===== CARD FLIP HELPERS =====
+    function flipUp(index) {
       const card = cards[index];
       if (!card || card.matched) return;
-      if (flippedIndices.includes(index)) return;
-
-      if (flippedIndices.length >= 2) return;
-
-      revealCard(index);
-      rememberForCPU(index);
-
-      flippedIndices.push(index);
-
-      if (flippedIndices.length === 2) {
-        busy = true;
-        setTimeout(() => {
-          resolvePair(who);
-        }, 650);
-      }
+      const el = card.element;
+      if (!el) return;
+      el.classList.add("front");
+      computerMemory.set(index, card.emoji); // computer sees everything that is flipped
     }
 
-    function revealCard(index) {
-      const card = cards[index];
-      if (!card) return;
-      card.element.classList.add("revealed");
-      card.element.textContent = card.symbol;
-    }
-
-    function hideCard(index) {
-      const card = cards[index];
-      if (!card) return;
-      card.element.classList.remove("revealed");
-      if (!card.matched) {
-        card.element.textContent = "✺";
-      }
-    }
-
-    function rememberForCPU(index) {
+    function flipDown(index) {
       const card = cards[index];
       if (!card || card.matched) return;
-      const sym = card.symbol;
-      if (!cpuMemory.has(sym)) {
-        cpuMemory.set(sym, new Set());
-      }
-      cpuMemory.get(sym).add(index);
+      const el = card.element;
+      if (!el) return;
+      el.classList.remove("front");
     }
 
-    function cleanupCPUMemoryForMatched(symbol, indices) {
-      const set = cpuMemory.get(symbol);
-      if (!set) return;
-      indices.forEach(i => set.delete(i));
-      if (set.size === 0) {
-        cpuMemory.delete(symbol);
-      }
+    function markMatched(i1, i2) {
+      [i1, i2].forEach((idx) => {
+        const card = cards[idx];
+        if (!card) return;
+        card.matched = true;
+        const el = card.element;
+        if (el) {
+          el.classList.add("matched");
+          el.classList.add("disabled");
+        }
+      });
     }
 
-    function resolvePair(who) {
-      const [i1, i2] = flippedIndices;
-      const c1 = cards[i1];
-      const c2 = cards[i2];
-
-      if (c1 && c2 && c1.symbol === c2.symbol) {
-        // Match
-        c1.matched = true;
-        c2.matched = true;
-        c1.element.classList.add("matched", "disabled");
-        c2.element.classList.add("matched", "disabled");
-        cleanupCPUMemoryForMatched(c1.symbol, [i1, i2]);
-
-        if (who === "player") {
-          playerPairs++;
-          scorePlayerEl.textContent = playerPairs.toString();
-          statusLineEl.textContent = "You found a pair! You go again.";
-          statusLineEl.className = "status-line good";
-        } else {
-          cpuPairs++;
-          scoreCPUEl.textContent = cpuPairs.toString();
-          statusLineEl.textContent = "Computer found a pair and goes again…";
-          statusLineEl.className = "status-line bad";
-        }
-
-        flippedIndices = [];
-        busy = false;
-
-        if (playerPairs + cpuPairs === PAIRS) {
-          endGame();
-        } else {
-          // Same player goes again
-          if (who === "cpu") {
-            setTimeout(cpuTurn, 700);
-          }
-        }
-      } else {
-        // No match: hide them again
-        hideCard(i1);
-        hideCard(i2);
-        flippedIndices = [];
-        busy = false;
-
-        // Switch player
-        if (who === "player") {
-          currentPlayer = "cpu";
-          turnLabelEl.textContent = "Computer";
-          turnLabelEl.className = "turn-label turn-cpu";
-          statusLineEl.textContent = "Computer’s turn…";
-          statusLineEl.className = "status-line muted";
-          setTimeout(cpuTurn, 750);
-        } else {
-          currentPlayer = "player";
-          turnLabelEl.textContent = "You";
-          turnLabelEl.className = "turn-label turn-you";
-          statusLineEl.textContent = "Your turn. Flip two cards.";
-          statusLineEl.className = "status-line muted";
-        }
-      }
+    function allPairsFound() {
+      return cards.every((c) => c.matched);
     }
 
-    function cpuTurn() {
-      if (gameOver || currentPlayer !== "cpu") return;
-      busy = true;
-
-      const knownPair = findKnownPair();
-      if (knownPair) {
-        const [i1, i2] = knownPair;
-        setTimeout(() => {
-          flipCard("cpu", i1);
-          setTimeout(() => {
-            flipCard("cpu", i2);
-          }, 500);
-        }, 400);
-        return;
-      }
-
-      // No known pair: random logic with preference for unseen
-      const firstIndex = chooseRandomForCPU(null);
-      setTimeout(() => {
-        flipCard("cpu", firstIndex);
-        setTimeout(() => {
-          const secondIndex = chooseRandomForCPU(firstIndex);
-          flipCard("cpu", secondIndex);
-        }, 500);
-      }, 400);
-    }
-
-    function findKnownPair() {
-      for (const [sym, set] of cpuMemory.entries()) {
-        const indices = [...set].filter(i => !cards[i].matched);
-        if (indices.length >= 2) {
-          return [indices[0], indices[1]];
-        }
-      }
-      return null;
-    }
-
-    function chooseRandomForCPU(firstIndex) {
-      const unmatchedIndices = cards
-        .map((c, idx) => ({ c, idx }))
-        .filter(obj => !obj.c.matched)
-        .map(obj => obj.idx);
-
-      if (firstIndex !== null && firstIndex !== undefined) {
-        // If we know a partner for firstIndex's symbol, use it
-        const s = cards[firstIndex].symbol;
-        const seen = cpuMemory.get(s);
-        if (seen) {
-          const candidates = [...seen].filter(i => i !== firstIndex && !cards[i].matched);
-          if (candidates.length > 0) {
-            return candidates[0];
-          }
-        }
-
-        // Otherwise, prefer still-unseen indices
-        const seenAll = new Set();
-        for (const set of cpuMemory.values()) {
-          for (const n of set.values()) seenAll.add(n);
-        }
-        const unseen = unmatchedIndices.filter(i => i !== firstIndex && !seenAll.has(i));
-        if (unseen.length > 0) {
-          return unseen[Math.floor(Math.random() * unseen.length)];
-        }
-
-        const remaining = unmatchedIndices.filter(i => i !== firstIndex);
-        return remaining[Math.floor(Math.random() * remaining.length)];
-      }
-
-      // First flip of a turn: prefer completely unseen cards
-      const seenAll = new Set();
-      for (const set of cpuMemory.values()) {
-        for (const n of set.values()) seenAll.add(n);
-      }
-      const unseen = unmatchedIndices.filter(i => !seenAll.has(i));
-      if (unseen.length > 0) {
-        return unseen[Math.floor(Math.random() * unseen.length)];
-      }
-      return unmatchedIndices[Math.floor(Math.random() * unmatchedIndices.length)];
+    function updateScores() {
+      playerScoreEl.textContent = String(playerPairs);
+      computerScoreEl.textContent = String(computerPairs);
     }
 
     function endGame() {
       gameOver = true;
-      busy = true;
+      lockInput = true;
 
-      let title, text, playerWon = false;
+      if (playerPairs > computerPairs) {
+        setStatus("You won the match!", "status-good");
 
-      if (playerPairs > cpuPairs) {
-        title = "You win! 🎉";
-        text = `You found ${playerPairs} pairs, the computer found ${cpuPairs}.`;
-        playerWon = true;
-      } else if (cpuPairs > playerPairs) {
-        title = "The computer wins…";
-        text = `Computer found ${cpuPairs} pairs, you found ${playerPairs}. Try again!`;
-      } else {
-        title = "It’s a tie!";
-        text = `You both found ${playerPairs} pairs.`;
-      }
-
-      resultTitleEl.textContent = title;
-      resultTextEl.textContent = text;
-
-      if (playerWon) {
-        letterTextEl.style.display = "block";
-        if (!localStorage.getItem(DAY_KEY)) {
-          localStorage.setItem(DAY_KEY, HIDDEN_LETTER);
-          alreadyBanner.style.display = "block";
+        if (!localStorage.getItem(DAY_LETTER_KEY)) {
+          localStorage.setItem(DAY_LETTER_KEY, HIDDEN_LETTER);
         }
+        alreadyBanner.style.display = "block";
+        openModal("letterModal");
+      } else if (computerPairs > playerPairs) {
+        setStatus("The computer won this one.", "status-bad");
+        openModal("loseModal");
       } else {
-        letterTextEl.style.display = "none";
+        setStatus("You tied with the computer. Try again to claim the letter.", "status-muted");
+        openModal("loseModal");
+      }
+    }
+
+    // ===== TURN / MATCH LOGIC =====
+    function resolvePair() {
+      if (revealed.length !== 2) return;
+      const [i1, i2] = revealed;
+      const c1 = cards[i1];
+      const c2 = cards[i2];
+      if (!c1 || !c2) return;
+
+      lockInput = true;
+
+      if (c1.emoji === c2.emoji) {
+        // Match
+        markMatched(i1, i2);
+        revealed = [];
+
+        if (isPlayerTurn) {
+          playerPairs++;
+          updateScores();
+          setStatus("Nice match! You get another turn.", "status-good");
+        } else {
+          computerPairs++;
+          updateScores();
+          setStatus("Computer found a pair and goes again.", "status-muted");
+        }
+
+        if (allPairsFound()) {
+          setTimeout(endGame, 650);
+          return;
+        }
+
+        // Same player goes again
+        lockInput = false;
+        if (!isPlayerTurn) {
+          // Let computer think a bit
+          setTimeout(computerTurn, 700);
+        }
+
+      } else {
+        // Not a match
+        setTimeout(() => {
+          flipDown(i1);
+          flipDown(i2);
+          revealed = [];
+        }, 650);
+
+        setTimeout(() => {
+          isPlayerTurn = !isPlayerTurn;
+          turnIndicatorEl.textContent = isPlayerTurn ? "Your turn" : "Computer's turn";
+          if (isPlayerTurn) {
+            setStatus("Your turn. Remember what you’ve seen.", "status-muted");
+          } else {
+            setStatus("Computer’s turn…", "status-muted");
+          }
+
+          lockInput = false;
+          if (!isPlayerTurn && !gameOver) {
+            setTimeout(computerTurn, 800);
+          }
+        }, 700);
+      }
+    }
+
+    // ===== PLAYER INTERACTION =====
+    function handlePlayerClick(index) {
+      if (gameOver || lockInput || !isPlayerTurn) return;
+      const card = cards[index];
+      if (!card || card.matched) return;
+      if (revealed.includes(index)) return;
+      if (revealed.length === 2) return;
+
+      flipUp(index);
+      revealed.push(index);
+
+      if (revealed.length === 2) {
+        resolvePair();
+      }
+    }
+
+    // ===== COMPUTER AI (slightly less powerful) =====
+    function getKnownPairsForComputer() {
+      const emojiToIndices = new Map();
+
+      for (const [idx, emoji] of computerMemory.entries()) {
+        const card = cards[idx];
+        if (!card || card.matched) continue;
+        if (!emojiToIndices.has(emoji)) emojiToIndices.set(emoji, []);
+        emojiToIndices.get(emoji).push(idx);
       }
 
-      openModal("resultModal");
+      const pairs = [];
+      emojiToIndices.forEach((list) => {
+        if (list.length >= 2) {
+          // store only unique pair (0 and 1)
+          pairs.push([list[0], list[1]]);
+        }
+      });
+
+      return pairs;
     }
 
-    function openModal(id) {
-      document.getElementById(id).classList.add("open");
+    function getRandomUnmatchedIndex(exclude = []) {
+      const excludedSet = new Set(exclude);
+      const candidates = cards
+        .map((c, idx) => ({ c, idx }))
+        .filter(({ c, idx }) => !c.matched && !excludedSet.has(idx));
+
+      if (candidates.length === 0) return null;
+      const choice = candidates[Math.floor(Math.random() * candidates.length)];
+      return choice.idx;
     }
 
-    function closeModal(id) {
-      document.getElementById(id).classList.remove("open");
+    function computerTurn() {
+      if (gameOver) return;
+      if (isPlayerTurn) return; // safety
+
+      lockInput = true;
+      revealed = [];
+
+      const knownPairs = getKnownPairsForComputer();
+      let chosenPair = null;
+
+      if (knownPairs.length > 0 && Math.random() < COMPUTER_SMARTNESS) {
+        // Use a known pair most of the time
+        chosenPair = knownPairs[Math.floor(Math.random() * knownPairs.length)];
+      }
+
+      if (!chosenPair) {
+        // Either no known pairs or AI deliberately "derped"
+        const first = getRandomUnmatchedIndex();
+        const second = getRandomUnmatchedIndex([first]);
+        if (first == null || second == null) {
+          lockInput = false;
+          return;
+        }
+        chosenPair = [first, second];
+      }
+
+      const [firstIndex, secondIndex] = chosenPair;
+
+      // Flip first card
+      setTimeout(() => {
+        flipUp(firstIndex);
+        revealed.push(firstIndex);
+      }, 250);
+
+      // Flip second card
+      setTimeout(() => {
+        flipUp(secondIndex);
+        revealed.push(secondIndex);
+        resolvePair();
+      }, 900);
     }
 
-    // Init
+    // ===== INIT & WIRING =====
+    function init() {
+      if (localStorage.getItem(DAY_LETTER_KEY)) {
+        alreadyBanner.style.display = "block";
+      }
+
+      resetGame();
+
+      document.getElementById("restartBtn").addEventListener("click", () => {
+        closeModal("loseModal");
+        resetGame();
+      });
+
+      document.getElementById("backBtn").addEventListener("click", () => {
+        window.location.href = "../../index.html";
+      });
+
+      document.getElementById("goHomeFromModal").addEventListener("click", () => {
+        window.location.href = "../../index.html";
+      });
+
+      document
+        .querySelectorAll("[data-close]")
+        .forEach((btn) =>
+          btn.addEventListener("click", () =>
+            closeModal(btn.getAttribute("data-close"))
+          )
+        );
+
+      document.querySelectorAll(".modal").forEach((modal) => {
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal) {
+            modal.classList.remove("open");
+            modal.setAttribute("aria-hidden", "true");
+          }
+        });
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          document
+            .querySelectorAll(".modal.open")
+            .forEach((m) => m.classList.remove("open"));
+        }
+      });
+    }
+
     init();
   </script>
 </body>
