@@ -1,167 +1,137 @@
-import React, { useState, useEffect } from "react";
-
-const Day5Modal = ({ onClose, onComplete }) => {
-  const [r1, setR1] = useState("");
-  const [r1Status, setR1Status] = useState("unanswered");
-
-  const [r2, setR2] = useState("");
-  const [r2Status, setR2Status] = useState("unanswered");
-
-  const [finished, setFinished] = useState(false);
-
-  const normalize = (s) =>
-    s.toLowerCase().replace(/[^a-z0-9-]/g, "").trim();
-
-  // Check completion
-  useEffect(() => {
-    if (r1Status === "correct" && r2Status === "correct" && !finished) {
-      setFinished(true);
-      onComplete?.(); // send signal to parent if needed
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Day 5 — Riddles</title>
+  <style>
+    body {
+      background: #0f172a;
+      color: #e2e8f0;
+      font-family: Arial, sans-serif;
+      padding: 20px;
     }
-  }, [r1Status, r2Status]);
+    .card {
+      background: #1e293b;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 1px solid #334155;
+    }
+    input {
+      background: #0f172a;
+      border: 1px solid #475569;
+      padding: 6px;
+      color: #f1f5f9;
+      border-radius: 4px;
+    }
+    button {
+      padding: 6px 10px;
+      background: #facc15;
+      border: none;
+      color: #1e293b;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .correct { color: #4ade80; font-weight: bold; }
+    .incorrect { color: #f87171; font-weight: bold; }
+    .digit-box {
+      background: #14532d;
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+      color: #bbf7d0;
+      font-size: 14px;
+      display: none;
+    }
+  </style>
+</head>
 
-  const handleR1 = (e) => {
-    e.preventDefault();
-    const ans = normalize(r1);
-    if (ans === "honey") setR1Status("correct");
-    else setR1Status("incorrect");
-  };
+<body>
 
-  const handleR2 = (e) => {
-    e.preventDefault();
+<h1>Day 5 — Riddles</h1>
+<p>Solve both problems to reveal the first digit of the combination lock.</p>
 
-    // Accept "-1", "x=-1", "x = -1", etc
-    const raw = r2.trim().toLowerCase();
-    let val = Number(raw);
-    if (isNaN(val)) {
-      const match = raw.match(/-?\d+(\.\d+)?/);
-      if (match) val = Number(match[0]);
+<!-- RIDDLE 1 -->
+<div class="card">
+  <h3>Problem 1 — Riddle</h3>
+  <p>
+    “By vicious beast I'm guarded,<br>
+    By death on silver wings.<br>
+    Like gold, I last eternal,<br>
+    Treasure to queens and kings.”
+  </p>
+
+  <input id="r1" placeholder="answer" />
+  <button onclick="checkR1()">Submit</button>
+  <span id="r1-status"></span>
+</div>
+
+<!-- RIDDLE 2 -->
+<div class="card">
+  <h3>Problem 2 — Solve for x</h3>
+  <p style="font-family: monospace;">
+    7·3^x + 3^x + 3^x = 9·3^x · 27 · 3^x · 9^x
+  </p>
+
+  <input id="r2" placeholder="x = ?" />
+  <button onclick="checkR2()">Submit</button>
+  <span id="r2-status"></span>
+</div>
+
+<!-- RESULT -->
+<div id="digit" class="digit-box">
+  Great job! The first digit of the combination lock is <strong>5</strong>.
+</div>
+
+<script>
+  let done1 = false;
+  let done2 = false;
+
+  function normalize(s) {
+    return s.toLowerCase().replace(/[^a-z0-9-]/g, "");
+  }
+
+  // Check riddle 1
+  function checkR1() {
+    const val = normalize(document.getElementById("r1").value);
+    const status = document.getElementById("r1-status");
+
+    if (val === "honey") {
+      status.innerHTML = "<span class='correct'>✔ correct</span>";
+      done1 = true;
+      reveal();
+    } else {
+      status.innerHTML = "<span class='incorrect'>✖ try again</span>";
+    }
+  }
+
+  // Check riddle 2
+  function checkR2() {
+    const raw = document.getElementById("r2").value.trim().toLowerCase();
+    const status = document.getElementById("r2-status");
+
+    let num = Number(raw);
+    if (isNaN(num)) {
+      const m = raw.match(/-?\d+/);
+      if (m) num = Number(m[0]);
     }
 
-    if (val === -1) setR2Status("correct");
-    else setR2Status("incorrect");
-  };
+    if (num === -1) {
+      status.innerHTML = "<span class='correct'>✔ correct</span>";
+      done2 = true;
+      reveal();
+    } else {
+      status.innerHTML = "<span class='incorrect'>✖ try again</span>";
+    }
+  }
 
-  const reset = () => {
-    setR1(""); setR2("");
-    setR1Status("unanswered");
-    setR2Status("unanswered");
-    setFinished(false);
-  };
+  function reveal() {
+    if (done1 && done2) {
+      document.getElementById("digit").style.display = "block";
+    }
+  }
+</script>
 
-  const badge = (status) => {
-    if (status === "correct")
-      return (
-        <span className="ml-2 rounded bg-green-600/40 px-2 py-0.5 text-xs text-green-200">
-          ✔ correct
-        </span>
-      );
-    if (status === "incorrect")
-      return (
-        <span className="ml-2 rounded bg-red-600/40 px-2 py-0.5 text-xs text-red-200">
-          ✖ try again
-        </span>
-      );
-    return null;
-  };
-
-  return (
-    <div className="fixed inset-0 z-40 flex items-start justify-center bg-black/60 pt-10">
-      <div className="w-full max-w-3xl rounded-xl bg-slate-900/95 p-6 shadow-xl border border-slate-700">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-5">
-          <h1 className="text-xl font-semibold text-slate-100">Day 5 — Riddles</h1>
-          <button
-            onClick={onClose}
-            className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-slate-100 rounded"
-          >
-            Close
-          </button>
-        </div>
-
-        {/* Intro */}
-        <p className="text-slate-300 mb-6 text-sm">
-          Solve both problems to reveal the first digit of the combination lock.
-        </p>
-
-        {/* PROBLEM 1 */}
-        <div className="mb-5 bg-slate-800/80 p-4 rounded-lg border border-slate-700">
-          <h2 className="text-sm font-semibold text-slate-100 mb-2 flex items-center">
-            Problem 1 — Riddle
-            {badge(r1Status)}
-          </h2>
-
-          <p className="text-slate-200 text-sm mb-3 leading-relaxed">
-            “By vicious beast I'm guarded,<br />
-            By death on silver wings.<br />
-            Like gold, I last eternal,<br />
-            Treasure to queens and kings.”
-          </p>
-
-          <form onSubmit={handleR1} className="flex gap-2">
-            <input
-              type="text"
-              value={r1}
-              onChange={(e) => setR1(e.target.value)}
-              placeholder="answer"
-              className="w-40 px-3 py-1 bg-slate-900 border border-slate-600 rounded text-slate-100 text-sm"
-            />
-            <button
-              type="submit"
-              className="px-3 py-1 bg-amber-400 hover:bg-amber-300 text-slate-900 rounded text-sm"
-            >
-              Submit
-            </button>
-          </form>
-        </div>
-
-        {/* PROBLEM 2 */}
-        <div className="mb-5 bg-slate-800/80 p-4 rounded-lg border border-slate-700">
-          <h2 className="text-sm font-semibold text-slate-100 mb-2 flex items-center">
-            Problem 2 — Solve for x
-            {badge(r2Status)}
-          </h2>
-
-          <p className="text-slate-200 text-sm mb-3 font-mono">
-            7·3^x + 3^x + 3^x = 9·3^x · 27 · 3^x · 9^x
-          </p>
-
-          <form onSubmit={handleR2} className="flex gap-2">
-            <input
-              type="text"
-              value={r2}
-              onChange={(e) => setR2(e.target.value)}
-              placeholder="x = ?"
-              className="w-32 px-3 py-1 bg-slate-900 border border-slate-600 rounded text-slate-100 text-sm"
-            />
-            <button
-              type="submit"
-              className="px-3 py-1 bg-amber-400 hover:bg-amber-300 text-slate-900 rounded text-sm"
-            >
-              Submit
-            </button>
-          </form>
-        </div>
-
-        {/* FOOTER */}
-        <div className="flex items-center justify-between">
-          <button
-            onClick={reset}
-            className="px-3 py-1 border border-slate-600 text-slate-300 text-xs rounded hover:bg-slate-700"
-          >
-            Reset Day 5
-          </button>
-
-          {finished && (
-            <div className="px-3 py-2 rounded bg-green-600/20 text-green-200 text-xs">
-              Great job! The first digit of the combination lock is{" "}
-              <span className="font-bold text-green-100">5</span>.
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default Day5Modal;
+</body>
+</html>
