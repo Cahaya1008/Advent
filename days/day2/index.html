@@ -1,4 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Day 2 – Maze Runner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    :root {
+      --bg: #020617;
+      --panel: #020617;
+      --maze-wall: #020617;
+      --maze-floor: #0f172a;
+      --maze-trap: #4b5563;
+      --maze-fog: #4c1d95;
+      --maze-speed: #16a34a;
+      --maze-goal: #facc15;
+      --maze-cell: 16px;
+      --text-main: #f9fafb;
+      --muted: #9ca3af;
+      --accent: #fb7185;
+      --good: #22c55e;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #020617 0, #020617 55%, #000 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1.5rem 0.75rem;
+      color: var(--text-main);
+    }
+
+    .page {
+      width: 100%;
+      max-width: 1100px;
+      background: #020617;
+      border-radius: 22px;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.7);
+      padding: 1.7rem 1.6rem 1.3rem;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      position: relative;
+    }
+
+    .already-banner {
+      position: absolute;
+      top: 0.7rem;
+      right: 0.9rem;
+      font-size: 0.75rem;
+      background: rgba(22, 163, 74, 0.12);
+      border-radius: 999px;
+      padding: 0.18rem 0.6rem;
+      border: 1px solid rgba(74, 222, 128, 0.7);
+      color: #bbf7d0;
+      display: none;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .header-left {
+      flex: 1;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      background: rgba(248, 250, 252, 0.06);
+      padding: 0.24rem 0.6rem;
+      border-radius: 999px;
+      margin-bottom: 0.35rem;
+      border: 1px solid rgba(248, 250, 252, 0.15);
+    }
+
+    h1 {
+      font-size: 1.9rem;
+      margin-bottom: 0.15rem;
+    }
+
+    header p {
+      font-size: 0.9rem;
+      color: var(--muted);
+      max-width: 540px;
+    }
+
+    main {
+      margin-top: 0.3rem;
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(260px, 1.1fr);
+      gap: 1rem;
+      align-items: stretch;
+    }
+
+    .maze-panel {
+      background: radial-gradient(circle at top, #020617, #020617 70%, #000);
+      border-radius: 18px;
+      padding: 0.8rem;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 520px;
+    }
+
+    .maze-container {
+      position: relative;
+      padding: 0.5rem;
+      border-radius: 18px;
+      background: #020617;
+      box-shadow:
+        0 0 0 1px rgba(148, 163, 184, 0.6),
+        0 0 40px rgba(15, 23, 42, 0.9);
+      max-width: 100%;
+      max-height: 650px;
+      overflow: auto;
+    }
+
+    .maze-grid {
+      display: grid;
+      gap: 0;
+      position: relative;
+      transition: opacity 0.15s ease;
+    }
+
+    .maze-grid.fog-mode .cell {
+      opacity: 0.08;
+    }
+
+    .maze-grid.fog-mode .cell.visible {
+      opacity: 1;
+    }
+
+    .cell {
+      width: var(--maze-cell);
+      height: var(--maze-cell);
+      position: relative;
+    }
+
+    .cell.wall {
+      background: var(--maze-wall);
+    }
+
+    .cell.floor {
+      background: var(--maze-floor);
+      box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.17);
+    }
+
+    .cell.goal {
+      background: radial-gradient(circle at 35% 25%, #fef3c7, #f59e0b 40%, #854d0e);
+    }
+
+    .cell.goal::after {
+      content: "🎁";
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: calc(var(--maze-cell) * 0.8);
+    }
+
+    .cell.trap {
+      background: var(--maze-trap);
+      box-shadow: inset 0 0 0 2px rgba(31, 41, 55, 0.95);
+    }
+
+    .cell.fog {
+      background: var(--maze-fog);
+      box-shadow: inset 0 0 0 2px rgba(76, 29, 149, 0.9);
+    }
+
+    .cell.fog::after {
+      content: "☁︎";
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: calc(var(--maze-cell) * 0.7);
+      color: #e9d5ff;
+    }
+
+    .cell.buff {
+      background: radial-gradient(circle at 20% 20%, #bbf7d0, #16a34a 45%, #052e16);
+    }
+
+    .cell.buff::after {
+      content: "✦";
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: calc(var(--maze-cell) * 0.8);
+      color: #ecfdf5;
+    }
+
+    .cell.key::after {
+      content: "🔑";
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: calc(var(--maze-cell) * 0.8);
+    }
+
+    .cell.lock::after {
+      content: "🔒";
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: calc(var(--maze-cell) * 0.8);
+    }
+
+    .player {
+      position: absolute;
+      width: var(--maze-cell);
+      height: var(--maze-cell);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: calc(var(--maze-cell) * 0.9);
+      color: #e5e7eb;
+      text-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
+      transition: transform 0.08s linear;
+      pointer-events: none;
+    }
+
+    .player.boost {
+      color: #bbf7d0;
+      text-shadow: 0 0 10px rgba(34, 197, 94, 0.9), 0 0 4px #bbf7d0;
+    }
+
+    .enemy-icon {
+      position: absolute;
+      width: var(--maze-cell);
+      height: var(--maze-cell);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: calc(var(--maze-cell) * 0.8);
+      color: #fca5a5;
+      text-shadow: 0 0 6px rgba(248, 113, 113, 0.9);
+      pointer-events: none;
+    }
+
+    .info-panel {
+      background: rgba(15, 23, 42, 0.96);
+      border-radius: 18px;
+      padding: 0.85rem 0.9rem 0.9rem;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      font-size: 0.86rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      max-height: 580px;
+      overflow: auto;
+    }
+
+    .info-panel h2 {
+      font-size: 1rem;
+    }
+
+    .info-panel p {
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.4rem 0.75rem;
+      font-size: 0.82rem;
+      margin-top: 0.2rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .legend-swatch {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+    }
+
+    .legend-swatch.floor { background: var(--maze-floor); }
+    .legend-swatch.wall { background: var(--maze-wall); box-shadow: inset 0 0 0 1px rgba(15,23,42,0.6); }
+    .legend-swatch.trap { background: var(--maze-trap); }
+    .legend-swatch.fog { background: var(--maze-fog); }
+    .legend-swatch.buff { background: var(--maze-speed); }
+    .legend-swatch.goal { background: var(--maze-goal); }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .btn {
+      border-radius: 999px;
+      border: none;
+      padding: 0.42rem 0.9rem;
+      font-size: 0.83rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: #f1f5f9;
+      color: #020617;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      transition: background 0.12s ease, transform 0.08s ease,
+        box-shadow 0.12s ease;
+    }
+
+    .btn:hover {
+      background: #e5e7eb;
+      transform: translateY(-1px);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #111827;
+      border-color: #fecaca;
+    }
+
+    .btn-primary:hover {
+      background: #fb7185;
+    }
+
+    .status {
+      min-height: 1.2rem;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 0.1rem;
+    }
+
+    .status-good {
+      color: var(--good);
+    }
+
+    footer {
+      margin-top: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    /* Modal */
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 40;
+    }
+
+    .modal.open {
+      display: flex;
+    }
+
+    .modal-content {
+      max-width: 420px;
+      width: 100%;
+      padding: 1.2rem 1.3rem 1.05rem;
+      background: #0b1220;
+      border-radius: 18px;
+      color: #e5e7eb;
+      position: relative;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+    }
+
+    .modal h2 {
+      font-size: 1.1rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .modal p {
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: #cbd5f5;
+    }
+
+    .modal-close {
+      position: absolute;
+      right: 0.7rem;
+      top: 0.6rem;
+      border: none;
+      background: transparent;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: #9ca3af;
+    }
+
+    .modal-footer {
+      margin-top: 0.9rem;
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 850px) {
+      main {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .maze-panel {
+        min-height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="already-banner" id="alreadyBanner">
+      Letter already collected ✅
+    </div>
+
+    <header>
+      <div class="header-left">
+        <div class="badge">
+          <span>Day 2</span>
+          <span>Maze runner</span>
+        </div>
+        <h1>Run the maze</h1>
+        <p>
+          Use the arrow keys to guide your little arrow from the start corner to
+          the present in the opposite corner. Gray tiles, purple fog, green
+          buffs, red enemies, keys, and locks all have Opinions™.
+        </p>
+      </div>
+    </header>
+
+    <main>
+      <section class="maze-panel">
+        <div class="maze-container">
+          <div class="maze-grid" id="mazeGrid"></div>
+        </div>
+      </section>
+
+      <section class="info-panel">
+        <h2>How it works</h2>
+        <p>
+          Move with the <strong>arrow keys</strong>. You can only walk on the
+          lighter slate floor tiles, not the solid walls. Reach the glowing present
+          to open it and reveal today’s letter. The arrow turns to face the
+          direction you last moved.
+        </p>
+
+        <div class="legend">
+          <div class="legend-item">
+            <span class="legend-swatch floor"></span>
+            <span>Walkable path</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-swatch wall"></span>
+            <span>Wall (nope)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-swatch trap"></span>
+            <span>Gray – trap (teleports you back to start)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-swatch fog"></span>
+            <span>Purple – fog of war (one-time)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-swatch buff"></span>
+            <span>Green – one-time buff tile</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-swatch goal"></span>
+            <span>Present – the exit</span>
+          </div>
+        </div>
+
+        <p>
+          Red enemies patrol the corridors. If one bumps into you, you’re sent
+          back to the start. Buff tiles randomly give you either a <strong>speed
+          boost</strong> or <strong>clear vision</strong> that cancels fog for
+          a short time. Each green or purple tile only triggers once and then
+          fades into a normal floor.
+        </p>
+
+        <div class="btn-row">
+          <button class="btn" id="restartBtn">↻ Restart from start</button>
+          <button class="btn btn-primary" id="backBtn">← Back to calendar</button>
+        </div>
+
+        <div class="status" id="statusLine">
+          Tip: keys are always placed before their matching locks along at least
+          one valid route.
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>Arrow keys only – no mouse cheating.</span>
+      <span>Each day hides at most one letter.</span>
+    </footer>
+  </div>
+
+  <!-- Letter modal -->
+  <div class="modal" id="letterModal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="modal-close" data-close="letterModal">&times;</button>
+      <h2>Present unlocked 🎁</h2>
+      <p>
+        Inside the maze’s present you find the letter
+        <strong>P</strong>. It’s been added to your letter collection on the main
+        calendar page.
+      </p>
+      <div class="modal-footer">
+        <button class="btn" data-close="letterModal">Stay in the maze</button>
+        <button class="btn btn-primary" id="goHomeFromModal">Back to calendar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DAY_LETTER_KEY = "advent_day_2_letter";
+    const HIDDEN_LETTER = "P";
+
+    // Smaller but still nasty
+    const MAZE_ROWS = 61;
+    const MAZE_COLS = 61;
+
+    const NUM_FOG_TILES = 40;
+    const NUM_BUFF_TILES = 35;
+    const NUM_TRAPS = 25;
+    const NUM_ENEMIES = 8;
+    const NUM_KEY_LOCK_PAIRS = 6;
+
+    const FOG_MOVES = 12;
+    const SPEED_DURATION_MS = 6000;
+    const CLEAR_FOG_DURATION_MS = 7000;
+    const ENEMY_STEP_MS = 400;
+
+    const mazeGridEl = document.getElementById("mazeGrid");
+    const statusLineEl = document.getElementById("statusLine");
+    const alreadyBanner = document.getElementById("alreadyBanner");
+
+    let playerEl;
+    let grid = [];
+    let rows = MAZE_ROWS;
+    let cols = MAZE_COLS;
+
+    let startPos = { row: 1, col: 1 };
+    let goalPos = { row: rows - 2, col: cols - 2 };
+
+    let playerPos = { row: 1, col: 1 };
+
+    let fogMovesRemaining = 0;
+    let fogDisabledUntil = 0;
+    let speedBoostUntil = 0;
+
+    let enemies = [];
+    let enemyTimer = null;
+
+    let inventoryKeys = new Set();
+    let hasWon = false;
+
+    function randInt(max) {
+      return Math.floor(Math.random() * max);
+    }
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function setStatus(message, tone = "") {
+      statusLineEl.textContent = message;
+      if (tone === "good") {
+        statusLineEl.className = "status status-good";
+      } else {
+        statusLineEl.className = "status";
+      }
+    }
+
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      if (!modal) return;
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      if (!modal) return;
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    // ===== MAZE GENERATION =====
+    function generateMazeGrid() {
+      const maze = Array.from({ length: rows }, () =>
+        Array.from({ length: cols }, () => "#")
+      );
+
+      function inBounds(r, c) {
+        return r > 0 && r < rows - 1 && c > 0 && c < cols - 1;
+      }
+
+      function carve(r, c) {
+        maze[r][c] = ".";
+        const dirs = shuffle([
+          [0, 2],
+          [0, -2],
+          [2, 0],
+          [-2, 0]
+        ]);
+        for (const [dr, dc] of dirs) {
+          const nr = r + dr;
+          const nc = c + dc;
+          if (inBounds(nr, nc) && maze[nr][nc] === "#") {
+            maze[r + dr / 2][c + dc / 2] = ".";
+            carve(nr, nc);
+          }
+        }
+      }
+
+      carve(startPos.row, startPos.col);
+
+      grid = [];
+      for (let r = 0; r < rows; r++) {
+        const rowArr = [];
+        for (let c = 0; c < cols; c++) {
+          let type = maze[r][c] === "." ? "floor" : "wall";
+          rowArr.push(type);
+        }
+        grid.push(rowArr);
+      }
+
+      grid[startPos.row][startPos.col] = "floor";
+      grid[goalPos.row][goalPos.col] = "goal";
+    }
+
+    function computePath() {
+      const queue = [];
+      const visited = Array.from({ length: rows }, () =>
+        Array(cols).fill(false)
+      );
+      const prev = Array.from({ length: rows }, () =>
+        Array(cols).fill(null)
+      );
+
+      queue.push(startPos);
+      visited[startPos.row][startPos.col] = true;
+
+      const deltas = [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1]
+      ];
+
+      while (queue.length) {
+        const { row, col } = queue.shift();
+        if (row === goalPos.row && col === goalPos.col) break;
+
+        for (const [dr, dc] of deltas) {
+          const nr = row + dr;
+          const nc = col + dc;
+          if (
+            nr >= 0 &&
+            nr < rows &&
+            nc >= 0 &&
+            nc < cols &&
+            !visited[nr][nc] &&
+            grid[nr][nc] !== "wall"
+          ) {
+            visited[nr][nc] = true;
+            prev[nr][nc] = { row, col };
+            queue.push({ row: nr, col: nc });
+          }
+        }
+      }
+
+      const path = [];
+      let cur = { ...goalPos };
+      if (!prev[cur.row][cur.col]) return path;
+
+      while (cur) {
+        path.push(cur);
+        cur = prev[cur.row][cur.col];
+      }
+      path.reverse();
+      return path;
+    }
+
+    function decorateMaze() {
+      const path = computePath();
+      if (path.length === 0) {
+        generateMazeGrid();
+        return decorateMaze();
+      }
+
+      const floors = [];
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (grid[r][c] === "floor") {
+            if (
+              (r === startPos.row && c === startPos.col) ||
+              (r === goalPos.row && c === goalPos.col)
+            ) {
+              continue;
+            }
+            floors.push({ row: r, col: c });
+          }
+        }
+      }
+
+      // tiles on the main route start->goal
+      const pathSet = new Set(path.map((p) => `${p.row},${p.col}`));
+
+      function pickMany(array, count) {
+        const copy = array.slice();
+        shuffle(copy);
+        return copy.slice(0, Math.min(count, copy.length));
+      }
+
+      // fog tiles (one-time)
+      pickMany(floors, NUM_FOG_TILES).forEach(({ row, col }) => {
+        if (grid[row][col] === "floor") grid[row][col] = "fog";
+      });
+
+      // buff tiles (one-time)
+      pickMany(
+        floors.filter((p) => grid[p.row][p.col] === "floor"),
+        NUM_BUFF_TILES
+      ).forEach(({ row, col }) => {
+        grid[row][col] = "buff";
+      });
+
+      // traps, but never on the main path
+      pickMany(
+        floors.filter(
+          (p) =>
+            grid[p.row][p.col] === "floor" &&
+            !pathSet.has(`${p.row},${p.col}`)
+        ),
+        NUM_TRAPS
+      ).forEach(({ row, col }) => {
+        grid[row][col] = "trap";
+      });
+
+      // keys + locks along the main path
+      const usablePath = path.slice(3, path.length - 3);
+      const lockPositions = pickMany(usablePath, NUM_KEY_LOCK_PAIRS);
+      const usedIndices = new Set();
+
+      lockPositions.forEach((lockCell, index) => {
+        const lockIndex = path.findIndex(
+          (p) => p.row === lockCell.row && p.col === lockCell.col
+        );
+        if (lockIndex < 5) return;
+
+        const possibleKeyIndices = [];
+        for (let i = 2; i < lockIndex - 2; i++) {
+          if (!usedIndices.has(i)) possibleKeyIndices.push(i);
+        }
+        if (!possibleKeyIndices.length) return;
+
+        const keyIndex =
+          possibleKeyIndices[
+            Math.floor(Math.random() * possibleKeyIndices.length)
+          ];
+        usedIndices.add(keyIndex);
+
+        const keyCell = path[keyIndex];
+        const lockId = index;
+
+        if (grid[lockCell.row][lockCell.col] === "floor") {
+          grid[lockCell.row][lockCell.col] = "lock-" + lockId;
+        }
+        if (
+          grid[keyCell.row][keyCell.col] === "floor" ||
+          grid[keyCell.row][keyCell.col] === "fog"
+        ) {
+          grid[keyCell.row][keyCell.col] = "key-" + lockId;
+        }
+      });
+
+      // enemies mostly off-path
+      const enemyCandidates = floors.filter(
+        (p) => !pathSet.has(`${p.row},${p.col}`)
+      );
+      pickMany(enemyCandidates, NUM_ENEMIES).forEach(({ row, col }) => {
+        enemies.push({
+          row,
+          col,
+          dx: Math.random() < 0.5 ? 1 : -1,
+          dy: 0,
+          el: null
+        });
+      });
+    }
+
+    function buildDOMGrid() {
+      mazeGridEl.innerHTML = "";
+      mazeGridEl.style.gridTemplateColumns = `repeat(${cols}, var(--maze-cell))`;
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const cellEl = document.createElement("div");
+          cellEl.classList.add("cell");
+          cellEl.dataset.row = r;
+          cellEl.dataset.col = c;
+
+          const type = grid[r][c];
+          if (type === "wall") {
+            cellEl.classList.add("wall");
+          } else {
+            cellEl.classList.add("floor");
+            if (type === "goal") cellEl.classList.add("goal");
+            if (type === "trap") cellEl.classList.add("trap");
+            if (type === "fog") cellEl.classList.add("fog");
+            if (type === "buff") cellEl.classList.add("buff");
+            if (type && type.startsWith("key-")) cellEl.classList.add("key");
+            if (type && type.startsWith("lock-")) cellEl.classList.add("lock");
+          }
+
+          mazeGridEl.appendChild(cellEl);
+        }
+      }
+
+      // create player inside the grid
+      playerEl = document.createElement("div");
+      playerEl.className = "player";
+      playerEl.textContent = "→";
+      mazeGridEl.appendChild(playerEl);
+
+      // enemies
+      enemies.forEach((enemy) => {
+        const el = document.createElement("div");
+        el.classList.add("enemy-icon");
+        el.textContent = "✕";
+        enemy.el = el;
+        mazeGridEl.appendChild(el);
+        positionEnemyElement(enemy, false);
+      });
+    }
+
+    function cellType(row, col) {
+      if (row < 0 || row >= rows || col < 0 || col >= cols) return "wall";
+      return grid[row][col];
+    }
+
+    function isWalkable(row, col) {
+  const type = cellType(row, col);
+  if (type === "wall") return false;
+
+  // Doors: only walkable if we already have that key
+  if (type && type.startsWith("lock-")) {
+    const id = type.split("-")[1];
+    if (!inventoryKeys.has(id)) {
+      return false; // hard block if we don't have the matching key
+    }
+    return true;     // we *do* have the key → allowed
+  }
+
+  return true; // normal floor / goal / trap / fog / buff / key
+}
+
+    function clearFogHighlights() {
+      mazeGridEl
+        .querySelectorAll(".cell")
+        .forEach((cell) => cell.classList.remove("visible"));
+    }
+
+    function updateFogVisibility() {
+      const now = performance.now();
+      if (fogDisabledUntil > now) {
+        mazeGridEl.classList.remove("fog-mode");
+        clearFogHighlights();
+        return;
+      }
+
+      if (fogMovesRemaining <= 0) {
+        mazeGridEl.classList.remove("fog-mode");
+        clearFogHighlights();
+        return;
+      }
+
+      const cells = mazeGridEl.querySelectorAll(".cell");
+      cells.forEach((cell) => {
+        const r = Number(cell.dataset.row);
+        const c = Number(cell.dataset.col);
+        const dist =
+          Math.abs(r - playerPos.row) + Math.abs(c - playerPos.col);
+        if (dist <= 2) {
+          cell.classList.add("visible");
+        } else {
+          cell.classList.remove("visible");
+        }
+      });
+      mazeGridEl.classList.add("fog-mode");
+    }
+
+    function updatePlayerArrow(dx, dy) {
+      if (dx === 1 && dy === 0) playerEl.textContent = "→";
+      else if (dx === -1 && dy === 0) playerEl.textContent = "←";
+      else if (dx === 0 && dy === 1) playerEl.textContent = "↓";
+      else if (dx === 0 && dy === -1) playerEl.textContent = "↑";
+    }
+
+    function updatePlayerPosition(animated = true) {
+      const cellSize = parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue(
+          "--maze-cell"
+        )
+      );
+      const x = playerPos.col * cellSize;
+      const y = playerPos.row * cellSize;
+
+      if (!animated) {
+        playerEl.style.transition = "none";
+      } else {
+        playerEl.style.transition = "transform 0.08s linear";
+      }
+
+      playerEl.style.transform = `translate(${x}px, ${y}px)`;
+
+      if (fogMovesRemaining > 0 || performance.now() < fogDisabledUntil) {
+        updateFogVisibility();
+      }
+    }
+
+    function restartMazeFromStart(message) {
+      playerPos = { ...startPos };
+      fogMovesRemaining = 0;
+      fogDisabledUntil = 0;
+      speedBoostUntil = 0;
+      inventoryKeys.clear();
+      if (playerEl) playerEl.classList.remove("boost");
+      mazeGridEl.classList.remove("fog-mode");
+      clearFogHighlights();
+      hasWon = false;
+      setStatus(message || "Back at the entrance.", "");
+      updatePlayerArrow(1, 0);
+      updatePlayerPosition(false);
+    }
+
+    function handleTileEffects(type) {
+      const now = performance.now();
+      const r = playerPos.row;
+      const c = playerPos.col;
+      const cellEl = mazeGridEl.querySelector(
+        `.cell[data-row="${r}"][data-col="${c}"]`
+      );
+
+      if (type === "goal") {
+        handleWin();
+        return true;
+      }
+
+      if (type === "trap") {
+        restartMazeFromStart("Trap! You’re teleported all the way back.");
+        return true;
+      }
+
+      if (type === "fog") {
+        fogMovesRemaining = FOG_MOVES;
+        setStatus(
+          "A purple fog closes in… your vision shrinks for a few moves.",
+          ""
+        );
+        // one-time: turn tile into floor
+        grid[r][c] = "floor";
+        if (cellEl) cellEl.classList.remove("fog");
+        updateFogVisibility();
+      }
+
+      if (type === "buff") {
+        const buff = Math.random() < 0.5 ? "speed" : "clearFog";
+        if (buff === "speed") {
+          speedBoostUntil = now + SPEED_DURATION_MS;
+          playerEl.classList.add("boost");
+          setStatus(
+            "Speed buff! For a moment each arrow key moves you two tiles.",
+            "good"
+          );
+        } else {
+          fogDisabledUntil = now + CLEAR_FOG_DURATION_MS;
+          fogMovesRemaining = 0;
+          mazeGridEl.classList.remove("fog-mode");
+          clearFogHighlights();
+          setStatus(
+            "Vision buff! The fog lifts and you can see the full maze.",
+            "good"
+          );
+        }
+        // one-time: consume buff tile
+        grid[r][c] = "floor";
+        if (cellEl) cellEl.classList.remove("buff");
+      }
+
       if (type && type.startsWith("key-")) {
+        const id = type.split("-")[1];
+        if (!inventoryKeys.has(id)) {
+          inventoryKeys.add(id);
+          setStatus(
+            `You picked up key ${String.fromCharCode(
+              65 + Number(id)
+            )}. Somewhere a matching lock waits.`,
+            "good"
+          );
+        }
+            
+        grid[r][c] = "floor";
+        if (cellEl) cellEl.classList.remove("key");
+      }
+           if (type && type.startsWith("key-")) {
         const id = type.split("-")[1];
         if (!inventoryKeys.has(id)) {
           inventoryKeys.add(id);
@@ -29,3 +1081,178 @@
         // If we *didn't* have the key, isWalkable would have blocked us
         // from entering this tile in the first place.
       }
+
+      return false;
+    }
+
+    function movePlayer(dx, dy) {
+      if (hasWon) return;
+
+      const now = performance.now();
+      const boosted = speedBoostUntil > now;
+      if (!boosted && playerEl) {
+        playerEl.classList.remove("boost");
+      }
+      const steps = boosted ? 2 : 1;
+
+      updatePlayerArrow(dx, dy);
+
+      for (let step = 0; step < steps; step++) {
+        const nr = playerPos.row + dy;
+        const nc = playerPos.col + dx;
+
+        if (!isWalkable(nr, nc)) break;
+
+        playerPos = { row: nr, col: nc };
+        updatePlayerPosition(true);
+
+        const type = cellType(playerPos.row, playerPos.col);
+        if (handleTileEffects(type)) break;
+      }
+
+      if (fogMovesRemaining > 0 && fogDisabledUntil <= now) {
+        fogMovesRemaining--;
+        if (fogMovesRemaining <= 0) {
+          mazeGridEl.classList.remove("fog-mode");
+          clearFogHighlights();
+          setStatus("", "");
+        } else {
+          updateFogVisibility();
+        }
+      }
+    }
+
+    function positionEnemyElement(enemy, animated = true) {
+      if (!enemy.el) return;
+      const cellSize = parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue(
+          "--maze-cell"
+        )
+      );
+      const x = enemy.col * cellSize;
+      const y = enemy.row * cellSize;
+      if (!animated) {
+        enemy.el.style.transition = "none";
+      } else {
+        enemy.el.style.transition = "transform 0.12s linear";
+      }
+      enemy.el.style.transform = `translate(${x}px, ${y}px)`;
+    }
+
+    function enemiesStep() {
+      if (hasWon) return;
+
+      enemies.forEach((enemy) => {
+        let { row, col, dx, dy } = enemy;
+
+        let nr = row + dy;
+        let nc = col + dx;
+        if (!isWalkable(nr, nc) || grid[nr][nc] === "goal") {
+          dx = -dx;
+          dy = -dy;
+          enemy.dx = dx;
+          enemy.dy = dy;
+          nr = row + dy;
+          nc = col + dx;
+        }
+
+        if (isWalkable(nr, nc)) {
+          enemy.row = nr;
+          enemy.col = nc;
+        }
+
+        positionEnemyElement(enemy, true);
+
+        if (enemy.row === playerPos.row && enemy.col === playerPos.col) {
+          restartMazeFromStart("You ran into a red enemy. Back to the start!");
+        }
+      });
+    }
+
+    function handleWin() {
+      hasWon = true;
+      setStatus("You found the present! It creaks open…", "good");
+
+      if (!localStorage.getItem(DAY_LETTER_KEY)) {
+        localStorage.setItem(DAY_LETTER_KEY, HIDDEN_LETTER);
+      }
+      alreadyBanner.style.display = "block";
+      setTimeout(() => {
+        openModal("letterModal");
+      }, 250);
+    }
+
+    function init() {
+      if (localStorage.getItem(DAY_LETTER_KEY)) {
+        alreadyBanner.style.display = "block";
+      }
+
+      enemies = [];
+
+      generateMazeGrid();
+      decorateMaze();
+      buildDOMGrid();
+
+      playerPos = { ...startPos };
+      updatePlayerArrow(1, 0);
+      updatePlayerPosition(false);
+
+      clearFogHighlights();
+
+      if (enemyTimer) clearInterval(enemyTimer);
+      enemyTimer = setInterval(enemiesStep, ENEMY_STEP_MS);
+
+      document.addEventListener("keydown", (e) => {
+        const key = e.key;
+        if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)) {
+          e.preventDefault();
+        }
+
+        if (key === "ArrowUp") movePlayer(0, -1);
+        if (key === "ArrowDown") movePlayer(0, 1);
+        if (key === "ArrowLeft") movePlayer(-1, 0);
+        if (key === "ArrowRight") movePlayer(1, 0);
+      });
+
+      document.getElementById("restartBtn").addEventListener("click", () => {
+        restartMazeFromStart("Back at the entrance. Deep breath, new attempt.");
+      });
+
+      document.getElementById("backBtn").addEventListener("click", () => {
+        window.location.href = "../../index.html";
+      });
+
+      document
+        .querySelectorAll("[data-close]")
+        .forEach((btn) =>
+          btn.addEventListener("click", () =>
+            closeModal(btn.getAttribute("data-close"))
+          )
+        );
+
+      document.getElementById("goHomeFromModal").addEventListener("click", () => {
+        window.location.href = "../../index.html";
+      });
+
+      document.querySelectorAll(".modal").forEach((modal) => {
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal) {
+            modal.classList.remove("open");
+            modal.setAttribute("aria-hidden", "true");
+          }
+        });
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          document
+            .querySelectorAll(".modal.open")
+            .forEach((m) => m.classList.remove("open"));
+        }
+      });
+    }
+
+    window.addEventListener("load", init);
+  </script>
+</body>
+</html>
