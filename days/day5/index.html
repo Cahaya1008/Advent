@@ -440,10 +440,13 @@
     }
 
     function revealDigitIfReady() {
-      if (solved1 && solved2) {
-        document.getElementById("digit-banner").style.display = "block";
-      }
-    }
+  if (solved1 && solved2) {
+    document.getElementById("digit-banner").style.display = "block";
+
+    // 🔐 Save the digit for the calendar page
+    localStorage.setItem("advent-day5-digit", "5");
+  }
+}
 
     function checkRiddle1() {
       const val = normalize(document.getElementById("riddle1").value);
