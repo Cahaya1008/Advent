@@ -12,7 +12,6 @@
     :root {
       --bg: #020617;
       --card-frame: #f5f5f5;
-      /* deep burgundy + darker burgundy */
       --card-main: #7b2333;
       --card-main2: #5a1423;
       --gold: #b68a2a;
@@ -195,6 +194,19 @@
       animation: twinkle 2.5s ease-in-out infinite alternate;
     }
 
+    .star.secret-star {
+      position: fixed;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.9);
+      background: rgba(252, 211, 77, 0.98);
+      box-shadow: 0 0 14px rgba(252, 211, 77, 0.95);
+      border-radius: 999px;
+      cursor: pointer;
+      pointer-events: auto;
+      z-index: 10;
+    }
+
     @keyframes twinkle {
       0% {
         opacity: 0.3;
@@ -203,46 +215,6 @@
       100% {
         opacity: 1;
         transform: scale(1.2);
-      }
-    }
-
-    /* secret clickable star */
-    .star.secret-star {
-      width: 14px;
-      height: 14px;
-      background: #ffffff;
-      border: 2px solid rgba(255, 255, 255, 0.9);
-      border-radius: 999px;
-      box-shadow:
-        0 0 10px rgba(255, 255, 255, 0.95),
-        0 0 22px rgba(252, 211, 77, 0.9),
-        0 0 34px rgba(252, 211, 77, 0.7);
-      cursor: pointer;
-      pointer-events: auto;
-      animation: specialPulse 3s ease-in-out infinite;
-    }
-
-    @keyframes specialPulse {
-      0% {
-        transform: scale(1);
-        box-shadow:
-          0 0 10px rgba(255, 255, 255, 0.95),
-          0 0 22px rgba(252, 211, 77, 0.9),
-          0 0 34px rgba(252, 211, 77, 0.7);
-      }
-      50% {
-        transform: scale(1.3);
-        box-shadow:
-          0 0 16px rgba(255, 255, 255, 1),
-          0 0 34px rgba(252, 211, 77, 1),
-          0 0 48px rgba(252, 211, 77, 0.9);
-      }
-      100% {
-        transform: scale(1);
-        box-shadow:
-          0 0 10px rgba(255, 255, 255, 0.95),
-          0 0 22px rgba(252, 211, 77, 0.9),
-          0 0 34px rgba(252, 211, 77, 0.7);
       }
     }
 
@@ -441,7 +413,7 @@
 
     #lettersProgress {
       font-size: 0.85rem;
-      margin-bottom: 0.4rem;
+      margin-bottom: 0.7rem;
       opacity: 0.95;
     }
 
@@ -454,8 +426,7 @@
       cursor: pointer;
       background: var(--accent);
       color: var(--text-dark);
-      transition: transform 0.1s ease, box-shadow 0.1s ease,
-        filter 0.1s ease;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.1s ease;
     }
 
     .small-btn:hover {
@@ -464,54 +435,8 @@
       filter: brightness(1.03);
     }
 
-    /* Number bank */
-
-    .numbers-wrapper {
-      margin-top: 0.3rem;
-      padding-top: 0.5rem;
-      border-top: 1px dashed rgba(255, 255, 255, 0.18);
-    }
-
-    .numbers-wrapper h3 {
-      font-size: 0.9rem;
-      margin-bottom: 0.2rem;
-    }
-
-    .numbers-bank {
-      display: flex;
-      gap: 0.35rem;
-      margin-top: 0.2rem;
-      flex-wrap: wrap;
-    }
-
-    .number-slot {
-      width: 26px;
-      height: 26px;
-      border-radius: 6px;
-      border: 1px solid rgba(248, 250, 252, 0.6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.85rem;
-      background: rgba(15, 23, 42, 0.85);
-      color: rgba(248, 250, 252, 0.9);
-    }
-
-    .number-slot.filled {
-      background: var(--accent);
-      color: var(--text-dark);
-      font-weight: 600;
-      border-color: rgba(15, 23, 42, 0.6);
-    }
-
-    .numbers-progress {
-      font-size: 0.8rem;
-      margin-top: 0.3rem;
-      opacity: 0.9;
-    }
-
     .final-wrapper {
-      margin-top: 0.7rem;
+      margin-top: 0.5rem;
       padding-top: 0.6rem;
       border-top: 1px solid rgba(255, 255, 255, 0.18);
     }
@@ -546,6 +471,49 @@
       display: none !important;
     }
 
+    /* Star code clue bank */
+
+    .code-section {
+      margin-top: 0.4rem;
+      margin-bottom: 0.7rem;
+      padding-top: 0.5rem;
+      border-top: 1px dashed rgba(255, 255, 255, 0.2);
+    }
+
+    .code-section h3 {
+      font-size: 0.95rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .code-slots {
+      display: flex;
+      gap: 0.35rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .code-slot {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .code-slot.filled {
+      background: rgba(252, 211, 77, 0.95);
+      color: #222;
+      font-weight: 600;
+    }
+
+    .code-progress {
+      font-size: 0.8rem;
+      opacity: 0.9;
+    }
+
     /* Reset */
 
     #resetSection {
@@ -563,8 +531,7 @@
       cursor: pointer;
       background: #f8f1e1;
       color: #6b3c3c;
-      transition: transform 0.1s ease, box-shadow 0.12s ease,
-        filter 0.1s ease;
+      transition: transform 0.1s ease, box-shadow 0.12s ease, filter 0.1s ease;
     }
 
     #resetButton:hover {
@@ -721,11 +688,10 @@
           <div id="lettersList"></div>
           <p id="lettersProgress"></p>
 
-          <!-- Number bank -->
-          <div class="numbers-wrapper">
+          <div class="code-section">
             <h3>Star code clues</h3>
-            <div id="numbersBank" class="numbers-bank"></div>
-            <p id="numbersProgress" class="numbers-progress"></p>
+            <div id="codeSlots" class="code-slots"></div>
+            <p id="codeProgress" class="code-progress"></p>
           </div>
 
           <div class="final-wrapper">
@@ -880,6 +846,7 @@
 
     const STAR_LETTER = "O";
     const STAR_CODE = "5201314";
+    const STAR_CODE_LENGTH = 7;
 
     const IGNORE_DATE_LOCKS = false;
 
@@ -943,7 +910,7 @@
           if (Array.isArray(parsed)) {
             letters = parsed;
           }
-        } catch (e) {
+        } catch {
           // ignore
         }
       }
@@ -984,42 +951,6 @@
         });
     }
 
-    // ===== Number bank helpers =====
-
-    function getCodeDigits() {
-      // positions 1..7
-      const digits = [];
-      for (let i = 1; i <= 7; i++) {
-        const d = localStorage.getItem("advent_code_digit_" + i);
-        digits.push(d && d.length === 1 ? d : null);
-      }
-      return digits;
-    }
-
-    function updateNumbersUI() {
-      const digits = getCodeDigits();
-      const bankEl = document.getElementById("numbersBank");
-      const progressEl = document.getElementById("numbersProgress");
-      bankEl.innerHTML = "";
-
-      let filled = 0;
-      digits.forEach((d) => {
-        const slot = document.createElement("div");
-        slot.className = "number-slot" + (d ? " filled" : "");
-        slot.textContent = d ? d : "•";
-        if (d) filled++;
-        bankEl.appendChild(slot);
-      });
-
-      progressEl.textContent =
-        `You’ve discovered ${filled} / 7 digits of the star code.`;
-
-      // Optional hint if fully filled:
-      if (filled === 7) {
-        progressEl.textContent += " The full code is now visible above.";
-      }
-    }
-
     function updateLettersUI() {
       const letters = getCollectedLetters();
       const list = document.getElementById("lettersList");
@@ -1044,7 +975,6 @@
       modalProgress.textContent = msgBase + extra;
 
       checkFinalUnlockConditions();
-      updateNumbersUI();
     }
 
     function checkFinalUnlockConditions() {
@@ -1067,6 +997,42 @@
         lockedText.textContent =
           "Collect all the special letters and unlock the star code. On Christmas Day, the hidden sentence will reveal itself.";
       }
+    }
+
+    // ===== Star code bank =====
+
+    function getStarCodeDigits() {
+      const digits = [];
+      for (let i = 1; i <= STAR_CODE_LENGTH; i++) {
+        const d = localStorage.getItem("advent_code_digit_" + i);
+        digits.push(d && d.length === 1 ? d : null);
+      }
+      return digits;
+    }
+
+    function updateCodeUI() {
+      const slotsEl = document.getElementById("codeSlots");
+      const progEl = document.getElementById("codeProgress");
+      const digits = getStarCodeDigits();
+
+      slotsEl.innerHTML = "";
+      let have = 0;
+
+      digits.forEach((d, idx) => {
+        const slot = document.createElement("div");
+        slot.className = "code-slot";
+        if (d) {
+          slot.classList.add("filled");
+          slot.textContent = d;
+          have++;
+        } else {
+          slot.textContent = "•";
+        }
+        slot.setAttribute("aria-label", `Code digit ${idx + 1}`);
+        slotsEl.appendChild(slot);
+      });
+
+      progEl.textContent = `You've discovered ${have} / ${STAR_CODE_LENGTH} digits of the star code.`;
     }
 
     // ===== Calendar =====
@@ -1186,6 +1152,7 @@
       const container = document.getElementById("starContainer");
       if (!container) return;
 
+      // Background stars
       const count = 60;
       for (let i = 0; i < count; i++) {
         const star = document.createElement("div");
@@ -1200,18 +1167,20 @@
         container.appendChild(star);
       }
 
-      // special clickable star
+      // Secret clickable star – fixed over the page, above Letters box
       const secret = document.createElement("button");
       secret.id = "secretStar";
       secret.className = "star secret-star";
       secret.type = "button";
       secret.setAttribute("aria-label", "Secret star");
 
-      // fixed position in the sky
-      secret.style.top = "18%";
-      secret.style.right = "12%";
+      // Position: roughly top-right over the letters panel
+      secret.style.top = "13%";
+      secret.style.right = "16%";
+      secret.style.animationDuration = "3s";
+      secret.style.animationDelay = "0.4s";
 
-      container.appendChild(secret);
+      document.body.appendChild(secret);
 
       const starSolved =
         localStorage.getItem("advent_star_solved") === "true";
@@ -1229,7 +1198,7 @@
       codeForm.addEventListener("submit", (e) => {
         e.preventDefault();
         const raw = (codeInput.value || "").trim();
-        if (raw.length !== 7) {
+        if (raw.length !== STAR_CODE_LENGTH) {
           codeMsg.textContent = "The code should be exactly 7 digits.";
           codeMsg.style.color = "#b83232";
           return;
@@ -1321,7 +1290,7 @@
       const btn = document.getElementById("resetButton");
       btn.addEventListener("click", () => {
         const ok = confirm(
-          "Reset all progress? (Days, letters, number clues, stars, and final message will all be cleared.)"
+          "Reset all progress? (Days, letters, stars, number clues, and final message will all be cleared.)"
         );
         if (!ok) return;
 
@@ -1329,8 +1298,7 @@
           localStorage.removeItem("advent_day_" + day + "_letter");
         }
 
-        // clear number bank
-        for (let i = 1; i <= 7; i++) {
+        for (let i = 1; i <= STAR_CODE_LENGTH; i++) {
           localStorage.removeItem("advent_code_digit_" + i);
         }
 
@@ -1393,15 +1361,13 @@
       initModals();
       initReset();
       updateLettersUI();
+      updateCodeUI();
     });
 
-    // NOTE:
-    // On each day that gives a LETTER:
-    //   localStorage.setItem("advent_day_X_letter", "L");
-    //
-    // On each day that gives a CODE DIGIT (position 1–7):
-    //   localStorage.setItem("advent_code_digit_1", "5");
-    //   updateNumbersUI();
+    // NOTE for day pages:
+    // To award a letter: localStorage.setItem("advent_day_X_letter", "L");
+    // To award a specific code digit position:
+    //   localStorage.setItem("advent_code_digit_1", "5"); // etc.
   </script>
 </body>
 </html>
