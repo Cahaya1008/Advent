@@ -441,7 +441,7 @@
 
     #lettersProgress {
       font-size: 0.85rem;
-      margin-bottom: 0.7rem;
+      margin-bottom: 0.4rem;
       opacity: 0.95;
     }
 
@@ -464,8 +464,54 @@
       filter: brightness(1.03);
     }
 
+    /* Number bank */
+
+    .numbers-wrapper {
+      margin-top: 0.3rem;
+      padding-top: 0.5rem;
+      border-top: 1px dashed rgba(255, 255, 255, 0.18);
+    }
+
+    .numbers-wrapper h3 {
+      font-size: 0.9rem;
+      margin-bottom: 0.2rem;
+    }
+
+    .numbers-bank {
+      display: flex;
+      gap: 0.35rem;
+      margin-top: 0.2rem;
+      flex-wrap: wrap;
+    }
+
+    .number-slot {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      border: 1px solid rgba(248, 250, 252, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      background: rgba(15, 23, 42, 0.85);
+      color: rgba(248, 250, 252, 0.9);
+    }
+
+    .number-slot.filled {
+      background: var(--accent);
+      color: var(--text-dark);
+      font-weight: 600;
+      border-color: rgba(15, 23, 42, 0.6);
+    }
+
+    .numbers-progress {
+      font-size: 0.8rem;
+      margin-top: 0.3rem;
+      opacity: 0.9;
+    }
+
     .final-wrapper {
-      margin-top: 0.5rem;
+      margin-top: 0.7rem;
       padding-top: 0.6rem;
       border-top: 1px solid rgba(255, 255, 255, 0.18);
     }
@@ -675,6 +721,13 @@
           <div id="lettersList"></div>
           <p id="lettersProgress"></p>
 
+          <!-- Number bank -->
+          <div class="numbers-wrapper">
+            <h3>Star code clues</h3>
+            <div id="numbersBank" class="numbers-bank"></div>
+            <p id="numbersProgress" class="numbers-progress"></p>
+          </div>
+
           <div class="final-wrapper">
             <h3>Secret final message</h3>
             <p class="final-locked-text" id="finalLockedText">
@@ -692,7 +745,7 @@
           <button id="resetButton">Reset progress</button>
           <p class="reset-note">
             This resets everything on this device (calendar, stars, letters,
-            and final message). Use if you want to replay or if something breaks.
+            number clues, and final message). Use if you want to replay or if something breaks.
           </p>
         </section>
       </section>
@@ -931,6 +984,42 @@
         });
     }
 
+    // ===== Number bank helpers =====
+
+    function getCodeDigits() {
+      // positions 1..7
+      const digits = [];
+      for (let i = 1; i <= 7; i++) {
+        const d = localStorage.getItem("advent_code_digit_" + i);
+        digits.push(d && d.length === 1 ? d : null);
+      }
+      return digits;
+    }
+
+    function updateNumbersUI() {
+      const digits = getCodeDigits();
+      const bankEl = document.getElementById("numbersBank");
+      const progressEl = document.getElementById("numbersProgress");
+      bankEl.innerHTML = "";
+
+      let filled = 0;
+      digits.forEach((d) => {
+        const slot = document.createElement("div");
+        slot.className = "number-slot" + (d ? " filled" : "");
+        slot.textContent = d ? d : "•";
+        if (d) filled++;
+        bankEl.appendChild(slot);
+      });
+
+      progressEl.textContent =
+        `You’ve discovered ${filled} / 7 digits of the star code.`;
+
+      // Optional hint if fully filled:
+      if (filled === 7) {
+        progressEl.textContent += " The full code is now visible above.";
+      }
+    }
+
     function updateLettersUI() {
       const letters = getCollectedLetters();
       const list = document.getElementById("lettersList");
@@ -955,6 +1044,7 @@
       modalProgress.textContent = msgBase + extra;
 
       checkFinalUnlockConditions();
+      updateNumbersUI();
     }
 
     function checkFinalUnlockConditions() {
@@ -1231,12 +1321,17 @@
       const btn = document.getElementById("resetButton");
       btn.addEventListener("click", () => {
         const ok = confirm(
-          "Reset all progress? (Days, letters, stars, and final message will all be cleared.)"
+          "Reset all progress? (Days, letters, number clues, stars, and final message will all be cleared.)"
         );
         if (!ok) return;
 
         for (let day = 1; day <= TOTAL_DAYS; day++) {
           localStorage.removeItem("advent_day_" + day + "_letter");
+        }
+
+        // clear number bank
+        for (let i = 1; i <= 7; i++) {
+          localStorage.removeItem("advent_code_digit_" + i);
         }
 
         localStorage.removeItem("advent_letters");
@@ -1300,8 +1395,13 @@
       updateLettersUI();
     });
 
-    // NOTE: On each day page, award a letter with:
-    // localStorage.setItem("advent_day_X_letter", "L");
+    // NOTE:
+    // On each day that gives a LETTER:
+    //   localStorage.setItem("advent_day_X_letter", "L");
+    //
+    // On each day that gives a CODE DIGIT (position 1–7):
+    //   localStorage.setItem("advent_code_digit_1", "5");
+    //   updateNumbersUI();
   </script>
 </body>
 </html>
