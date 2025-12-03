@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Day 3 – Matching Game</title>
+  <title>Day 3 – Maze Runner</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link
     href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
@@ -11,16 +11,18 @@
   <style>
     :root {
       --bg: #020617;
-      --panel: #0b1220;
-      --card-bg: #111827;
-      --card-face: #f9fafb;
-      --card-border: #1f2937;
-      --accent: #f97373;
-      --accent-soft: #fef2f2;
+      --panel: #020617;
+      --maze-wall: #020617;
+      --maze-floor: #0f172a;
+      --maze-trap: #4b5563;
+      --maze-fog: #4c1d95;
+      --maze-speed: #16a34a;
+      --maze-goal: #facc15;
+      --maze-cell: 16px;
       --text-main: #f9fafb;
       --muted: #9ca3af;
+      --accent: #fb7185;
       --good: #22c55e;
-      --bad: #f97373;
     }
 
     * {
@@ -32,7 +34,7 @@
     body {
       font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
         "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top, #111827 0, #020617 55%, #000 100%);
+      background: radial-gradient(circle at top, #020617 0, #020617 55%, #000 100%);
       min-height: 100vh;
       display: flex;
       justify-content: center;
@@ -42,14 +44,27 @@
     }
 
     .page {
-      max-width: 920px;
       width: 100%;
-      background: linear-gradient(135deg, #020617, #020617 40%, #020617 100%);
+      max-width: 1100px;
+      background: #020617;
       border-radius: 22px;
       box-shadow: 0 18px 45px rgba(0, 0, 0, 0.7);
-      padding: 1.7rem 1.5rem 1.3rem;
+      padding: 1.7rem 1.6rem 1.3rem;
+      border: 1px solid rgba(148, 163, 184, 0.35);
       position: relative;
-      border: 1px solid rgba(148, 163, 184, 0.25);
+    }
+
+    .already-banner {
+      position: absolute;
+      top: 0.7rem;
+      right: 0.9rem;
+      font-size: 0.75rem;
+      background: rgba(22, 163, 74, 0.12);
+      border-radius: 999px;
+      padding: 0.18rem 0.6rem;
+      border: 1px solid rgba(74, 222, 128, 0.7);
+      color: #bbf7d0;
+      display: none;
     }
 
     header {
@@ -60,7 +75,7 @@
       margin-bottom: 1rem;
     }
 
-    header-left {
+    .header-left {
       flex: 1;
     }
 
@@ -84,157 +99,238 @@
     header p {
       font-size: 0.9rem;
       color: var(--muted);
-    }
-
-    .scoreboard {
-      min-width: 190px;
-      background: rgba(15, 23, 42, 0.9);
-      border-radius: 16px;
-      padding: 0.7rem 0.8rem;
-      border: 1px solid rgba(148, 163, 184, 0.35);
-      font-size: 0.85rem;
-    }
-
-    .score-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.25rem;
-    }
-
-    .score-label {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.25rem;
-    }
-
-    .score-label span.dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: #38bdf8;
-    }
-
-    .score-label span.dot.computer {
-      background: #f97316;
-    }
-
-    .score-value {
-      font-weight: 600;
-    }
-
-    .turn-indicator {
-      margin-top: 0.3rem;
-      font-size: 0.8rem;
-      color: var(--muted);
+      max-width: 540px;
     }
 
     main {
-      margin-top: 0.4rem;
+      margin-top: 0.3rem;
       display: grid;
-      grid-template-columns: minmax(0, 2fr) minmax(230px, 1fr);
+      grid-template-columns: minmax(0, 3fr) minmax(260px, 1.1fr);
       gap: 1rem;
+      align-items: stretch;
     }
 
-    .board-wrapper {
-      background: radial-gradient(circle at top, #020617, #020617 65%, #000 100%);
+    .maze-panel {
+      background: radial-gradient(circle at top, #020617, #020617 70%, #000);
       border-radius: 18px;
-      padding: 0.9rem;
-      border: 1px solid rgba(148, 163, 184, 0.3);
-    }
-
-    .board {
-      display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
-      grid-auto-rows: 64px;
-      gap: 0.45rem;
-      background: #020617;
-      padding: 0.45rem;
-      border-radius: 14px;
-      box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.9);
-    }
-
-    .card-slot {
-      border-radius: 10px;
-      background: #020617;
-      box-shadow: 0 0 0 1px rgba(51, 65, 85, 0.9);
+      padding: 0.8rem;
+      border: 1px solid rgba(148, 163, 184, 0.35);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 2px;
+      min-height: 520px;
     }
 
-    .card {
-      width: 100%;
-      height: 100%;
-      border-radius: 8px;
-      border: 1px solid var(--card-border);
-      background: radial-gradient(circle at 25% 0, #1f2937, #020617 70%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.8rem;
-      cursor: pointer;
-      color: transparent;
-      transition: transform 0.18s ease, box-shadow 0.18s ease,
-        background 0.18s ease, color 0.18s ease;
+    .maze-container {
       position: relative;
-      overflow: hidden;
+      padding: 0.5rem;
+      border-radius: 18px;
+      background: #020617;
+      box-shadow:
+        0 0 0 1px rgba(148, 163, 184, 0.6),
+        0 0 40px rgba(15, 23, 42, 0.9);
+      max-width: 100%;
+      max-height: 650px;
+      overflow: auto;
     }
 
-    .card-inner {
+    .maze-grid {
+      display: grid;
+      gap: 0;
+      position: relative;
+      transition: opacity 0.15s ease;
+    }
+
+    .maze-grid.fog-mode .cell {
+      opacity: 0.08;
+    }
+
+    .maze-grid.fog-mode .cell.visible {
+      opacity: 1;
+    }
+
+    .cell {
+      width: var(--maze-cell);
+      height: var(--maze-cell);
+      position: relative;
+    }
+
+    .cell.wall {
+      background: var(--maze-wall);
+    }
+
+    .cell.floor {
+      background: var(--maze-floor);
+      box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.17);
+    }
+
+    .cell.goal {
+      background: radial-gradient(circle at 35% 25%, #fef3c7, #f59e0b 40%, #854d0e);
+    }
+
+    .cell.goal::after {
+      content: "🎁";
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: calc(var(--maze-cell) * 0.8);
+    }
+
+    .cell.trap {
+      background: var(--maze-trap);
+      box-shadow: inset 0 0 0 2px rgba(31, 41, 55, 0.95);
+    }
+
+    .cell.fog {
+      background: var(--maze-fog);
+      box-shadow: inset 0 0 0 2px rgba(76, 29, 149, 0.9);
+    }
+
+    .cell.fog::after {
+      content: "☁︎";
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: calc(var(--maze-cell) * 0.7);
+      color: #e9d5ff;
+    }
+
+    .cell.buff {
+      background: radial-gradient(circle at 20% 20%, #bbf7d0, #16a34a 45%, #052e16);
+    }
+
+    .cell.buff::after {
+      content: "✦";
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: calc(var(--maze-cell) * 0.8);
+      color: #ecfdf5;
+    }
+
+    .cell.key::after {
+      content: "🔑";
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: calc(var(--maze-cell) * 0.8);
+    }
+
+    .cell.lock::after {
+      content: "🔒";
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: calc(var(--maze-cell) * 0.8);
+    }
+
+    .player {
+      position: absolute;
+      width: var(--maze-cell);
+      height: var(--maze-cell);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: calc(var(--maze-cell) * 0.9);
+      color: #e5e7eb;
+      text-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
+      transition: transform 0.08s linear;
       pointer-events: none;
     }
 
-    .card.front {
-      background: var(--card-face);
-      color: #111827;
-      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.65);
-      transform: translateY(-1px);
+    .player.boost {
+      color: #bbf7d0;
+      text-shadow: 0 0 10px rgba(34, 197, 94, 0.9), 0 0 4px #bbf7d0;
     }
 
-    .card.matched {
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      color: #052e16;
-      border-color: #4ade80;
-      box-shadow: 0 0 0 1px rgba(74, 222, 128, 0.7);
-      cursor: default;
-      transform: none;
-    }
-
-    .card.disabled {
+    .enemy-icon {
+      position: absolute;
+      width: var(--maze-cell);
+      height: var(--maze-cell);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: calc(var(--maze-cell) * 0.8);
+      color: #fca5a5;
+      text-shadow: 0 0 6px rgba(248, 113, 113, 0.9);
       pointer-events: none;
     }
 
     .info-panel {
-      background: rgba(15, 23, 42, 0.9);
+      background: rgba(15, 23, 42, 0.96);
       border-radius: 18px;
-      padding: 0.8rem 0.9rem 0.9rem;
+      padding: 0.85rem 0.9rem 0.9rem;
       border: 1px solid rgba(148, 163, 184, 0.35);
-      font-size: 0.85rem;
+      font-size: 0.86rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      max-height: 580px;
+      overflow: auto;
     }
 
     .info-panel h2 {
       font-size: 1rem;
-      margin-bottom: 0.4rem;
     }
 
     .info-panel p {
       color: var(--muted);
-      margin-bottom: 0.4rem;
       line-height: 1.5;
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.4rem 0.75rem;
+      font-size: 0.82rem;
+      margin-top: 0.2rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .legend-swatch {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+    }
+
+    .legend-swatch.floor { background: var(--maze-floor); }
+    .legend-swatch.wall { background: var(--maze-wall); box-shadow: inset 0 0 0 1px rgba(15,23,42,0.6); }
+    .legend-swatch.trap { background: var(--maze-trap); }
+    .legend-swatch.fog { background: var(--maze-fog); }
+    .legend-swatch.buff { background: var(--maze-speed); }
+    .legend-swatch.goal { background: var(--maze-goal); }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
     }
 
     .btn {
       border-radius: 999px;
       border: none;
-      padding: 0.45rem 0.9rem;
+      padding: 0.42rem 0.9rem;
       font-size: 0.83rem;
       font-weight: 500;
       cursor: pointer;
-      background: var(--accent-soft);
-      color: #991b1b;
-      border: 1px solid rgba(248, 113, 113, 0.5);
+      background: #f1f5f9;
+      color: #020617;
+      border: 1px solid rgba(148, 163, 184, 0.7);
       display: inline-flex;
       align-items: center;
       gap: 0.25rem;
@@ -243,40 +339,30 @@
     }
 
     .btn:hover {
-      background: #fecaca;
+      background: #e5e7eb;
       transform: translateY(-1px);
       box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
     }
 
     .btn-primary {
-      background: #f97373;
+      background: var(--accent);
       color: #111827;
       border-color: #fecaca;
     }
 
     .btn-primary:hover {
-      background: #fca5a5;
+      background: #fb7185;
     }
 
     .status {
-      margin-top: 0.4rem;
-      min-height: 1.1rem;
-    }
-
-    .status span {
-      display: inline-block;
+      min-height: 1.2rem;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 0.1rem;
     }
 
     .status-good {
       color: var(--good);
-    }
-
-    .status-bad {
-      color: var(--bad);
-    }
-
-    .status-muted {
-      color: var(--muted);
     }
 
     footer {
@@ -288,19 +374,6 @@
       flex-wrap: wrap;
       font-size: 0.78rem;
       color: var(--muted);
-    }
-
-    .already-banner {
-      position: absolute;
-      top: 0.7rem;
-      right: 0.9rem;
-      font-size: 0.75rem;
-      background: rgba(22, 163, 74, 0.12);
-      border-radius: 999px;
-      padding: 0.18rem 0.6rem;
-      border: 1px solid rgba(74, 222, 128, 0.7);
-      color: #bbf7d0;
-      display: none;
     }
 
     /* Modal */
@@ -361,6 +434,16 @@
       gap: 0.5rem;
       flex-wrap: wrap;
     }
+
+    @media (max-width: 850px) {
+      main {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .maze-panel {
+        min-height: 420px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -372,139 +455,166 @@
     <header>
       <div class="header-left">
         <div class="badge">
-          <span>Day 3</span>
-          <span>Matching Game</span>
+          <span>Day 2</span>
+          <span>Maze runner</span>
         </div>
-        <h1>Memory vs. the Computer</h1>
+        <h1>Run the maze</h1>
         <p>
-          Flip cards and find pairs before the computer does. You go first.
-          If you find more pairs than it does, you win today’s secret letter.
+          Use the arrow keys to guide your little arrow from the start corner to
+          the present in the opposite corner. Gray tiles, purple fog, green
+          buffs, red enemies, keys, and locks all have Opinions™.
         </p>
-      </div>
-      <div class="scoreboard">
-        <div class="score-row">
-          <div class="score-label">
-            <span class="dot"></span><span>You</span>
-          </div>
-          <div class="score-value" id="playerScore">0</div>
-        </div>
-        <div class="score-row">
-          <div class="score-label">
-            <span class="dot computer"></span><span>Computer</span>
-          </div>
-          <div class="score-value" id="computerScore">0</div>
-        </div>
-        <div class="turn-indicator" id="turnIndicator">Your turn</div>
       </div>
     </header>
 
     <main>
-      <section class="board-wrapper">
-        <div class="board" id="board"></div>
+      <section class="maze-panel">
+        <div class="maze-container">
+          <div class="maze-grid" id="mazeGrid"></div>
+        </div>
       </section>
 
       <section class="info-panel">
-        <h2>How this works</h2>
+        <h2>How it works</h2>
         <p>
-          You and the computer take turns flipping two cards. If the emojis match,
-          that pair disappears and whoever found it scores a point and goes again.
-          If they don’t match, they flip back over and the turn passes.
-        </p>
-        <p>
-          The computer remembers emojis it has seen, but it isn’t perfect:
-          That’s your chance to outplay it. You got this!
-        </p>
-        <p>
-          There are 30 cards (15 pairs). When all pairs are gone, whoever has
-          more pairs <em>wins</em>!
+          Move with the <strong>arrow keys</strong>. You can only walk on the
+          lighter slate floor tiles, not the solid walls. Reach the glowing present
+          to open it and reveal today’s letter. The arrow turns to face the
+          direction you last moved.
         </p>
 
-        <button class="btn" id="restartBtn">↻ Restart this game</button>
-        <button class="btn btn-primary" id="backBtn">← Back to calendar</button>
+        <div class="legend">
+          <div class="legend-item">
+            <span class="legend-swatch floor"></span>
+            <span>Walkable path</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-swatch wall"></span>
+            <span>Wall (nope)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-swatch trap"></span>
+            <span>Gray – trap (teleports you back to start)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-swatch fog"></span>
+            <span>Purple – fog of war (one-time)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-swatch buff"></span>
+            <span>Green – one-time buff tile</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-swatch goal"></span>
+            <span>Present – the exit</span>
+          </div>
+        </div>
 
-        <div class="status" id="statusLine"><span class="status-muted">Find a first pair to get ahead.</span></div>
+        <p>
+          Red enemies patrol the corridors. If one bumps into you, you’re sent
+          back to the start. Buff tiles randomly give you either a <strong>speed
+          boost</strong> or <strong>clear vision</strong> that cancels fog for
+          a short time. Each green or purple tile only triggers once and then
+          fades into a normal floor.
+        </p>
+
+        <div class="btn-row">
+          <button class="btn" id="restartBtn">↻ Restart from start</button>
+          <button class="btn btn-primary" id="backBtn">← Back to calendar</button>
+        </div>
+
+        <div class="status" id="statusLine">
+          Tip: keys are always placed before their matching locks along at least
+          one valid route.
+        </div>
       </section>
     </main>
 
     <footer>
-      <span>Tip: Try to remember the computer’s mistakes too. Its memory isn’t perfect.</span>
+      <span>Arrow keys only – no mouse cheating.</span>
       <span>Each day hides at most one letter.</span>
     </footer>
   </div>
 
-  <!-- Win / letter modal -->
+  <!-- Letter modal -->
   <div class="modal" id="letterModal" aria-hidden="true">
     <div class="modal-content">
       <button class="modal-close" data-close="letterModal">&times;</button>
-      <h2>You beat the computer 🎉</h2>
+      <h2>Present unlocked 🎁</h2>
       <p>
-        Your memory wins this round. Today’s hidden letter is
-        <strong>W</strong>. It’s been added to your collection on the
-        main calendar page.
+        Inside the maze’s present you find the letter
+        <strong>P</strong>. It’s been added to your letter collection on the main
+        calendar page.
       </p>
       <div class="modal-footer">
-        <button class="btn" data-close="letterModal">Stay on this page</button>
+        <button class="btn" data-close="letterModal">Stay in the maze</button>
         <button class="btn btn-primary" id="goHomeFromModal">Back to calendar</button>
       </div>
     </div>
   </div>
 
-  <!-- Lose modal -->
-  <div class="modal" id="loseModal" aria-hidden="true">
-    <div class="modal-content">
-      <button class="modal-close" data-close="loseModal">&times;</button>
-      <h2>The computer won this time 🤖</h2>
-      <p>
-        It found more pairs than you did. The letter stays hidden for now,
-        but you can hit “Restart this game” and try again as many times as you like.
-      </p>
-      <div class="modal-footer">
-        <button class="btn" data-close="loseModal">Close</button>
-      </div>
-    </div>
-  </div>
-
   <script>
-    // ===== CONFIG =====
-    const DAY_LETTER_KEY = "advent_day_3_letter";
-    const HIDDEN_LETTER = "W";
+    const DAY_LETTER_KEY = "advent_day_2_letter";
+    const HIDDEN_LETTER = "P";
 
-    const EMOJIS = [
-      "🎄","🎁","⭐","⛄","🕯️",
-      "🍪","🥛","🧣","🧤","🎅",
-      "🦌","🛷","❄️","🔔","🍬"
-    ]; // 15 pairs
+    // Smaller but still nasty
+    const MAZE_ROWS = 61;
+    const MAZE_COLS = 61;
 
-    const COMPUTER_SMARTNESS = 0.7; // 70% of the time, it uses a known pair
+    const NUM_FOG_TILES = 40;
+    const NUM_BUFF_TILES = 35;
+    const NUM_TRAPS = 25;
+    const NUM_ENEMIES = 8;
+    const NUM_KEY_LOCK_PAIRS = 6;
 
-    // ===== STATE =====
-    let cards = [];             // {id, emoji, matched, element}
-    let revealed = [];          // indices of currently flipped but unresolved cards
-    let isPlayerTurn = true;
-    let playerPairs = 0;
-    let computerPairs = 0;
-    let gameOver = false;
-    let lockInput = false;      // to prevent spam clicking
-    const computerMemory = new Map(); // index -> emoji seen
+    const FOG_MOVES = 12;
+    const SPEED_DURATION_MS = 6000;
+    const CLEAR_FOG_DURATION_MS = 7000;
+    const ENEMY_STEP_MS = 400;
 
-    const boardEl = document.getElementById("board");
+    const mazeGridEl = document.getElementById("mazeGrid");
     const statusLineEl = document.getElementById("statusLine");
-    const playerScoreEl = document.getElementById("playerScore");
-    const computerScoreEl = document.getElementById("computerScore");
-    const turnIndicatorEl = document.getElementById("turnIndicator");
     const alreadyBanner = document.getElementById("alreadyBanner");
 
-    // ===== UTIL =====
-    function shuffle(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-      return array;
+    let playerEl;
+    let grid = [];
+    let rows = MAZE_ROWS;
+    let cols = MAZE_COLS;
+
+    let startPos = { row: 1, col: 1 };
+    let goalPos = { row: rows - 2, col: cols - 2 };
+
+    let playerPos = { row: 1, col: 1 };
+
+    let fogMovesRemaining = 0;
+    let fogDisabledUntil = 0;
+    let speedBoostUntil = 0;
+
+    let enemies = [];
+    let enemyTimer = null;
+
+    let inventoryKeys = new Set();
+    let hasWon = false;
+
+    function randInt(max) {
+      return Math.floor(Math.random() * max);
     }
 
-    function setStatus(msg, tone = "status-muted") {
-      statusLineEl.innerHTML = `<span class="${tone}">${msg}</span>`;
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function setStatus(message, tone = "") {
+      statusLineEl.textContent = message;
+      if (tone === "good") {
+        statusLineEl.className = "status status-good";
+      } else {
+        statusLineEl.className = "status";
+      }
     }
 
     function openModal(id) {
@@ -521,293 +631,594 @@
       modal.setAttribute("aria-hidden", "true");
     }
 
-    // ===== GAME SETUP =====
-    function buildDeck() {
-      const pairEmojis = [...EMOJIS, ...EMOJIS]; // 30 cards
-      shuffle(pairEmojis);
-      cards = pairEmojis.map((emoji, index) => ({
-        id: index,
-        emoji,
-        matched: false,
-        element: null
-      }));
-    }
+    // ===== MAZE GENERATION =====
+    function generateMazeGrid() {
+      const maze = Array.from({ length: rows }, () =>
+        Array.from({ length: cols }, () => "#")
+      );
 
-    function renderBoard() {
-      boardEl.innerHTML = "";
-      cards.forEach((card) => {
-        const slot = document.createElement("div");
-        slot.className = "card-slot";
-
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "card";
-        btn.dataset.index = String(card.id);
-
-        const inner = document.createElement("span");
-        inner.className = "card-inner";
-        inner.textContent = card.emoji;
-
-        btn.appendChild(inner);
-        slot.appendChild(btn);
-        boardEl.appendChild(slot);
-
-        card.element = btn;
-
-        btn.addEventListener("click", () => handlePlayerClick(card.id));
-      });
-    }
-
-    function resetGame() {
-      buildDeck();
-      renderBoard();
-
-      revealed = [];
-      isPlayerTurn = true;
-      playerPairs = 0;
-      computerPairs = 0;
-      gameOver = false;
-      lockInput = false;
-      computerMemory.clear();
-
-      playerScoreEl.textContent = "0";
-      computerScoreEl.textContent = "0";
-      turnIndicatorEl.textContent = "Your turn";
-      setStatus("Find a first pair to get ahead.", "status-muted");
-    }
-
-    // ===== CARD FLIP HELPERS =====
-    function flipUp(index) {
-      const card = cards[index];
-      if (!card || card.matched) return;
-      const el = card.element;
-      if (!el) return;
-      el.classList.add("front");
-      computerMemory.set(index, card.emoji); // computer sees everything that is flipped
-    }
-
-    function flipDown(index) {
-      const card = cards[index];
-      if (!card || card.matched) return;
-      const el = card.element;
-      if (!el) return;
-      el.classList.remove("front");
-    }
-
-    function markMatched(i1, i2) {
-      [i1, i2].forEach((idx) => {
-        const card = cards[idx];
-        if (!card) return;
-        card.matched = true;
-        const el = card.element;
-        if (el) {
-          el.classList.add("matched");
-          el.classList.add("disabled");
-        }
-      });
-    }
-
-    function allPairsFound() {
-      return cards.every((c) => c.matched);
-    }
-
-    function updateScores() {
-      playerScoreEl.textContent = String(playerPairs);
-      computerScoreEl.textContent = String(computerPairs);
-    }
-
-    function endGame() {
-      gameOver = true;
-      lockInput = true;
-
-      if (playerPairs > computerPairs) {
-        setStatus("You won the match!", "status-good");
-
-        if (!localStorage.getItem(DAY_LETTER_KEY)) {
-          localStorage.setItem(DAY_LETTER_KEY, HIDDEN_LETTER);
-        }
-        alreadyBanner.style.display = "block";
-        openModal("letterModal");
-      } else if (computerPairs > playerPairs) {
-        setStatus("The computer won this one.", "status-bad");
-        openModal("loseModal");
-      } else {
-        setStatus("You tied with the computer. Try again to claim the letter.", "status-muted");
-        openModal("loseModal");
+      function inBounds(r, c) {
+        return r > 0 && r < rows - 1 && c > 0 && c < cols - 1;
       }
+
+      function carve(r, c) {
+        maze[r][c] = ".";
+        const dirs = shuffle([
+          [0, 2],
+          [0, -2],
+          [2, 0],
+          [-2, 0]
+        ]);
+        for (const [dr, dc] of dirs) {
+          const nr = r + dr;
+          const nc = c + dc;
+          if (inBounds(nr, nc) && maze[nr][nc] === "#") {
+            maze[r + dr / 2][c + dc / 2] = ".";
+            carve(nr, nc);
+          }
+        }
+      }
+
+      carve(startPos.row, startPos.col);
+
+      grid = [];
+      for (let r = 0; r < rows; r++) {
+        const rowArr = [];
+        for (let c = 0; c < cols; c++) {
+          let type = maze[r][c] === "." ? "floor" : "wall";
+          rowArr.push(type);
+        }
+        grid.push(rowArr);
+      }
+
+      grid[startPos.row][startPos.col] = "floor";
+      grid[goalPos.row][goalPos.col] = "goal";
     }
 
-    // ===== TURN / MATCH LOGIC =====
-    function resolvePair() {
-      if (revealed.length !== 2) return;
-      const [i1, i2] = revealed;
-      const c1 = cards[i1];
-      const c2 = cards[i2];
-      if (!c1 || !c2) return;
+    function computePath() {
+      const queue = [];
+      const visited = Array.from({ length: rows }, () =>
+        Array(cols).fill(false)
+      );
+      const prev = Array.from({ length: rows }, () =>
+        Array(cols).fill(null)
+      );
 
-      lockInput = true;
+      queue.push(startPos);
+      visited[startPos.row][startPos.col] = true;
 
-      if (c1.emoji === c2.emoji) {
-        // Match
-        markMatched(i1, i2);
-        revealed = [];
+      const deltas = [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1]
+      ];
 
-        if (isPlayerTurn) {
-          playerPairs++;
-          updateScores();
-          setStatus("Nice match! You get another turn.", "status-good");
-        } else {
-          computerPairs++;
-          updateScores();
-          setStatus("Computer found a pair and goes again.", "status-muted");
+      while (queue.length) {
+        const { row, col } = queue.shift();
+        if (row === goalPos.row && col === goalPos.col) break;
+
+        for (const [dr, dc] of deltas) {
+          const nr = row + dr;
+          const nc = col + dc;
+          if (
+            nr >= 0 &&
+            nr < rows &&
+            nc >= 0 &&
+            nc < cols &&
+            !visited[nr][nc] &&
+            grid[nr][nc] !== "wall"
+          ) {
+            visited[nr][nc] = true;
+            prev[nr][nc] = { row, col };
+            queue.push({ row: nr, col: nc });
+          }
         }
+      }
 
-        if (allPairsFound()) {
-          setTimeout(endGame, 650);
-          return;
+      const path = [];
+      let cur = { ...goalPos };
+      if (!prev[cur.row][cur.col]) return path;
+
+      while (cur) {
+        path.push(cur);
+        cur = prev[cur.row][cur.col];
+      }
+      path.reverse();
+      return path;
+    }
+
+    function decorateMaze() {
+      const path = computePath();
+      if (path.length === 0) {
+        generateMazeGrid();
+        return decorateMaze();
+      }
+
+      const floors = [];
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (grid[r][c] === "floor") {
+            if (
+              (r === startPos.row && c === startPos.col) ||
+              (r === goalPos.row && c === goalPos.col)
+            ) {
+              continue;
+            }
+            floors.push({ row: r, col: c });
+          }
         }
+      }
 
-        // Same player goes again
-        lockInput = false;
-        if (!isPlayerTurn) {
-          // Let computer think a bit
-          setTimeout(computerTurn, 700);
+      // tiles on the main route start->goal
+      const pathSet = new Set(path.map((p) => `${p.row},${p.col}`));
+
+      function pickMany(array, count) {
+        const copy = array.slice();
+        shuffle(copy);
+        return copy.slice(0, Math.min(count, copy.length));
+      }
+
+      // fog tiles (one-time)
+      pickMany(floors, NUM_FOG_TILES).forEach(({ row, col }) => {
+        if (grid[row][col] === "floor") grid[row][col] = "fog";
+      });
+
+      // buff tiles (one-time)
+      pickMany(
+        floors.filter((p) => grid[p.row][p.col] === "floor"),
+        NUM_BUFF_TILES
+      ).forEach(({ row, col }) => {
+        grid[row][col] = "buff";
+      });
+
+      // traps, but never on the main path
+      pickMany(
+        floors.filter(
+          (p) =>
+            grid[p.row][p.col] === "floor" &&
+            !pathSet.has(`${p.row},${p.col}`)
+        ),
+        NUM_TRAPS
+      ).forEach(({ row, col }) => {
+        grid[row][col] = "trap";
+      });
+
+      // keys + locks along the main path
+      const usablePath = path.slice(3, path.length - 3);
+      const lockPositions = pickMany(usablePath, NUM_KEY_LOCK_PAIRS);
+      const usedIndices = new Set();
+
+      lockPositions.forEach((lockCell, index) => {
+        const lockIndex = path.findIndex(
+          (p) => p.row === lockCell.row && p.col === lockCell.col
+        );
+        if (lockIndex < 5) return;
+
+        const possibleKeyIndices = [];
+        for (let i = 2; i < lockIndex - 2; i++) {
+          if (!usedIndices.has(i)) possibleKeyIndices.push(i);
         }
+        if (!possibleKeyIndices.length) return;
 
-      } else {
-        // Not a match
-        setTimeout(() => {
-          flipDown(i1);
-          flipDown(i2);
-          revealed = [];
-        }, 650);
+        const keyIndex =
+          possibleKeyIndices[
+            Math.floor(Math.random() * possibleKeyIndices.length)
+          ];
+        usedIndices.add(keyIndex);
 
-        setTimeout(() => {
-          isPlayerTurn = !isPlayerTurn;
-          turnIndicatorEl.textContent = isPlayerTurn ? "Your turn" : "Computer's turn";
-          if (isPlayerTurn) {
-            setStatus("Your turn. Remember what you’ve seen.", "status-muted");
+        const keyCell = path[keyIndex];
+        const lockId = index;
+
+        if (grid[lockCell.row][lockCell.col] === "floor") {
+          grid[lockCell.row][lockCell.col] = "lock-" + lockId;
+        }
+        if (
+          grid[keyCell.row][keyCell.col] === "floor" ||
+          grid[keyCell.row][keyCell.col] === "fog"
+        ) {
+          grid[keyCell.row][keyCell.col] = "key-" + lockId;
+        }
+      });
+
+      // enemies mostly off-path
+      const enemyCandidates = floors.filter(
+        (p) => !pathSet.has(`${p.row},${p.col}`)
+      );
+      pickMany(enemyCandidates, NUM_ENEMIES).forEach(({ row, col }) => {
+        enemies.push({
+          row,
+          col,
+          dx: Math.random() < 0.5 ? 1 : -1,
+          dy: 0,
+          el: null
+        });
+      });
+    }
+
+    function buildDOMGrid() {
+      mazeGridEl.innerHTML = "";
+      mazeGridEl.style.gridTemplateColumns = `repeat(${cols}, var(--maze-cell))`;
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const cellEl = document.createElement("div");
+          cellEl.classList.add("cell");
+          cellEl.dataset.row = r;
+          cellEl.dataset.col = c;
+
+          const type = grid[r][c];
+          if (type === "wall") {
+            cellEl.classList.add("wall");
           } else {
-            setStatus("Computer’s turn…", "status-muted");
+            cellEl.classList.add("floor");
+            if (type === "goal") cellEl.classList.add("goal");
+            if (type === "trap") cellEl.classList.add("trap");
+            if (type === "fog") cellEl.classList.add("fog");
+            if (type === "buff") cellEl.classList.add("buff");
+            if (type && type.startsWith("key-")) cellEl.classList.add("key");
+            if (type && type.startsWith("lock-")) cellEl.classList.add("lock");
           }
 
-          lockInput = false;
-          if (!isPlayerTurn && !gameOver) {
-            setTimeout(computerTurn, 800);
-          }
-        }, 700);
+          mazeGridEl.appendChild(cellEl);
+        }
       }
+
+      // create player inside the grid
+      playerEl = document.createElement("div");
+      playerEl.className = "player";
+      playerEl.textContent = "→";
+      mazeGridEl.appendChild(playerEl);
+
+      // enemies
+      enemies.forEach((enemy) => {
+        const el = document.createElement("div");
+        el.classList.add("enemy-icon");
+        el.textContent = "✕";
+        enemy.el = el;
+        mazeGridEl.appendChild(el);
+        positionEnemyElement(enemy, false);
+      });
     }
 
-    // ===== PLAYER INTERACTION =====
-    function handlePlayerClick(index) {
-      if (gameOver || lockInput || !isPlayerTurn) return;
-      const card = cards[index];
-      if (!card || card.matched) return;
-      if (revealed.includes(index)) return;
-      if (revealed.length === 2) return;
-
-      flipUp(index);
-      revealed.push(index);
-
-      if (revealed.length === 2) {
-        resolvePair();
-      }
+    function cellType(row, col) {
+      if (row < 0 || row >= rows || col < 0 || col >= cols) return "wall";
+      return grid[row][col];
     }
 
-    // ===== COMPUTER AI (slightly less powerful) =====
-    function getKnownPairsForComputer() {
-      const emojiToIndices = new Map();
+    function isWalkable(row, col) {
+  const type = cellType(row, col);
+  if (type === "wall") return false;
 
-      for (const [idx, emoji] of computerMemory.entries()) {
-        const card = cards[idx];
-        if (!card || card.matched) continue;
-        if (!emojiToIndices.has(emoji)) emojiToIndices.set(emoji, []);
-        emojiToIndices.get(emoji).push(idx);
+  // Doors: only walkable if we already have that key
+  if (type && type.startsWith("lock-")) {
+    const id = type.split("-")[1];
+    if (!inventoryKeys.has(id)) {
+      return false; // hard block if we don't have the matching key
+    }
+    return true;     // we *do* have the key → allowed
+  }
+
+  return true; // normal floor / goal / trap / fog / buff / key
+}
+
+    function clearFogHighlights() {
+      mazeGridEl
+        .querySelectorAll(".cell")
+        .forEach((cell) => cell.classList.remove("visible"));
+    }
+
+    function updateFogVisibility() {
+      const now = performance.now();
+      if (fogDisabledUntil > now) {
+        mazeGridEl.classList.remove("fog-mode");
+        clearFogHighlights();
+        return;
       }
 
-      const pairs = [];
-      emojiToIndices.forEach((list) => {
-        if (list.length >= 2) {
-          // store only unique pair (0 and 1)
-          pairs.push([list[0], list[1]]);
+      if (fogMovesRemaining <= 0) {
+        mazeGridEl.classList.remove("fog-mode");
+        clearFogHighlights();
+        return;
+      }
+
+      const cells = mazeGridEl.querySelectorAll(".cell");
+      cells.forEach((cell) => {
+        const r = Number(cell.dataset.row);
+        const c = Number(cell.dataset.col);
+        const dist =
+          Math.abs(r - playerPos.row) + Math.abs(c - playerPos.col);
+        if (dist <= 2) {
+          cell.classList.add("visible");
+        } else {
+          cell.classList.remove("visible");
         }
       });
-
-      return pairs;
+      mazeGridEl.classList.add("fog-mode");
     }
 
-    function getRandomUnmatchedIndex(exclude = []) {
-      const excludedSet = new Set(exclude);
-      const candidates = cards
-        .map((c, idx) => ({ c, idx }))
-        .filter(({ c, idx }) => !c.matched && !excludedSet.has(idx));
-
-      if (candidates.length === 0) return null;
-      const choice = candidates[Math.floor(Math.random() * candidates.length)];
-      return choice.idx;
+    function updatePlayerArrow(dx, dy) {
+      if (dx === 1 && dy === 0) playerEl.textContent = "→";
+      else if (dx === -1 && dy === 0) playerEl.textContent = "←";
+      else if (dx === 0 && dy === 1) playerEl.textContent = "↓";
+      else if (dx === 0 && dy === -1) playerEl.textContent = "↑";
     }
 
-    function computerTurn() {
-      if (gameOver) return;
-      if (isPlayerTurn) return; // safety
+    function updatePlayerPosition(animated = true) {
+      const cellSize = parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue(
+          "--maze-cell"
+        )
+      );
+      const x = playerPos.col * cellSize;
+      const y = playerPos.row * cellSize;
 
-      lockInput = true;
-      revealed = [];
-
-      const knownPairs = getKnownPairsForComputer();
-      let chosenPair = null;
-
-      if (knownPairs.length > 0 && Math.random() < COMPUTER_SMARTNESS) {
-        // Use a known pair most of the time
-        chosenPair = knownPairs[Math.floor(Math.random() * knownPairs.length)];
+      if (!animated) {
+        playerEl.style.transition = "none";
+      } else {
+        playerEl.style.transition = "transform 0.08s linear";
       }
 
-      if (!chosenPair) {
-        // Either no known pairs or AI deliberately "derped"
-        const first = getRandomUnmatchedIndex();
-        const second = getRandomUnmatchedIndex([first]);
-        if (first == null || second == null) {
-          lockInput = false;
-          return;
+      playerEl.style.transform = `translate(${x}px, ${y}px)`;
+
+      if (fogMovesRemaining > 0 || performance.now() < fogDisabledUntil) {
+        updateFogVisibility();
+      }
+    }
+
+    function restartMazeFromStart(message) {
+      playerPos = { ...startPos };
+      fogMovesRemaining = 0;
+      fogDisabledUntil = 0;
+      speedBoostUntil = 0;
+      inventoryKeys.clear();
+      if (playerEl) playerEl.classList.remove("boost");
+      mazeGridEl.classList.remove("fog-mode");
+      clearFogHighlights();
+      hasWon = false;
+      setStatus(message || "Back at the entrance.", "");
+      updatePlayerArrow(1, 0);
+      updatePlayerPosition(false);
+    }
+
+    function handleTileEffects(type) {
+      const now = performance.now();
+      const r = playerPos.row;
+      const c = playerPos.col;
+      const cellEl = mazeGridEl.querySelector(
+        `.cell[data-row="${r}"][data-col="${c}"]`
+      );
+
+      if (type === "goal") {
+        handleWin();
+        return true;
+      }
+
+      if (type === "trap") {
+        restartMazeFromStart("Trap! You’re teleported all the way back.");
+        return true;
+      }
+
+      if (type === "fog") {
+        fogMovesRemaining = FOG_MOVES;
+        setStatus(
+          "A purple fog closes in… your vision shrinks for a few moves.",
+          ""
+        );
+        // one-time: turn tile into floor
+        grid[r][c] = "floor";
+        if (cellEl) cellEl.classList.remove("fog");
+        updateFogVisibility();
+      }
+
+      if (type === "buff") {
+        const buff = Math.random() < 0.5 ? "speed" : "clearFog";
+        if (buff === "speed") {
+          speedBoostUntil = now + SPEED_DURATION_MS;
+          playerEl.classList.add("boost");
+          setStatus(
+            "Speed buff! For a moment each arrow key moves you two tiles.",
+            "good"
+          );
+        } else {
+          fogDisabledUntil = now + CLEAR_FOG_DURATION_MS;
+          fogMovesRemaining = 0;
+          mazeGridEl.classList.remove("fog-mode");
+          clearFogHighlights();
+          setStatus(
+            "Vision buff! The fog lifts and you can see the full maze.",
+            "good"
+          );
         }
-        chosenPair = [first, second];
+        // one-time: consume buff tile
+        grid[r][c] = "floor";
+        if (cellEl) cellEl.classList.remove("buff");
       }
 
-      const [firstIndex, secondIndex] = chosenPair;
+      if (type && type.startsWith("key-")) {
+        const id = type.split("-")[1];
+        if (!inventoryKeys.has(id)) {
+          inventoryKeys.add(id);
+          setStatus(
+            `You picked up key ${String.fromCharCode(
+              65 + Number(id)
+            )}. Somewhere a matching lock waits.`,
+            "good"
+          );
+        }
+            
+        grid[r][c] = "floor";
+        if (cellEl) cellEl.classList.remove("key");
+      }
+           if (type && type.startsWith("key-")) {
+        const id = type.split("-")[1];
+        if (!inventoryKeys.has(id)) {
+          inventoryKeys.add(id);
+          setStatus(
+            `You picked up key ${String.fromCharCode(
+              65 + Number(id)
+            )}. Somewhere a matching lock waits.`,
+            "good"
+          );
+        }
+        grid[r][c] = "floor";
+        if (cellEl) cellEl.classList.remove("key");
+      }
 
-      // Flip first card
-      setTimeout(() => {
-        flipUp(firstIndex);
-        revealed.push(firstIndex);
-      }, 250);
+      // NEW: when stepping onto a lock we *have* the key for, open it
+      if (type && type.startsWith("lock-")) {
+        const id = type.split("-")[1];
+        if (inventoryKeys.has(id)) {
+          grid[r][c] = "floor";
+          if (cellEl) cellEl.classList.remove("lock");
+          setStatus(
+            `Door ${String.fromCharCode(
+              65 + Number(id)
+            )} swings open. You can pass.`,
+            "good"
+          );
+        }
+        // If we *didn't* have the key, isWalkable would have blocked us
+        // from entering this tile in the first place.
+      }
 
-      // Flip second card
-      setTimeout(() => {
-        flipUp(secondIndex);
-        revealed.push(secondIndex);
-        resolvePair();
-      }, 900);
+      return false;
     }
 
-    // ===== INIT & WIRING =====
+    function movePlayer(dx, dy) {
+      if (hasWon) return;
+
+      const now = performance.now();
+      const boosted = speedBoostUntil > now;
+      if (!boosted && playerEl) {
+        playerEl.classList.remove("boost");
+      }
+      const steps = boosted ? 2 : 1;
+
+      updatePlayerArrow(dx, dy);
+
+      for (let step = 0; step < steps; step++) {
+        const nr = playerPos.row + dy;
+        const nc = playerPos.col + dx;
+
+        if (!isWalkable(nr, nc)) break;
+
+        playerPos = { row: nr, col: nc };
+        updatePlayerPosition(true);
+
+        const type = cellType(playerPos.row, playerPos.col);
+        if (handleTileEffects(type)) break;
+      }
+
+      if (fogMovesRemaining > 0 && fogDisabledUntil <= now) {
+        fogMovesRemaining--;
+        if (fogMovesRemaining <= 0) {
+          mazeGridEl.classList.remove("fog-mode");
+          clearFogHighlights();
+          setStatus("", "");
+        } else {
+          updateFogVisibility();
+        }
+      }
+    }
+
+    function positionEnemyElement(enemy, animated = true) {
+      if (!enemy.el) return;
+      const cellSize = parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue(
+          "--maze-cell"
+        )
+      );
+      const x = enemy.col * cellSize;
+      const y = enemy.row * cellSize;
+      if (!animated) {
+        enemy.el.style.transition = "none";
+      } else {
+        enemy.el.style.transition = "transform 0.12s linear";
+      }
+      enemy.el.style.transform = `translate(${x}px, ${y}px)`;
+    }
+
+    function enemiesStep() {
+      if (hasWon) return;
+
+      enemies.forEach((enemy) => {
+        let { row, col, dx, dy } = enemy;
+
+        let nr = row + dy;
+        let nc = col + dx;
+        if (!isWalkable(nr, nc) || grid[nr][nc] === "goal") {
+          dx = -dx;
+          dy = -dy;
+          enemy.dx = dx;
+          enemy.dy = dy;
+          nr = row + dy;
+          nc = col + dx;
+        }
+
+        if (isWalkable(nr, nc)) {
+          enemy.row = nr;
+          enemy.col = nc;
+        }
+
+        positionEnemyElement(enemy, true);
+
+        if (enemy.row === playerPos.row && enemy.col === playerPos.col) {
+          restartMazeFromStart("You ran into a red enemy. Back to the start!");
+        }
+      });
+    }
+
+    function handleWin() {
+      hasWon = true;
+      setStatus("You found the present! It creaks open…", "good");
+
+      if (!localStorage.getItem(DAY_LETTER_KEY)) {
+        localStorage.setItem(DAY_LETTER_KEY, HIDDEN_LETTER);
+      }
+      alreadyBanner.style.display = "block";
+      setTimeout(() => {
+        openModal("letterModal");
+      }, 250);
+    }
+
     function init() {
       if (localStorage.getItem(DAY_LETTER_KEY)) {
         alreadyBanner.style.display = "block";
       }
 
-      resetGame();
+      enemies = [];
+
+      generateMazeGrid();
+      decorateMaze();
+      buildDOMGrid();
+
+      playerPos = { ...startPos };
+      updatePlayerArrow(1, 0);
+      updatePlayerPosition(false);
+
+      clearFogHighlights();
+
+      if (enemyTimer) clearInterval(enemyTimer);
+      enemyTimer = setInterval(enemiesStep, ENEMY_STEP_MS);
+
+      document.addEventListener("keydown", (e) => {
+        const key = e.key;
+        if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)) {
+          e.preventDefault();
+        }
+
+        if (key === "ArrowUp") movePlayer(0, -1);
+        if (key === "ArrowDown") movePlayer(0, 1);
+        if (key === "ArrowLeft") movePlayer(-1, 0);
+        if (key === "ArrowRight") movePlayer(1, 0);
+      });
 
       document.getElementById("restartBtn").addEventListener("click", () => {
-        closeModal("loseModal");
-        resetGame();
+        restartMazeFromStart("Back at the entrance. Deep breath, new attempt.");
       });
 
       document.getElementById("backBtn").addEventListener("click", () => {
-        window.location.href = "../../index.html";
-      });
-
-      document.getElementById("goHomeFromModal").addEventListener("click", () => {
         window.location.href = "../../index.html";
       });
 
@@ -818,6 +1229,10 @@
             closeModal(btn.getAttribute("data-close"))
           )
         );
+
+      document.getElementById("goHomeFromModal").addEventListener("click", () => {
+        window.location.href = "../../index.html";
+      });
 
       document.querySelectorAll(".modal").forEach((modal) => {
         modal.addEventListener("click", (e) => {
@@ -837,7 +1252,9 @@
       });
     }
 
-    init();
+    window.addEventListener("load", init);
   </script>
 </body>
 </html>
+
+
